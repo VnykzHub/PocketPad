@@ -1,8 +1,9 @@
 # Session checkpoint — 2026-10-21
 
-> Written while three workflows are still running. Read this first after a
-> restart. Do not start a new wave from this file alone; inspect the workflow
-> journals and run the integration gate.
+> Final Wave 1 checkpoint. All three workflows completed 9/9 with 0 errors;
+> `npm run check` is green; local checkpoint commit **d326559** (not pushed).
+> Read this first after a restart. Do not start a new wave from this file
+> alone; inspect the workflow journals and re-run the integration gate.
 
 ## Running workflows
 
@@ -195,7 +196,8 @@ after all three workflows finish; do not "fix" them in isolation.
 
 ## Rules
 
-- No git commit was made at checkpoint time.
+- Checkpoint commit `d326559` was created locally and **not pushed**. It contains
+  all Wave 1 planning, probe, controller and session work plus this checkpoint.
 - No measurements were fabricated; E1/E2/E3/E14 rows must state what actually
   ran.
 - D1, D2 and D4 are not complete until their review agents pass and the
