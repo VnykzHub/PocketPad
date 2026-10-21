@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lanpad device probes</title>
+<link rel="stylesheet" href="./shared/probe.css">
+</head>
+<body>
+<main>
+<h1>lanpad device probes</h1>
+<p>Standalone D1 probes. Open a probe and press <strong>Run</strong>; nothing runs automatically. Copy the JSON result and record it by hand in <code>docs/RESULTS.md</code>. No analytics, uploads, cookies or PII.</p>
+
+<h2>Planned probes</h2>
+<ul class="probe-list">
+  <li data-experiment="E1">
+    <a href="./e01/">E1 - TV browser capabilities</a>
+    <p class="description">WebGL2, compressed textures, Web Audio, binary WebSocket, WebRTC, rAF rate and Wake Lock on the TV browser.</p>
+  </li>
+  <li data-experiment="E2">
+    <a href="./e02/">E2 - Memory ceiling</a>
+    <p class="description">Allocates typed arrays and WebGL textures in steps until slowdown or failure; records the last stable step and the failure mode.</p>
+  </li>
+  <li data-experiment="E3">
+    <a href="./e03/">E3 - TV render benchmark</a>
+    <p class="description">Instanced quads, a static mesh and a texture atlas at 720p and 1080p; records p50/p95 frame time and draw calls.</p>
+  </li>
+  <li data-experiment="E14">
+    <a href="./e14/">E14 - Mixed content and LAN reachability</a>
+    <p class="description">Checks whether an HTTPS page can open <code>ws://</code> or <code>fetch http://</code> to a LAN address.</p>
+  </li>
+</ul>
+
+<h2>Self-test fixtures</h2>
+<ul>
+  <li data-fixture="webgl2-failure">
+    <a href="./shared/fixtures/webgl2-failure/">WebGL2 failure display</a>
+    <p class="description">Intentionally throws a WebGL2 context error so the shared failure display can be checked without a real TV.</p>
+  </li>
+</ul>
+
+<p>Source, build and test commands: <code>experiments/README.md</code>.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,44 @@
+{
+  "name": "stale-packet",
+  "hostTickHz": 60,
+  "packets": [
+    {
+      "atMs": 2,
+      "slot": 1,
+      "tick": 5000,
+      "buttons": 0,
+      "edges": 0,
+      "lx": 0,
+      "ly": 0,
+      "rx": 0,
+      "ry": 0,
+      "gx": 0,
+      "gy": 0,
+      "gz": 0,
+      "lt": 0,
+      "rt": 0,
+      "flags": 0
+    },
+    {
+      "atMs": 8,
+      "slot": 1,
+      "tick": 4990,
+      "buttons": 1,
+      "edges": 2,
+      "lx": 0,
+      "ly": 0,
+      "rx": 0,
+      "ry": 0,
+      "gx": 0,
+      "gy": 0,
+      "gz": 0,
+      "lt": 0,
+      "rt": 0,
+      "flags": 0
+    }
+  ],
+  "polls": [
+    { "hostTick": 1, "expect": { "buttons": 0, "edges": 2, "tick": 5000 } },
+    { "hostTick": 2, "expect": { "buttons": 0, "edges": 0, "tick": 5000 } }
+  ]
+}

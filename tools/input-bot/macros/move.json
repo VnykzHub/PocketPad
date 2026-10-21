@@ -1,0 +1,6 @@
+[
+  { "atMs": 0, "type": "axis", "lx": 0, "ly": -32767 },
+  { "atMs": 1000, "type": "axis", "lx": 32767, "ly": 0 },
+  { "atMs": 2000, "type": "axis", "lx": 0, "ly": 32767 },
+  { "atMs": 3000, "type": "axis", "lx": -32767, "ly": 0 }
+]

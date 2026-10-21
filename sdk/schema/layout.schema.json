@@ -1,0 +1,286 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "lanpad Controller Layout",
+  "description": "Controller layout v0. Mirrors LayoutDocument in sdk/src/layout.ts. Coordinate model: x/y percentages are relative to the viewport width/height; size/r percentages are relative to min(viewportWidth, viewportHeight); w/h percentages are relative to the viewport width/height. Percent lengths are 0..100 and pixel lengths are 0..4096.",
+  "$comment": "Cross-field rules that JSON Schema cannot express are enforced by validateLayout: serialized size <= 16384 UTF-8 bytes, unique control ids, unique button/dpad bit assignments, dpad direction bits distinct, and unique input channel bindings (stick lx/ly or rx/ry, touchpad rx/ry, trigger/slider lt/rt). Numeric length ranges are registry-side; this schema checks syntax only.",
+  "type": "object",
+  "required": ["id", "orientation", "controls"],
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "description": "Layout format version. Absent means 1. A new control type or a breaking field change requires a bump."
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "orientation": {
+      "enum": ["portrait", "landscape", "any"]
+    },
+    "background": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+    },
+    "controls": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 24,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/button" },
+          { "$ref": "#/$defs/dpad" },
+          { "$ref": "#/$defs/stick" },
+          { "$ref": "#/$defs/trigger" },
+          { "$ref": "#/$defs/touchpad" },
+          { "$ref": "#/$defs/slider" },
+          { "$ref": "#/$defs/gyro" },
+          { "$ref": "#/$defs/choice" },
+          { "$ref": "#/$defs/panel" },
+          { "$ref": "#/$defs/text" },
+          { "$ref": "#/$defs/canvas" }
+        ]
+      }
+    },
+    "sensors": {
+      "type": "object",
+      "properties": {
+        "gyro": {
+          "enum": ["steer", "aim", "tilt"]
+        },
+        "sensitivity": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "smoothing": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "length": {
+      "type": "string",
+      "pattern": "^(?:\\d+(?:\\.\\d+)?)(?:%|px)$",
+      "description": "A percentage or pixel length. Percent 0..100 and pixels 0..4096 are enforced by validateLayout."
+    },
+    "controlId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32
+    },
+    "eventName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "bit": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 15
+    },
+    "button": {
+      "type": "object",
+      "required": ["type", "id", "x", "y", "label", "shape", "r", "bit"],
+      "properties": {
+        "type": { "const": "button" },
+        "id": { "$ref": "#/$defs/controlId" },
+        "x": { "$ref": "#/$defs/length" },
+        "y": { "$ref": "#/$defs/length" },
+        "z": { "type": "number" },
+        "label": { "type": "string" },
+        "shape": { "enum": ["circle", "rounded", "square"] },
+        "r": { "$ref": "#/$defs/length" },
+        "bit": { "$ref": "#/$defs/bit" },
+        "haptic": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 65535
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "dpad": {
+      "type": "object",
+      "required": ["type", "id", "x", "y", "size", "bits"],
+      "properties": {
+        "type": { "const": "dpad" },
+        "id": { "$ref": "#/$defs/controlId" },
+        "x": { "$ref": "#/$defs/length" },
+        "y": { "$ref": "#/$defs/length" },
+        "z": { "type": "number" },
+        "size": { "$ref": "#/$defs/length" },
+        "bits": {
+          "type": "object",
+          "required": ["up", "down", "left", "right"],
+          "properties": {
+            "up": { "$ref": "#/$defs/bit" },
+            "down": { "$ref": "#/$defs/bit" },
+            "left": { "$ref": "#/$defs/bit" },
+            "right": { "$ref": "#/$defs/bit" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "stick": {
+      "type": "object",
+      "required": ["type", "id", "x", "y", "size", "axis", "mode"],
+      "properties": {
+        "type": { "const": "stick" },
+        "id": { "$ref": "#/$defs/controlId" },
+        "x": { "$ref": "#/$defs/length" },
+        "y": { "$ref": "#/$defs/length" },
+        "z": { "type": "number" },
+        "size": { "$ref": "#/$defs/length" },
+        "axis": { "enum": ["left", "right"] },
+        "mode": { "enum": ["floating", "fixed"] },
+        "deadzone": { "type": "number", "minimum": 0, "maximum": 0.5 }
+      },
+      "additionalProperties": true
+    },
+    "trigger": {
+      "type": "object",
+      "required": ["type", "id", "x", "y", "size", "channel"],
+      "properties": {
+        "type": { "const": "trigger" },
+        "id": { "$ref": "#/$defs/controlId" },
+        "x": { "$ref": "#/$defs/length" },
+        "y": { "$ref": "#/$defs/length" },
+        "z": { "type": "number" },
+        "size": { "$ref": "#/$defs/length" },
+        "channel": { "enum": ["lt", "rt"] },
+        "orientation": { "enum": ["vertical", "horizontal"] }
+      },
+      "additionalProperties": true
+    },
+    "touchpad": {
+      "type": "object",
+      "required": ["type", "id", "x", "y", "w", "h"],
+      "properties": {
+        "type": { "const": "touchpad" },
+        "id": { "$ref": "#/$defs/controlId" },
+        "x": { "$ref": "#/$defs/length" },
+        "y": { "$ref": "#/$defs/length" },
+        "z": { "type": "number" },
+        "w": { "$ref": "#/$defs/length" },
+        "h": { "$ref": "#/$defs/length" }
+      },
+      "additionalProperties": true
+    },
+    "slider": {
+      "type": "object",
+      "required": ["type", "id", "x", "y", "w", "h", "channel"],
+      "properties": {
+        "type": { "const": "slider" },
+        "id": { "$ref": "#/$defs/controlId" },
+        "x": { "$ref": "#/$defs/length" },
+        "y": { "$ref": "#/$defs/length" },
+        "z": { "type": "number" },
+        "w": { "$ref": "#/$defs/length" },
+        "h": { "$ref": "#/$defs/length" },
+        "channel": { "enum": ["lt", "rt"] },
+        "direction": { "enum": ["horizontal", "vertical"] }
+      },
+      "additionalProperties": true
+    },
+    "gyro": {
+      "type": "object",
+      "required": ["type", "id", "x", "y"],
+      "properties": {
+        "type": { "const": "gyro" },
+        "id": { "$ref": "#/$defs/controlId" },
+        "x": { "$ref": "#/$defs/length" },
+        "y": { "$ref": "#/$defs/length" },
+        "z": { "type": "number" },
+        "sensitivity": { "type": "number", "exclusiveMinimum": 0 },
+        "smoothing": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": true
+    },
+    "choice": {
+      "type": "object",
+      "required": ["type", "id", "x", "y", "w", "h", "event", "options"],
+      "properties": {
+        "type": { "const": "choice" },
+        "id": { "$ref": "#/$defs/controlId" },
+        "x": { "$ref": "#/$defs/length" },
+        "y": { "$ref": "#/$defs/length" },
+        "z": { "type": "number" },
+        "w": { "$ref": "#/$defs/length" },
+        "h": { "$ref": "#/$defs/length" },
+        "event": { "$ref": "#/$defs/eventName" },
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": {
+            "type": "object",
+            "required": ["value", "label"],
+            "properties": {
+              "value": { "type": "string" },
+              "label": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "panel": {
+      "type": "object",
+      "required": ["type", "id", "x", "y", "w", "h"],
+      "properties": {
+        "type": { "const": "panel" },
+        "id": { "$ref": "#/$defs/controlId" },
+        "x": { "$ref": "#/$defs/length" },
+        "y": { "$ref": "#/$defs/length" },
+        "z": { "type": "number" },
+        "w": { "$ref": "#/$defs/length" },
+        "h": { "$ref": "#/$defs/length" }
+      },
+      "additionalProperties": true
+    },
+    "text": {
+      "type": "object",
+      "required": ["type", "id", "x", "y", "w", "h", "event", "maxLen"],
+      "properties": {
+        "type": { "const": "text" },
+        "id": { "$ref": "#/$defs/controlId" },
+        "x": { "$ref": "#/$defs/length" },
+        "y": { "$ref": "#/$defs/length" },
+        "z": { "type": "number" },
+        "w": { "$ref": "#/$defs/length" },
+        "h": { "$ref": "#/$defs/length" },
+        "event": { "$ref": "#/$defs/eventName" },
+        "maxLen": { "type": "integer", "minimum": 1, "maximum": 200 }
+      },
+      "additionalProperties": true
+    },
+    "canvas": {
+      "type": "object",
+      "required": ["type", "id", "x", "y", "w", "h", "event"],
+      "properties": {
+        "type": { "const": "canvas" },
+        "id": { "$ref": "#/$defs/controlId" },
+        "x": { "$ref": "#/$defs/length" },
+        "y": { "$ref": "#/$defs/length" },
+        "z": { "type": "number" },
+        "w": { "$ref": "#/$defs/length" },
+        "h": { "$ref": "#/$defs/length" },
+        "event": { "$ref": "#/$defs/eventName" },
+        "maxStrokePoints": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": true
+    }
+  }
+}

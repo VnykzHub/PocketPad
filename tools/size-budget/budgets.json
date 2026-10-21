@@ -1,0 +1,8 @@
+{
+  "targets": {
+    "controller": { "dev": 40960, "prod": 51200, "hard": 61440 },
+    "host": { "dev": 3145728, "prod": 3670016, "hard": 5242880 },
+    "engineCore": { "aspirational": 409600 }
+  },
+  "games": {}
+}

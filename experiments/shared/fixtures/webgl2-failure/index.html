@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E1 fixture - WebGL2 failure display</title>
+<link rel="stylesheet" href="../../probe.css">
+</head>
+<body>
+<main>
+<h1>WebGL2 failure display fixture</h1>
+<p>This fixture intentionally makes <code>getContext("webgl2")</code> throw. It verifies that a failed check produces a readable status and error message in the results table and the JSON block. It does not touch the GPU, never auto-runs and makes no network requests.</p>
+
+<button id="run" type="button">Run failure fixture</button>
+<button id="copy" type="button" disabled>Copy JSON</button>
+<p id="status" role="status" aria-live="polite">Not run.</p>
+
+<table id="results" aria-label="Fixture results"></table>
+
+<h2>JSON result</h2>
+<pre id="json">Not run.</pre>
+
+<p><a href="../../../">Back to the experiment index</a></p>
+</main>
+<script type="module" src="./fixture.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E1 - TV browser capabilities</title>
+<link rel="stylesheet" href="../shared/probe.css">
+</head>
+<body>
+<main>
+<h1>E1 - TV browser capabilities</h1>
+<p>Measure this browser with feature detection: WebGL2 and its limits, compressed texture extensions, Web Audio after the Run gesture, a binary WebSocket round trip, RTCPeerConnection presence, the requestAnimationFrame rate, Wake Lock, device memory, hardware concurrency, screen/DPR, and the user-agent string as a recorded value only.</p>
+<p>The binary WebSocket check uses the existing <code>/ws</code> room flow on this dev server (it creates a throwaway room, hosts it, joins it, and sends one 26-byte <code>Input</code> frame). Nothing is uploaded; no analytics, cookies or PII. Copy the JSON result into <code>docs/RESULTS.md</code> by hand. Open this page through a URL printed by the dev server (LAN IP or localhost) so the WebSocket Origin allowlist matches.</p>
+<p>KTX2 support is not inferred from ASTC: the exact compressed-extension list is recorded, and the Basis transcoder may still be needed.</p>
+
+<button id="run" type="button">Run all checks</button>
+<button id="copy" type="button" disabled>Copy JSON</button>
+<p id="status" role="status" aria-live="polite">Not run.</p>
+
+<table id="results" aria-label="E1 results"></table>
+
+<h2>JSON result</h2>
+<pre id="json">Not run.</pre>
+
+<p><a href="../">Back to the experiment index</a></p>
+</main>
+<script type="module" src="./page.js"></script>
+</body>
+</html>

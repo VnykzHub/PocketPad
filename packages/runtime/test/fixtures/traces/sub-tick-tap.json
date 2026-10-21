@@ -1,0 +1,27 @@
+{
+  "name": "sub-tick-tap",
+  "hostTickHz": 60,
+  "packets": [
+    {
+      "atMs": 10,
+      "slot": 1,
+      "tick": 100000,
+      "buttons": 0,
+      "edges": 1,
+      "lx": 0,
+      "ly": 0,
+      "rx": 0,
+      "ry": 0,
+      "gx": 0,
+      "gy": 0,
+      "gz": 0,
+      "lt": 0,
+      "rt": 0,
+      "flags": 0
+    }
+  ],
+  "polls": [
+    { "hostTick": 1, "expect": { "buttons": 0, "edges": 1 } },
+    { "hostTick": 2, "expect": { "buttons": 0, "edges": 0 } }
+  ]
+}

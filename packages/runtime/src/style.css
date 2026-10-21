@@ -1,0 +1,270 @@
+/*
+ * Host page shell styles (D0-RT-01). External stylesheet so the dev CSP's
+ * `style-src 'self'` is satisfied (no inline <style> or style attributes).
+ * TV-first: large room code/PIN and high-contrast text.
+ */
+:root {
+  color-scheme: dark;
+  --bg: #0b1020;
+  --surface: #141b31;
+  --line: #253154;
+  --text: #e8ecf8;
+  --muted: #9fb0d9;
+  --ok-bg: #14532d;
+  --ok-text: #dcfce7;
+  --bad-bg: #7f1d1d;
+  --bad-text: #fee2e2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+#app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  gap: 20px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h2 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+#connection {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+#connection[data-state="ok"] {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+}
+
+#connection[data-state="bad"] {
+  background: var(--bad-bg);
+  color: var(--bad-text);
+}
+
+.room {
+  display: flex;
+  align-items: baseline;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+#room-code {
+  font-size: 72px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+#room-pin {
+  font-size: 40px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 18px;
+}
+
+/*
+ * Room panel (D4-HOST-01). TV-first: the code and PIN are sized for a couch,
+ * the QR is a 384 px canvas shown at 320 CSS px so it stays sharp, and the
+ * security notice is never dismissible. `[hidden]` wins over the display
+ * rules used by the canvas/fallback swap.
+ */
+.room-panel {
+  flex-basis: 100%;
+  display: grid;
+  gap: 16px;
+}
+
+.room-panel:empty {
+  display: none;
+}
+
+.room-panel__layout {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.room-panel__qr {
+  margin: 0;
+  flex: 0 0 auto;
+  min-width: 320px;
+  min-height: 320px;
+  padding: 12px;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  border-radius: 12px;
+}
+
+.room-panel__qr-canvas {
+  display: block;
+  width: 320px;
+  height: 320px;
+  image-rendering: pixelated;
+}
+
+.room-panel__qr-fallback {
+  max-width: 300px;
+  padding: 12px;
+  color: #1f2937;
+  font-size: 18px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.room-panel__digits {
+  display: grid;
+  gap: 8px;
+}
+
+.room-panel__code {
+  font-size: clamp(72px, 9vw, 128px);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.room-panel__pin {
+  font-size: clamp(40px, 5vw, 72px);
+  font-weight: 700;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.room-panel__notice {
+  margin: 0;
+  padding: 12px 16px;
+  border-left: 4px solid #f59e0b;
+  background: #2a2313;
+  color: #fde68a;
+  font-size: 18px;
+}
+
+.room-panel__manual {
+  margin: 0;
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.room-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.room-panel__new-room {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px 20px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.room-panel__new-room:hover,
+.room-panel__new-room:focus-visible {
+  border-color: var(--text);
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+
+.room-panel__status {
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.room-panel [hidden] {
+  display: none !important;
+}
+
+#game-root:empty {
+  display: none;
+}
+
+.input-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.input-table th,
+.input-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.input-table th {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.input-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.input-table td.tick,
+.input-table th.tick {
+  display: none;
+}
+
+.input-table.show-tick td.tick,
+.input-table.show-tick th.tick {
+  display: table-cell;
+}

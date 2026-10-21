@@ -1,0 +1,24 @@
+{
+  "name": "@lanpad/runtime",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b && tsc -p tsconfig.test.json && vite build",
+    "test": "vitest run --root ../.. --project packages/runtime",
+    "typecheck": "tsc -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@lanpad/protocol": "*",
+    "@lanpad/sdk": "*"
+  }
+}

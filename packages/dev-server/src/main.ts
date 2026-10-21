@@ -1,0 +1,319 @@
+/**
+ * Dev server entry point (D0-SRV-01): static routes, LAN discovery, health,
+ * room creation and the broker's WebSocket adapter.
+ *
+ * This is an adapter only. Room lifecycle lives in `@lanpad/broker` (A1), so
+ * the production relay in P1 reuses the same core through a different
+ * transport. No CORS headers are ever emitted: dev is same-origin and
+ * production origins are config-driven.
+ */
+import { randomBytes as secureRandomBytes } from "node:crypto";
+import {
+  createServer,
+  type IncomingMessage,
+  type Server,
+  type ServerResponse,
+} from "node:http";
+import { networkInterfaces } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  RoomRegistry,
+  attachWebSocketServer,
+  type Logger,
+} from "@lanpad/broker";
+import { allowedOriginsFromUrls, lanUrls } from "./lan.js";
+import { applySecurityHeaders, createStaticHandlers } from "./static.js";
+import { printBootInfo } from "./terminal.js";
+
+export const DEFAULT_PORT = 8080;
+export const DEFAULT_HOST = "0.0.0.0";
+/** FR-7.14: ping every 2 s, drop after 5 s of silence. */
+export const HEARTBEAT_MS = 2000;
+export const DEAD_AFTER_MS = 5000;
+/** G2: drop level-only input when the host socket is this far behind. */
+export const MAX_BUFFERED_BYTES = 262_144;
+
+/** Frozen interface from D0-SRV-01. */
+export interface DevServerConfig {
+  /** Bind address; default `0.0.0.0`. */
+  host: string;
+  /** Default 8080. Use 0 in tests to bind an ephemeral port. */
+  port: number;
+  staticRoots: {
+    host: string;
+    controller: string;
+    games: string;
+    experiments: string;
+  };
+  /** Derived at boot from LAN IPs + localhost; never `*`. */
+  allowedOrigins: string[];
+}
+
+export interface DevServerDeps {
+  /** Injected clock for tests; defaults to `Date.now`. */
+  now?: () => number;
+  /** Injected entropy for tests; defaults to `node:crypto.randomBytes`. */
+  randomBytes?: (n: number) => Uint8Array;
+  /** Defaults to structured JSON lines on stdout. */
+  logger?: Logger;
+}
+
+export interface DevServer {
+  server: Server;
+  registry: RoomRegistry;
+  wss: ReturnType<typeof attachWebSocketServer>;
+  config: DevServerConfig;
+  /** Binds the server and returns the actual port plus every reachable URL. */
+  listen(): Promise<{ port: number; urls: string[] }>;
+  close(): Promise<void>;
+}
+
+function writeLogLine(event: string, fields: Record<string, string | number>): void {
+  process.stdout.write(`${JSON.stringify({ event, ...fields })}\n`);
+}
+
+const stdoutLogger: Logger = {
+  info: writeLogLine,
+};
+
+/** Repository root derived from this module's location, never hard-coded (FR-4.3). */
+export function defaultRepoRoot(): string {
+  return resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+}
+
+export function defaultConfig(repoRoot = defaultRepoRoot()): DevServerConfig {
+  const urls = lanUrls(DEFAULT_PORT, networkInterfaces());
+  return {
+    host: DEFAULT_HOST,
+    port: DEFAULT_PORT,
+    staticRoots: {
+      host: join(repoRoot, "packages/runtime/dist"),
+      controller: join(repoRoot, "packages/controller/dist"),
+      games: join(repoRoot, "packages/games/dist"),
+      experiments: join(repoRoot, "experiments"),
+    },
+    allowedOrigins: allowedOriginsFromUrls(urls),
+  };
+}
+
+function pathnameOf(rawUrl: string | undefined): string | null {
+  try {
+    return new URL(rawUrl ?? "/", "http://localhost").pathname;
+  } catch {
+    return null;
+  }
+}
+
+/** Strips a mount prefix while preserving the query string for sirv. */
+function rewritePrefix(req: IncomingMessage, prefix: string): void {
+  const url = new URL(req.url ?? "/", "http://localhost");
+  const rest = url.pathname.slice(prefix.length) || "/";
+  req.url = `${rest}${url.search}`;
+}
+
+function sendText(res: ServerResponse, status: number, body: string): void {
+  applySecurityHeaders(res);
+  res.writeHead(status, {
+    "Content-Type": "text/plain; charset=utf-8",
+    "Content-Length": Buffer.byteLength(body),
+    "Cache-Control": "no-store",
+  });
+  res.end(body);
+}
+
+function sendJson(res: ServerResponse, status: number, body: unknown): void {
+  const payload = JSON.stringify(body);
+  applySecurityHeaders(res);
+  res.writeHead(status, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Content-Length": Buffer.byteLength(payload),
+    "Cache-Control": "no-store",
+  });
+  res.end(payload);
+}
+
+function sendMethodNotAllowed(res: ServerResponse, allow: string): void {
+  applySecurityHeaders(res);
+  res.writeHead(405, {
+    Allow: allow,
+    "Content-Type": "text/plain; charset=utf-8",
+    "Cache-Control": "no-store",
+  });
+  res.end("Method not allowed");
+}
+
+/**
+ * Creates the dev server without binding it. `listen()` must be called before
+ * requests are served.
+ */
+export function createDevServer(config: DevServerConfig, deps: DevServerDeps = {}): DevServer {
+  const logger = deps.logger ?? stdoutLogger;
+  const registry = new RoomRegistry({
+    now: deps.now ?? Date.now,
+    randomBytes: deps.randomBytes ?? ((count) => new Uint8Array(secureRandomBytes(count))),
+    logger,
+  });
+  const staticHandlers = createStaticHandlers(config.staticRoots);
+
+  function handleRequest(req: IncomingMessage, res: ServerResponse): void {
+    const startedAt = Date.now();
+    const method = req.method ?? "GET";
+    const pathname = pathnameOf(req.url);
+
+    // SR-9: method, pathname, status and duration only. Query strings,
+    // headers and bodies are never logged.
+    res.on("finish", () => {
+      logger.info("http.request", {
+        method,
+        path: pathname ?? "invalid",
+        status: res.statusCode,
+        durationMs: Date.now() - startedAt,
+      });
+    });
+
+    if (pathname === null) {
+      sendText(res, 400, "Bad request");
+      return;
+    }
+
+    if (pathname === "/healthz") {
+      if (method !== "GET" && method !== "HEAD") {
+        sendMethodNotAllowed(res, "GET, HEAD");
+        return;
+      }
+      sendJson(res, 200, { ok: true, now: registry.nowMs(), rooms: registry.roomCount() });
+      return;
+    }
+
+    if (pathname === "/api/rooms") {
+      if (method !== "POST") {
+        sendMethodNotAllowed(res, "POST");
+        return;
+      }
+      sendJson(res, 201, registry.createRoom());
+      return;
+    }
+
+    if (method !== "GET" && method !== "HEAD") {
+      sendText(res, 404, "Not found");
+      return;
+    }
+
+    if (pathname === "/" || pathname === "/index.html") {
+      staticHandlers.host(req, res, () => sendText(res, 404, "Not found"));
+      return;
+    }
+    if (pathname === "/c" || pathname.startsWith("/c/")) {
+      rewritePrefix(req, "/c");
+      staticHandlers.controller(req, res, () => sendText(res, 404, "Not found"));
+      return;
+    }
+    if (pathname.startsWith("/games/")) {
+      rewritePrefix(req, "/games");
+      staticHandlers.games(req, res, () => sendText(res, 404, "Not found"));
+      return;
+    }
+    if (pathname.startsWith("/x/")) {
+      rewritePrefix(req, "/x");
+      staticHandlers.experiments(req, res, () => sendText(res, 404, "Not found"));
+      return;
+    }
+    if (pathname.startsWith("/assets/")) {
+      rewritePrefix(req, "/assets");
+      staticHandlers.assets(req, res, () => sendText(res, 404, "Not found"));
+      return;
+    }
+    sendText(res, 404, "Not found");
+  }
+
+  const server = createServer(handleRequest);
+  const wss = attachWebSocketServer(server, {
+    registry,
+    config: {
+      // Same array reference: listen() may fill it once the real port is known.
+      allowedOrigins: config.allowedOrigins,
+      allowMissingOrigin: true,
+      heartbeatMs: HEARTBEAT_MS,
+      deadAfterMs: DEAD_AFTER_MS,
+      maxBufferedBytes: MAX_BUFFERED_BYTES,
+    },
+    logger,
+  });
+
+  const sweeper = setInterval(() => registry.sweep(), 1000);
+  sweeper.unref?.();
+
+  async function listen(): Promise<{ port: number; urls: string[] }> {
+    await new Promise<void>((resolvePromise, reject) => {
+      const onError = (error: Error): void => {
+        server.off("listening", onListening);
+        reject(error);
+      };
+      const onListening = (): void => {
+        server.off("error", onError);
+        resolvePromise();
+      };
+      server.once("error", onError);
+      server.once("listening", onListening);
+      server.listen(config.port, config.host);
+    });
+
+    const address = server.address();
+    const port = typeof address === "object" && address !== null ? address.port : config.port;
+    const urls = lanUrls(port, networkInterfaces());
+    if (config.allowedOrigins.length === 0) {
+      config.allowedOrigins.push(...allowedOriginsFromUrls(urls));
+    }
+    return { port, urls };
+  }
+
+  async function close(): Promise<void> {
+    clearInterval(sweeper);
+    for (const client of wss.clients) {
+      client.terminate();
+    }
+    await new Promise<void>((resolvePromise) => setTimeout(() => resolvePromise(), 20));
+    await new Promise<void>((resolvePromise) => {
+      wss.close(() => resolvePromise());
+    });
+    if (server.listening) {
+      await new Promise<void>((resolvePromise) => {
+        server.close(() => resolvePromise());
+      });
+    }
+  }
+
+  return { server, registry, wss, config, listen, close };
+}
+
+/** Boots the default server and prints the LAN banner + QR. */
+export async function main(): Promise<void> {
+  const app = createDevServer(defaultConfig());
+  const { urls } = await app.listen();
+  await printBootInfo(urls);
+
+  const shutdown = (): void => {
+    void app.close().then(() => {
+      process.exitCode = 0;
+    });
+  };
+  process.once("SIGINT", shutdown);
+  process.once("SIGTERM", shutdown);
+}
+
+function normalizeEntryPath(path: string): string {
+  const resolved = resolve(path);
+  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
+}
+
+const entry = process.argv[1];
+if (
+  entry !== undefined &&
+  normalizeEntryPath(entry) === normalizeEntryPath(fileURLToPath(import.meta.url))
+) {
+  main().catch((error: unknown) => {
+    process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);
+    process.exitCode = 1;
+  });
+}

@@ -1,0 +1,10 @@
+[
+  { "atMs": 0, "type": "press", "buttons": ["A"] },
+  { "atMs": 8, "type": "release", "buttons": ["A"] },
+  { "atMs": 250, "type": "press", "buttons": ["B"] },
+  { "atMs": 290, "type": "release", "buttons": ["B"] },
+  { "atMs": 500, "type": "press", "buttons": ["X", "Y"] },
+  { "atMs": 520, "type": "release", "buttons": ["X", "Y"] },
+  { "atMs": 750, "type": "press", "buttons": ["A"] },
+  { "atMs": 790, "type": "release", "buttons": ["A"] }
+]

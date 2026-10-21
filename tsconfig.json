@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/protocol" },
+    { "path": "./packages/broker" },
+    { "path": "./packages/dev-server" },
+    { "path": "./packages/runtime" },
+    { "path": "./packages/controller" },
+    { "path": "./sdk" },
+    { "path": "./tools/input-bot" },
+    { "path": "./tools/size-budget" },
+    { "path": "./tools/trace-check" }
+  ]
+}

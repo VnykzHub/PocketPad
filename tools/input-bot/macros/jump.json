@@ -1,0 +1,8 @@
+[
+  { "atMs": 0, "type": "press", "buttons": ["A"] },
+  { "atMs": 120, "type": "release", "buttons": ["A"] },
+  { "atMs": 900, "type": "press", "buttons": ["A"] },
+  { "atMs": 1020, "type": "release", "buttons": ["A"] },
+  { "atMs": 1500, "type": "axis", "lx": 0, "ly": -32767 },
+  { "atMs": 1800, "type": "axis", "lx": 0, "ly": 0 }
+]

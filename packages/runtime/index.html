@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="theme-color" content="#0b1020" />
+    <title>lanpad host</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="top">
+        <h1>lanpad</h1>
+        <div id="connection" role="status" aria-live="polite">Starting…</div>
+      </header>
+
+      <section class="room" aria-label="Room">
+        <div id="room-code" aria-label="Room code">----</div>
+        <div id="room-pin" aria-label="Room PIN">PIN ----</div>
+        <p id="room-hint" class="hint">Creating a room…</p>
+        <!-- D4-HOST-01: RoomPanel mounts here with the QR, notice and manual line. -->
+        <div id="room-panel" class="room-panel"></div>
+      </section>
+
+      <!-- D3 mounts the runtime here; D0 leaves it empty. -->
+      <main id="game-root"></main>
+
+      <section aria-label="Controllers">
+        <h2>Controllers</h2>
+        <div id="slots"></div>
+      </section>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

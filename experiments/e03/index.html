@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E3 - TV render benchmark</title>
+<link rel="stylesheet" href="../shared/probe.css">
+<link rel="stylesheet" href="./bench.css">
+</head>
+<body>
+<main>
+<h1>E3 - TV render benchmark</h1>
+<p class="lead">Measures how fast this browser renders the planned TV workloads with raw WebGL2: 1k, 5k and 10k instanced quads, a 1,000,000-triangle static mesh, and a 2048&times;2048 texture atlas. Each scene runs at 1280&times;720 and 1920&times;1080, DPR 1.</p>
+
+<p><strong>Before running:</strong> keep this tab focused and fullscreen. One full run takes about 2 minutes: 2 s warm-up, 30 discarded frames, then 10 s of measurement per scene and resolution. Run it once with TV Game Mode on and once with it off, and record both results. Nothing is uploaded and nothing runs until you press Run.</p>
+
+<p><strong>Pass criterion:</strong> at least 30 fps at 720p with 1,000 instanced quads.</p>
+
+<button id="run" type="button">Run benchmark</button>
+<button id="stop" type="button" disabled>Stop</button>
+<button id="copy" type="button" disabled>Copy JSON</button>
+
+<p id="status" role="status" aria-live="polite">Not run.</p>
+<p id="gpu">WebGL2: not checked. Press Run to create the context.</p>
+
+<canvas id="canvas" width="1280" height="720" aria-label="E3 render benchmark canvas"></canvas>
+
+<table id="results"></table>
+
+<h2>Copyable JSON result</h2>
+<p>Paste this into <code>docs/RESULTS.md</code> (or hand it to the operator). It is generated locally; no network request is made.</p>
+<pre id="json">Not run.</pre>
+
+<p><a href="../">Back to experiments</a></p>
+</main>
+<script type="module" src="./bench.js"></script>
+</body>
+</html>

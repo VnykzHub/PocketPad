@@ -1,0 +1,46 @@
+{
+  "name": "stale-release",
+  "description": "A stale packet that releases a button must not clear a level set by a newer press, and a release carries no edge.",
+  "hostTickHz": 60,
+  "covers": ["FR-7.11"],
+  "packets": [
+    {
+      "atMs": 2,
+      "slot": 1,
+      "tick": 6000,
+      "buttons": 4,
+      "edges": 4,
+      "lx": 0,
+      "ly": 0,
+      "rx": 0,
+      "ry": 0,
+      "gx": 0,
+      "gy": 0,
+      "gz": 0,
+      "lt": 0,
+      "rt": 0,
+      "flags": 0
+    },
+    {
+      "atMs": 8,
+      "slot": 1,
+      "tick": 5990,
+      "buttons": 0,
+      "edges": 0,
+      "lx": 0,
+      "ly": 0,
+      "rx": 0,
+      "ry": 0,
+      "gx": 0,
+      "gy": 0,
+      "gz": 0,
+      "lt": 0,
+      "rt": 0,
+      "flags": 0
+    }
+  ],
+  "polls": [
+    { "hostTick": 1, "expect": { "buttons": 4, "edges": 4, "tick": 6000 } },
+    { "hostTick": 2, "expect": { "buttons": 4, "edges": 0, "tick": 6000 } }
+  ]
+}

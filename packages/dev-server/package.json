@@ -1,0 +1,26 @@
+{
+  "name": "@lanpad/dev-server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run --root ../.. --project packages/dev-server",
+    "typecheck": "tsc -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@lanpad/broker": "*",
+    "@lanpad/protocol": "*",
+    "qrcode": "^1.5.4",
+    "sirv": "^3.0.2"
+  }
+}

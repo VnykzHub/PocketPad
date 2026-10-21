@@ -1,0 +1,47 @@
+.warning {
+  padding: 0.75rem 1rem;
+  border: 2px solid #b00020;
+  border-radius: 0.4rem;
+  background: #b0002011;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.controls label {
+  flex-basis: 100%;
+}
+
+.controls button {
+  margin-right: 0;
+}
+
+.previous {
+  min-height: 1.5rem;
+  font-weight: 600;
+}
+
+.texture-host {
+  margin: 0.5rem 0;
+}
+
+.texture-canvas {
+  width: 64px;
+  height: 64px;
+  border: 1px solid #8884;
+  image-rendering: pixelated;
+}
+
+#log {
+  max-height: 20rem;
+}
+
+#results td,
+#steps td {
+  font-variant-numeric: tabular-nums;
+}

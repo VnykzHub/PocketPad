@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E14 - mixed content and private-network reachability</title>
+<link rel="stylesheet" href="../shared/probe.css">
+<link rel="stylesheet" href="./e14.css">
+</head>
+<body>
+<main>
+<h1>E14 - Mixed content and private-network reachability</h1>
+
+<p>This probe checks the assumption behind the dev/production split: an HTTPS page must not be able to reach an <code>http://</code> or <code>ws://</code> service on the LAN. The expected result is that the first two attempts below are blocked and the <code>localhost</code> control is allowed, because loopback is treated as a trustworthy origin.</p>
+
+<p><strong>Nothing runs on page load.</strong> Each attempt starts only when you press its button. The page sends no application data, uploads nothing, sets no cookies and stores nothing; results stay on this page until you copy them. An attempt times out after 4 seconds.</p>
+
+<h2>1. Current page context</h2>
+<dl id="context-list" class="context">
+  <dt>Script required</dt>
+  <dd>The context panel is filled by the probe script. If this text remains, the script did not load.</dd>
+</dl>
+<p id="context-note" role="status" aria-live="polite">Checking the page origin...</p>
+
+<h2>2. What you need</h2>
+<ol>
+  <li>Start the dev server on the LAN from the repository root: <code>node packages/dev-server/dist/main.js</code>. The default port is 8080 and the terminal prints the LAN URL.</li>
+  <li>Start an HTTPS tunnel to that same port. This probe never installs or starts a tunnel; run one manually:
+    <pre><code>cloudflared tunnel --url http://localhost:8080
+# or
+ngrok http 8080</code></pre>
+  </li>
+  <li>Open this page through the tunnel: <code>https://&lt;tunnel-host&gt;/x/e14/</code>. The page must be loaded over HTTPS for the mixed-content result to mean anything.</li>
+  <li>Enter the dev server's LAN WebSocket URL, for example <code>ws://192.168.1.10:8080/ws</code>, and press one of the test buttons.</li>
+</ol>
+<p>If you have no tunnel, you can still use this page to validate the URL format, inspect the current page context, and run the <code>localhost</code> control from a browser on the dev-server machine.</p>
+
+<h2>3. Run an attempt</h2>
+<label for="ws-url">LAN WebSocket URL (ws:// only)</label>
+<input id="ws-url" class="ws-url" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ws://192.168.1.10:8080/ws">
+<p id="validation" role="status" aria-live="polite">Enter a ws:// URL.</p>
+
+<div class="button-row">
+  <button id="test-lan-ws" type="button">Test ws:// LAN WebSocket</button>
+  <button id="test-lan-fetch" type="button">Test http:// LAN /healthz</button>
+  <button id="test-localhost-ws" type="button">Test ws://localhost control</button>
+  <button id="copy" type="button" disabled>Copy JSON</button>
+</div>
+
+<p id="status" role="status" aria-live="polite">Not run.</p>
+
+<table id="results" aria-label="E14 attempt results">
+  <caption>Attempt results. A blocked row is a result, not a failure of the probe.</caption>
+</table>
+
+<h2>4. Result JSON</h2>
+<pre id="json">Not run.</pre>
+
+<h2>How to read the result</h2>
+<ul>
+  <li><strong>ws:// LAN WebSocket</strong> - expected to be blocked on an HTTPS page. A synchronous <code>SecurityError</code> from the constructor is Chromium's mixed-content rejection. Other browsers may fire an error event instead; the console holds the reason.</li>
+  <li><strong>http:// LAN /healthz</strong> - expected to be blocked as mixed content. The dev server's CSP also lists only <code>'self'</code> and <code>ws:</code> under <code>connect-src</code>, so this attempt can be blocked by CSP first; the page reports that separately when it sees a <code>securitypolicyviolation</code> event.</li>
+  <li><strong>ws:// localhost control</strong> - expected to connect when the dev server runs on the same machine as the browser and this page is open at an origin the server allows (the printed LAN URL or <code>http://localhost:8080</code>). The reliable control run is <code>http://localhost:8080/x/e14/</code> on the dev-server machine. Through the HTTPS tunnel the browser sends the tunnel origin, which the dev server rejects at the WebSocket upgrade (SR-11), so a close before open with code 1006 there is an origin check, not mixed content. The server also rejects <code>127.0.0.1</code> for the same reason. On a phone, <code>localhost</code> is the phone itself, so a failure here is not evidence about the LAN result.</li>
+  <li><strong>Elapsed time</strong> - measured with <code>performance.now()</code> around the attempt. A timeout is not proof of a block; an unreachable host also times out.</li>
+</ul>
+
+<p><a href="../">Back to the experiment index</a></p>
+</main>
+<script type="module" src="./boot.js"></script>
+</body>
+</html>

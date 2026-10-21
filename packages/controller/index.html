@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <title>lanpad controller</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <span id="connection" class="pill" data-state="disconnected" role="status" aria-live="polite">
+          Disconnected
+        </span>
+      </header>
+      <main class="shell">
+        <form id="join-form" class="panel" autocomplete="off" novalidate>
+          <h1>Join a room</h1>
+          <label for="code">Room code</label>
+          <input
+            id="code"
+            name="code"
+            class="code-input"
+            inputmode="text"
+            maxlength="4"
+            autocapitalize="characters"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="ABCD"
+          />
+          <label for="pin">PIN</label>
+          <input
+            id="pin"
+            name="pin"
+            class="pin-input"
+            type="text"
+            inputmode="numeric"
+            maxlength="4"
+            pattern="[0-9]{4}"
+            autocomplete="one-time-code"
+            placeholder="1234"
+          />
+          <p id="join-error" class="error" role="alert" hidden></p>
+          <button id="join-button" class="join-button" type="submit">Join</button>
+        </form>
+        <section id="controller" class="controller" hidden>
+          <p id="slot-label" class="slot-label">Player</p>
+          <button id="test-button" class="test-button" type="button" disabled>Test</button>
+        </section>
+      </main>
+      <div id="play-surface" class="play-surface" hidden></div>
+      <aside id="debug-overlay" class="debug-overlay" aria-hidden="true" hidden>
+        <dl>
+          <div><dt>RTT</dt><dd id="debug-rtt">—</dd></div>
+          <div><dt>Packets/s</dt><dd id="debug-pps">0</dd></div>
+          <div><dt>Last send</dt><dd id="debug-age">—</dd></div>
+          <div><dt>Script</dt><dd id="debug-script">0.00 ms</dd></div>
+          <div><dt>Layout</dt><dd id="debug-layout">none</dd></div>
+        </dl>
+      </aside>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

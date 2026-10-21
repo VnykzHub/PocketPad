@@ -1,0 +1,68 @@
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0 auto;
+  max-width: 64rem;
+  padding: 1.5rem;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+
+h1,
+h2 {
+  line-height: 1.2;
+}
+
+table {
+  width: 100%;
+  margin: 1rem 0;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #8884;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #8881;
+}
+
+.status-pass {
+  color: #0a7a2f;
+  font-weight: 600;
+}
+
+.status-fail {
+  color: #b00020;
+  font-weight: 600;
+}
+
+pre {
+  padding: 1rem;
+  overflow: auto;
+  background: #8881;
+  border-radius: 0.4rem;
+}
+
+button {
+  margin-right: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+}
+
+.description {
+  margin: 0.15rem 0 0.6rem;
+}
+
+.copy-buffer {
+  position: fixed;
+  top: 0;
+  left: -9999px;
+  opacity: 0;
+}

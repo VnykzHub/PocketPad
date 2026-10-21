@@ -1,0 +1,29 @@
+/* E3 benchmark page additions on top of ../shared/probe.css. */
+
+.lead {
+  max-width: 60rem;
+}
+
+canvas#canvas {
+  display: block;
+  width: 100%;
+  max-width: 60rem;
+  height: auto;
+  margin: 1rem 0;
+  background: #0a0d14;
+  border: 1px solid #8884;
+}
+
+#gpu {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95rem;
+}
+
+#results td:nth-child(n + 3) {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+#status[role="status"] {
+  font-weight: 600;
+}
