@@ -45,7 +45,10 @@ afterEach(async () => {
   }
 });
 
-async function startHarness(overrides: Partial<WsServerConfig> = {}): Promise<Harness> {
+async function startHarness(
+  overrides: Partial<WsServerConfig> = {},
+  deps: { statsIntervalMs?: number } = {},
+): Promise<Harness> {
   const { logger, calls } = createTestLogger();
   const registry = new RoomRegistry({
     now: () => Date.now(),
@@ -69,7 +72,12 @@ async function startHarness(overrides: Partial<WsServerConfig> = {}): Promise<Ha
     maxBufferedBytes: 262_144,
     ...overrides,
   };
-  const wss = attachWebSocketServer(server, { registry, config, logger });
+  const wss = attachWebSocketServer(server, {
+    registry,
+    config,
+    logger,
+    ...(deps.statsIntervalMs === undefined ? {} : { statsIntervalMs: deps.statsIntervalMs }),
+  });
   const harness: Harness = {
     registry,
     server,
@@ -205,6 +213,52 @@ function nextClose(client: Client, timeoutMs = 3000): Promise<{ code: number; re
       clearTimeout(timer);
       resolve({ code, reason: reason.toString() });
     });
+  });
+}
+
+/** Collects every JSON frame a client receives; assertions poll the array. */
+function collectJson(client: Client): JsonControlMessage[] {
+  const messages: JsonControlMessage[] = [];
+  client.on("message", (data: unknown, isBinary: boolean) => {
+    if (!isBinary) {
+      messages.push(parseJsonMessage((data as Buffer).toString()));
+    }
+  });
+  return messages;
+}
+
+/** Collects every binary frame a client receives (InputFwd/Pong). */
+function collectBinary(client: Client): Uint8Array[] {
+  const frames: Uint8Array[] = [];
+  client.on("message", (data: unknown, isBinary: boolean) => {
+    if (isBinary) {
+      const buffer = data as Buffer;
+      frames.push(new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength));
+    }
+  });
+  return frames;
+}
+
+/**
+ * Polls `predicate` until it is true. The harness uses real timers, so this is
+ * the only way to observe frames produced by server-side intervals.
+ */
+async function waitFor(predicate: () => boolean, timeoutMs = 2000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (!predicate()) {
+    if (Date.now() >= deadline) {
+      throw new Error("timed out waiting for the expected condition");
+    }
+    await new Promise<void>((resolve) => setTimeout(resolve, 5));
+  }
+}
+
+function hostJoinMessage(room: { code: string; hostToken: string }, version = 1) {
+  return JSON.stringify({
+    t: "hostJoin",
+    v: version,
+    code: room.code,
+    hostToken: room.hostToken,
   });
 }
 
@@ -419,5 +473,283 @@ describe("WebSocket message flow", () => {
     await new Promise<void>((resolve) => setTimeout(() => resolve(), 50));
 
     assertNoSecretsLogged(harness.calls, [room.pin, room.roomToken, room.hostToken, session]);
+  });
+
+  test("[SR-9] pause, resume and host recovery never log credentials", async () => {
+    const harness = await startHarness();
+    const room = harness.registry.createRoom();
+
+    const host = await openClient(harness.url);
+    const hostJoined = nextJson(host, "hostJoined");
+    host.send(hostJoinMessage(room));
+    await hostJoined;
+
+    const controller = await openClient(harness.url);
+    const joined = nextJson(controller, "joined");
+    controller.send(JSON.stringify({ t: "join", v: 1, code: room.code, pin: room.pin }));
+    const joinedMessage = await joined;
+    const session = joinedMessage.t === "joined" ? joinedMessage.session : "";
+
+    const controllerMessages = collectJson(controller);
+    host.send(JSON.stringify({ t: "hostPause" }));
+    await waitFor(() =>
+      controllerMessages.some((message) => message.t === "hostStatus" && message.state === "paused"),
+    );
+    host.send(JSON.stringify({ t: "hostResume" }));
+    await waitFor(() =>
+      controllerMessages.some((message) => message.t === "hostStatus" && message.state === "active"),
+    );
+
+    // Drop the host, then recover it with the host token on a new socket.
+    host.close();
+    await waitFor(() =>
+      controllerMessages.some((message) => message.t === "hostStatus" && message.state === "lost"),
+    );
+    const resumedHost = await openClient(harness.url);
+    const resumedMessages = collectJson(resumedHost);
+    resumedHost.send(hostJoinMessage(room));
+    await waitFor(() => resumedMessages.some((message) => message.t === "hostJoined"));
+
+    controller.close();
+    resumedHost.close();
+    await new Promise<void>((resolve) => setTimeout(resolve, 50));
+
+    assertNoSecretsLogged(harness.calls, [room.pin, room.roomToken, room.hostToken, session]);
+  });
+});
+
+describe("WebSocket D4 session wiring", () => {
+  test("[A10][FR-5.6] a protocol version mismatch returns badVersion and keeps the socket usable", async () => {
+    const harness = await startHarness();
+    const room = harness.registry.createRoom();
+
+    const controller = await openClient(harness.url);
+    const refusedJoin = nextJson(controller, "joinError");
+    controller.send(
+      JSON.stringify({ t: "join", v: 2, code: room.code, pin: room.pin }),
+    );
+    expect(await refusedJoin).toEqual({ t: "joinError", reason: "badVersion" });
+    expect(controller.readyState).toBe(WebSocket.OPEN);
+
+    // The same socket can retry with the supported version.
+    const joined = nextJson(controller, "joined");
+    controller.send(JSON.stringify({ t: "join", v: 1, code: room.code, pin: room.pin }));
+    expect((await joined).t).toBe("joined");
+
+    const host = await openClient(harness.url);
+    const refusedHost = nextJson(host, "joinError");
+    host.send(hostJoinMessage(room, 2));
+    expect(await refusedHost).toEqual({ t: "joinError", reason: "badVersion" });
+    expect(host.readyState).toBe(WebSocket.OPEN);
+
+    const hostJoined = nextJson(host, "hostJoined");
+    host.send(hostJoinMessage(room));
+    expect((await hostJoined).t).toBe("hostJoined");
+  });
+
+  test("[FR-7.16][A9][G4] a host reload inside 30 s resumes the room and replays each slot once", async () => {
+    const harness = await startHarness();
+    const room = harness.registry.createRoom();
+
+    const host = await openClient(harness.url);
+    const hostJoined = nextJson(host, "hostJoined");
+    host.send(hostJoinMessage(room));
+    await hostJoined;
+
+    const controller = await openClient(harness.url);
+    const joined = nextJson(controller, "joined");
+    controller.send(JSON.stringify({ t: "join", v: 1, code: room.code, pin: room.pin }));
+    expect(await joined).toMatchObject({ t: "joined", slot: 1 });
+    const controllerMessages = collectJson(controller);
+
+    host.close();
+    await waitFor(() =>
+      controllerMessages.some((message) => message.t === "hostStatus" && message.state === "lost"),
+    );
+    expect(harness.registry.getRoom(room.code)?.state).toBe("hostLost");
+    expect(harness.registry.roomCount()).toBe(1);
+
+    // A reload inside the 30 s window activates the room again.
+    const resumedHost = await openClient(harness.url);
+    const resumedMessages = collectJson(resumedHost);
+    resumedHost.send(hostJoinMessage(room));
+    await waitFor(() => resumedMessages.some((message) => message.t === "hostJoined"));
+
+    expect(harness.registry.getRoom(room.code)?.state).toBe("active");
+    expect(resumedMessages.filter((message) => message.t === "playerJoined")).toEqual([
+      { t: "playerJoined", slot: 1 },
+    ]);
+    expect(
+      controllerMessages.filter((message) => message.t === "hostStatus").map((message) =>
+        message.t === "hostStatus" ? message.state : "",
+      ),
+    ).toEqual(["lost", "active"]);
+  });
+
+  test("[FR-7.16][A9] a host that never returns is kicked with hostLost after 30 s", async () => {
+    const harness = await startHarness();
+    const room = harness.registry.createRoom();
+
+    const host = await openClient(harness.url);
+    const hostJoined = nextJson(host, "hostJoined");
+    host.send(hostJoinMessage(room));
+    await hostJoined;
+
+    const controller = await openClient(harness.url);
+    const joined = nextJson(controller, "joined");
+    controller.send(JSON.stringify({ t: "join", v: 1, code: room.code, pin: room.pin }));
+    await joined;
+
+    const controllerMessages = collectJson(controller);
+    const closed = nextClose(controller, 5000);
+    host.close();
+    await waitFor(() =>
+      controllerMessages.some((message) => message.t === "hostStatus" && message.state === "lost"),
+    );
+
+    // Drive the sweeper past the 30 s reservation; the adapter's real clock is
+    // not advanced, but `sweep` accepts the authoritative time explicitly.
+    harness.registry.sweep(Date.now() + 30_001);
+
+    expect(harness.registry.getRoom(room.code)).toBeUndefined();
+    expect(harness.registry.roomCount()).toBe(0);
+    // The kick is sent before the close; wait for the frame to reach the client.
+    await waitFor(() => controllerMessages.some((message) => message.t === "kick"));
+    expect(controllerMessages).toContainEqual({ t: "kick", reason: "hostLost" });
+    expect(await closed).toEqual({ code: 1000, reason: "host lost" });
+  });
+
+  test("[A9][FR-9.2] hostPause drops input and hostResume restores forwarding", async () => {
+    const harness = await startHarness();
+    const room = harness.registry.createRoom();
+
+    const host = await openClient(harness.url);
+    const hostJoined = nextJson(host, "hostJoined");
+    host.send(hostJoinMessage(room));
+    await hostJoined;
+    const hostBinary = collectBinary(host);
+
+    const controller = await openClient(harness.url);
+    const joined = nextJson(controller, "joined");
+    controller.send(JSON.stringify({ t: "join", v: 1, code: room.code, pin: room.pin }));
+    await joined;
+    const controllerMessages = collectJson(controller);
+
+    host.send(JSON.stringify({ t: "hostPause" }));
+    await waitFor(() =>
+      controllerMessages.some((message) => message.t === "hostStatus" && message.state === "paused"),
+    );
+
+    controller.send(encodeInput(input({ tick: 1, edges: 0b1 })));
+    await new Promise<void>((resolve) => setTimeout(resolve, 100));
+    expect(hostBinary).toHaveLength(0);
+    expect(harness.registry.getRoom(room.code)?.controllers.get(1)?.drops).toBe(1);
+
+    host.send(JSON.stringify({ t: "hostResume" }));
+    await waitFor(() =>
+      controllerMessages.some((message) => message.t === "hostStatus" && message.state === "active"),
+    );
+    controller.send(encodeInput(input({ tick: 2, edges: 0b1 })));
+    await waitFor(() => hostBinary.length > 0);
+    const forwarded = hostBinary[0];
+    if (forwarded === undefined) {
+      throw new Error("the resumed input was not forwarded");
+    }
+    expect(decodeInputFwd(forwarded)).toMatchObject({ slot: 1, state: { tick: 2 } });
+  });
+
+  test("[FR-5.5] a dropped socket reserves its slot and an explicit leave frees it", async () => {
+    const harness = await startHarness();
+    const room = harness.registry.createRoom();
+
+    const host = await openClient(harness.url);
+    const hostJoined = nextJson(host, "hostJoined");
+    host.send(hostJoinMessage(room));
+    await hostJoined;
+    const hostMessages = collectJson(host);
+
+    const controller = await openClient(harness.url);
+    const joined = nextJson(controller, "joined");
+    controller.send(JSON.stringify({ t: "join", v: 1, code: room.code, pin: room.pin }));
+    const joinedMessage = await joined;
+    if (joinedMessage.t !== "joined") {
+      throw new Error("controller did not join");
+    }
+
+    // FR-5.5/FR-7.14: a transport drop reserves, it does not free.
+    controller.close();
+    await waitFor(() =>
+      hostMessages.some(
+        (message) => message.t === "playerSuspended" && message.slot === joinedMessage.slot,
+      ),
+    );
+    expect(harness.registry.getRoom(room.code)?.controllers.get(joinedMessage.slot)?.peer).toBeNull();
+
+    const reconnected = await openClient(harness.url);
+    const rejoined = nextJson(reconnected, "joined");
+    reconnected.send(
+      JSON.stringify({ t: "join", v: 1, code: room.code, session: joinedMessage.session }),
+    );
+    expect(await rejoined).toMatchObject({
+      t: "joined",
+      slot: joinedMessage.slot,
+      session: joinedMessage.session,
+    });
+    await waitFor(() =>
+      hostMessages.some(
+        (message) => message.t === "playerResumed" && message.slot === joinedMessage.slot,
+      ),
+    );
+
+    // An explicit leave frees the slot immediately; the next join reuses it.
+    reconnected.send(JSON.stringify({ t: "leave" }));
+    await waitFor(() =>
+      hostMessages.some(
+        (message) => message.t === "playerLeft" && message.slot === joinedMessage.slot,
+      ),
+    );
+    const replacement = await openClient(harness.url);
+    const replacementJoined = nextJson(replacement, "joined");
+    replacement.send(JSON.stringify({ t: "join", v: 1, code: room.code, pin: room.pin }));
+    expect(await replacementJoined).toMatchObject({ t: "joined", slot: joinedMessage.slot });
+  });
+
+  test("[FR-7.14] the host receives stats for active slots while attached", async () => {
+    const harness = await startHarness(
+      { heartbeatMs: 25, deadAfterMs: 5000 },
+      { statsIntervalMs: 25 },
+    );
+    const room = harness.registry.createRoom();
+
+    const host = await openClient(harness.url);
+    const hostJoined = nextJson(host, "hostJoined");
+    host.send(hostJoinMessage(room));
+    await hostJoined;
+    const hostMessages = collectJson(host);
+
+    const controller = await openClient(harness.url);
+    const joined = nextJson(controller, "joined");
+    controller.send(JSON.stringify({ t: "join", v: 1, code: room.code, pin: room.pin }));
+    await joined;
+
+    controller.send(encodeInput(input({ tick: 10 })));
+    controller.send(encodeInput(input({ tick: 11 })));
+    await waitFor(() =>
+      hostMessages.some(
+        (message) =>
+          message.t === "stats" &&
+          message.slots.some((slot) => slot.slot === 1 && slot.packetsPerSecond >= 1),
+      ),
+    );
+
+    const statsMessages = hostMessages.filter(
+      (message): message is Extract<JsonControlMessage, { t: "stats" }> => message.t === "stats",
+    );
+    const latest = statsMessages.at(-1);
+    expect(latest?.slots).toHaveLength(1);
+    expect(latest?.slots[0]).toMatchObject({ slot: 1, drops: 0 });
+    expect(latest?.slots[0]?.rttMs).toBeGreaterThanOrEqual(0);
+    expect(latest?.slots[0]?.jitterMs).toBeGreaterThanOrEqual(0);
+    expect(latest?.slots[0]?.lastInputAgeMs).toBeGreaterThanOrEqual(0);
   });
 });

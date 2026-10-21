@@ -1,11 +1,20 @@
 /**
- * Controller network client and layout mount (D0-CTRL-01, D2-CTRL-04).
+ * Controller network client and layout mount (D0-CTRL-01, D2-CTRL-04,
+ * D4-CTRL-01/02 integration).
  *
- * Owns the only socket in the controller. It joins with `v/code/pin`, drives
- * `InputStore` → `SendLoop` → `sendInput` (FR-7.1, FR-7.3), answers Pongs into
- * `ClockSync` (FR-7.10) and receives the layout that D2 renders.
+ * Owns the only socket in the controller. Every join request is produced by
+ * `JoinFlow`: session first, then the QR room token, then the manual code+PIN
+ * form (FR-5.4–5.6). The flow also clears the URL fragment before the first
+ * network call (FR-5.1). The client only transports the messages it is handed.
  *
- * Layout handling in D2:
+ * D4 adds:
+ * - `ReconnectController` for a dropped socket (250 ms → 4 s backoff, session
+ *   rejoin, 7 s silence watchdog; FR-5.4, FR-7.14, FR-7.15);
+ * - `SuspendController` + Wake Lock for hidden/visible transitions (FR-8.8);
+ * - `hostStatus` handling so the pill can show "Waiting for TV" / "TV paused"
+ *   (A9, FR-7.16).
+ *
+ * Layout handling is unchanged from D2:
  * - A layout arrives in `joined.layout`, or in the first `setLayout` addressed
  *   to this slot (or `all`). It is validated on the controller with the same
  *   `validateLayout` the host uses (FR-8.4).
@@ -14,13 +23,8 @@
  * - There is no layout hot-swap in D2 (FR-8.2 is D5-CTRL-02): once a layout is
  *   mounted, later `setLayout` messages are ignored until the socket closes.
  *
- * Connection handling in D2 has no reconnect loop (D4-CTRL-02); it only
- * preserves the D0 behavior: code+PIN join, the Connecting / Connected (Pn) /
- * Disconnected pill, immediate press/release, and the 10 Hz idle keepalive.
- * Closing the socket stops the send loop, the Ping cadence and the touch
- * engine, so no timers or listeners leak between connections.
- *
- * The socket remains the only network owner; controls never send.
+ * The socket remains the only network owner; controls never send. Tokens and
+ * PINs are never placed in state that the page, logs or the DOM can read.
  */
 import {
   BUTTON_BITS,
@@ -34,6 +38,7 @@ import {
 } from "@lanpad/protocol";
 import type {
   ClientToServerMessage,
+  HostStatusState,
   InputState,
   JoinErrorReason,
   JsonControlMessage,
@@ -56,6 +61,32 @@ import { createControl } from "../controls/registry.js";
 import { InputStore } from "../input/InputStore.js";
 import { SendLoop } from "../input/sendLoop.js";
 import { CLOCK_PING_INTERVAL_MS, ClockSync } from "./clockSync.js";
+import {
+  JOIN_FLOW_MESSAGES,
+  createJoinFlow,
+  type JoinFlow,
+  type JoinFlowState,
+  type JoinLocation,
+  type JoinRequest,
+  type JoinTransport,
+} from "../join/joinFlow.js";
+import { createSessionStore, type SessionStore } from "../join/sessionStore.js";
+import type { ReplaceStateHistory } from "../route.js";
+import {
+  createReconnectController,
+  type ReconnectController,
+  type ReconnectState,
+  type ReconnectStopReason,
+  type ReconnectTimers,
+} from "./reconnect.js";
+import {
+  createSuspendController,
+  type SessionLostReason,
+  type SuspendController,
+  type SuspendWakeLock,
+  type VisibilitySource,
+} from "../lifecycle/suspend.js";
+import { WakeLockManager } from "../lifecycle/wakeLock.js";
 import { TouchEngine } from "../touch/touchEngine.js";
 import type { TouchEngineEvent } from "../touch/touchEngine.js";
 
@@ -65,7 +96,7 @@ const A_BUTTON_MASK = 1 << BUTTON_BITS.A;
 const BUTTON_MASK = 0xffff;
 
 /** Connection pill states. The pill never shows a token or PIN. */
-export type ControllerStatus = "connecting" | "connected" | "disconnected";
+export type ControllerStatus = "connecting" | "connected" | "reconnecting" | "disconnected";
 
 export interface ControllerState {
   status: ControllerStatus;
@@ -73,6 +104,8 @@ export interface ControllerState {
   slot: number | null;
   /** Readable join/connection error for the form; null when there is none. */
   error: string | null;
+  /** Last `hostStatus` seen while connected (A9); null when unknown. */
+  host: HostStatusState | null;
 }
 
 /** Human-readable text for every join refusal (FR-5.6 retry path). */
@@ -87,17 +120,58 @@ export const JOIN_ERROR_TEXT: Readonly<Record<JoinErrorReason, string>> = {
   badVersion: "This controller is out of date. Reload the page.",
 };
 
-/** Pill label used by the page shell. */
+/** Pill label used by the page shell (the D4 pill is in `ui/ConnectionPill`). */
 export function connectionPillLabel(state: ControllerState): string {
   switch (state.status) {
     case "connecting":
       return "Connecting";
+    case "reconnecting":
+      return "Reconnecting";
     case "connected":
+      if (state.host === "lost") {
+        return "Waiting for TV";
+      }
+      if (state.host === "paused") {
+        return "TV paused";
+      }
       return state.slot === null ? "Connected" : `Connected (P${state.slot})`;
     case "disconnected":
       return "Disconnected";
   }
 }
+
+/** Reads the room code back out of a join-flow state, without any secret. */
+export function joinStateCode(state: JoinFlowState): string | null {
+  switch (state.status) {
+    case "idle":
+      return null;
+    case "manual":
+    case "joining":
+    case "joined":
+    case "error":
+      return state.code;
+  }
+}
+
+/** The user-facing flow message, if any; never contains a token or PIN. */
+function joinStateNotice(state: JoinFlowState): string | null {
+  if (state.status === "manual") {
+    return state.notice;
+  }
+  if (state.status === "error") {
+    return state.message;
+  }
+  return null;
+}
+
+const noopHistory: ReplaceStateHistory = {
+  replaceState: () => {},
+};
+
+const defaultReconnectTimers: ReconnectTimers = {
+  setTimeout: (handler, timeoutMs) => globalThis.setTimeout(handler, timeoutMs),
+  clearTimeout: (handle) => globalThis.clearTimeout(handle),
+};
 
 /**
  * The socket surface the client needs. Tests provide a fake; the browser uses
@@ -147,6 +221,22 @@ export interface ControllerClientOptions {
   surfaceSize?: SurfaceSize | (() => SurfaceSize);
   /** Draw a dashed outline around each control (`?layout=debug`, FR-8.4). */
   debugOutline?: boolean;
+  /**
+   * Per-room session storage (FR-5.4). Defaults to a memory-less store, which
+   * makes every rejoin fall back to the manual form; the browser entry passes
+   * the real `sessionStorage`/`localStorage` pair.
+   */
+  sessionStore?: SessionStore;
+  /** History used to strip the URL fragment before the first join (FR-5.1). */
+  history?: ReplaceStateHistory;
+  /** Page visibility source for suspend/resume (FR-8.8); null disables it. */
+  visibility?: VisibilitySource | null;
+  /** Screen Wake Lock surface; defaults to a feature-detected manager. */
+  wakeLock?: SuspendWakeLock;
+  /** Backoff timers for `ReconnectController` (injected in tests). */
+  reconnectTimers?: ReconnectTimers;
+  /** Jitter source for reconnect backoff in [0, 1); injected in tests. */
+  random?: () => number;
 }
 
 /** Debug counters exposed to the page overlay (D2-CTRL-04 step 6). */
@@ -447,17 +537,40 @@ export class ControllerClient {
   private readonly now: () => number;
   private readonly timers: ControllerTimers;
   private readonly sendTimers: ControllerSendTimers;
+  private readonly reconnectTimers: ReconnectTimers;
+  private readonly random: () => number;
+  private readonly store: SessionStore;
+  private readonly history: ReplaceStateHistory;
+  private readonly visibility: VisibilitySource | null | undefined;
+  private readonly wakeLock: SuspendWakeLock;
   private readonly sendLoop: SendLoop;
   private readonly layoutView: ControllerLayoutView | null;
+  private readonly joinFlow: JoinFlow;
 
   private readonly listeners = new Set<(state: ControllerState) => void>();
   private readonly layoutListeners = new Set<(layout: LayoutDocument | null) => void>();
-  private state: ControllerState = { status: "disconnected", slot: null, error: null };
+  private readonly joinListeners = new Set<(state: JoinFlowState) => void>();
+  private state: ControllerState = {
+    status: "disconnected",
+    slot: null,
+    error: null,
+    host: null,
+  };
 
   private socket: ControllerSocket | null = null;
+  private socketOpen = false;
   private socketGeneration = 0;
   private joined = false;
+  private suspended = false;
   private pressMask = 0;
+
+  /** Join message produced by the flow, sent as soon as the socket opens. */
+  private pendingJoin: JoinRequest | null = null;
+  private roomCode: string | null = null;
+  private reconnect: ReconnectController | null = null;
+  private suspend: SuspendController | null = null;
+  /** Last `joinError` reason, used to word the terminal reconnect message. */
+  private lastJoinErrorReason: JoinErrorReason | null = null;
 
   private pingHandle: number | null = null;
   private pingsSentCount = 0;
@@ -475,6 +588,12 @@ export class ControllerClient {
     this.now = options.now ?? (() => Date.now());
     this.timers = options.timers ?? defaultTimers;
     this.sendTimers = options.sendTimers ?? defaultSendTimers;
+    this.reconnectTimers = options.reconnectTimers ?? defaultReconnectTimers;
+    this.random = options.random ?? Math.random;
+    this.store = options.sessionStore ?? createSessionStore();
+    this.history = options.history ?? noopHistory;
+    this.visibility = options.visibility;
+    this.wakeLock = options.wakeLock ?? new WakeLockManager();
     this.input = new InputStore();
     this.clock = new ClockSync();
 
@@ -491,6 +610,18 @@ export class ControllerClient {
     this.input.onChange = () => {
       this.sendLoop.notifyChange();
     };
+
+    const transport: JoinTransport = {
+      send: (message) => {
+        this.sendJoinMessage(message);
+      },
+    };
+    this.joinFlow = createJoinFlow({
+      store: this.store,
+      transport,
+      history: this.history,
+      now: this.now,
+    });
 
     if (options.surface !== undefined) {
       const viewOptions: ControllerLayoutViewOptions = {
@@ -516,6 +647,16 @@ export class ControllerClient {
 
   get currentState(): ControllerState {
     return this.state;
+  }
+
+  /** Current join-flow state (manual form errors, lockout, via…). */
+  get joinState(): JoinFlowState {
+    return this.joinFlow.state;
+  }
+
+  /** Remaining rate-limit lockout in ms; 0 when submit is allowed. */
+  get retryAfterMs(): number {
+    return this.joinFlow.retryAfterMs;
   }
 
   /** The mounted layout, or null while none has arrived. */
@@ -568,83 +709,99 @@ export class ControllerClient {
     };
   }
 
-  /**
-   * Opens the same-origin WebSocket and sends `join {v, code, pin}` on open.
-   * Replaces any previous connection and clears the mounted layout.
-   */
-  connect(code: string, pin: string): void {
-    this.teardown();
-    this.connectStartedAtMs = this.now();
-    this.joinToFirstInputMs = null;
-    this.setState({ status: "connecting", slot: null, error: null });
-
-    let socket: ControllerSocket;
-    try {
-      socket = this.createSocket(toWebSocketUrl(resolveServerOrigin(this.explicitOrigin)));
-    } catch {
-      this.setState({
-        status: "disconnected",
-        slot: null,
-        error: "Cannot reach the game server.",
-      });
-      return;
-    }
-
-    this.socket = socket;
-    const generation = ++this.socketGeneration;
-
-    socket.onopen = () => {
-      if (generation !== this.socketGeneration) {
-        return;
-      }
-      const join: ClientToServerMessage = { t: "join", v: PROTOCOL_VERSION, code, pin };
-      try {
-        socket.send(stringifyJsonMessage(join));
-      } catch {
-        this.fail("Could not send the join request.");
-      }
+  /** Subscribes to join-flow changes; the listener runs immediately. */
+  onJoinState(listener: (state: JoinFlowState) => void): () => void {
+    this.joinListeners.add(listener);
+    listener(this.joinFlow.state);
+    return () => {
+      this.joinListeners.delete(listener);
     };
-
-    socket.onmessage = (event) => {
-      if (generation !== this.socketGeneration) {
-        return;
-      }
-      this.handleMessage(event.data);
-    };
-
-    socket.onclose = () => {
-      if (generation !== this.socketGeneration) {
-        return;
-      }
-      const wasConnected = this.state.status === "connected";
-      const previousError = this.state.error;
-      this.teardown();
-      this.setState({
-        status: "disconnected",
-        slot: null,
-        error:
-          previousError ?? (wasConnected ? "Connection lost." : "Could not connect to the room."),
-      });
-    };
-
-    // A browser `error` is always followed by `close`; let that path report it.
-    socket.onerror = () => {};
   }
 
-  /** Closes the socket, stops every timer and clears the input state. */
+  /**
+   * D4 bootstrap (FR-5.1, FR-5.4): parse `/c/<code>` and the fragment, clear
+   * the fragment before any network call, then try a stored session, the room
+   * token and finally the manual form, in that order.
+   */
+  start(location: JoinLocation): JoinFlowState {
+    if (this.connectStartedAtMs === null) {
+      this.connectStartedAtMs = this.now();
+    }
+    this.reconnect?.stop("left");
+    this.reconnect = null;
+    this.teardownConnection();
+    this.destroySuspend();
+    this.releaseWakeLock();
+    const state = this.joinFlow.start(location);
+    this.afterFlowChange(state);
+    return state;
+  }
+
+  /** Sends a manual code + PIN join through the flow (FR-5.6). */
+  submitManual(code: string, pin: string): JoinFlowState {
+    if (this.connectStartedAtMs === null) {
+      this.connectStartedAtMs = this.now();
+    }
+    const state = this.joinFlow.submitManual({ code, pin });
+    this.afterFlowChange(state);
+    return state;
+  }
+
+  /** Retries after `roomFull` or a finished rate-limit lockout (FR-5.3). */
+  retryJoin(): JoinFlowState {
+    const state = this.joinFlow.retry();
+    this.afterFlowChange(state);
+    return state;
+  }
+
+  /**
+   * D0-compatible manual join. The request still goes through `JoinFlow`, so
+   * validation, storage and the rate-limit lockout behave identically to the
+   * D4 form. Replaces any previous connection and clears the mounted layout.
+   */
+  connect(code: string, pin: string): void {
+    this.connectStartedAtMs = this.now();
+    this.joinToFirstInputMs = null;
+    this.reconnect?.stop("left");
+    this.reconnect = null;
+    this.teardownConnection();
+    this.destroySuspend();
+    this.releaseWakeLock();
+    const state = this.joinFlow.submitManual({ code, pin });
+    this.afterFlowChange(state);
+    if (state.status !== "joining") {
+      this.setState({ status: "disconnected", slot: null, error: null, host: null });
+    }
+  }
+
+  /**
+   * Explicit leave: sends `leave` when possible, frees the slot immediately,
+   * drops the stored session and never reconnects (FR-5.4).
+   */
   disconnect(): void {
-    this.teardown();
-    this.setState({ status: "disconnected", slot: null, error: null });
+    if (this.joined && this.socket !== null && this.socketOpen) {
+      try {
+        this.socket.send(stringifyJsonMessage({ t: "leave" }));
+      } catch {
+        // The socket may already be gone; leaving is still the intent.
+      }
+    }
+    this.joinFlow.leave();
+    this.notifyJoinState();
+    this.reconnect?.stop("left");
+    this.teardownConnection();
+    this.destroySuspend();
+    this.releaseWakeLock();
+    this.roomCode = null;
+    this.setState({ status: "disconnected", slot: null, error: null, host: null });
   }
 
   /**
    * D0 Test-button press. Maps the mask onto `InputStore` bits; the send policy
-   * decides the packet timing (FR-7.1). Ignored before `joined`.
+   * decides the packet timing (FR-7.1). Presses made while the socket is down
+   * stay latched so a short reconnect can still deliver them (FR-5.4).
    */
   press(buttonMask: number = A_BUTTON_MASK): void {
-    if (!this.joined) {
-      return;
-    }
     const mask = buttonMask & BUTTON_MASK;
     if (mask === 0 || this.pressMask !== 0) {
       return;
@@ -659,7 +816,7 @@ export class ControllerClient {
 
   /** D0 Test-button release: clears the level; releases never latch edges. */
   release(): void {
-    if (!this.joined || this.pressMask === 0) {
+    if (this.pressMask === 0) {
       return;
     }
     const mask = this.pressMask;
@@ -714,6 +871,8 @@ export class ControllerClient {
     if (typeof data !== "string") {
       const bytes = toBytes(data);
       if (bytes !== null) {
+        // Any server frame proves the socket is alive (FR-7.14).
+        this.reconnect?.onServerActivity();
         this.handleBinary(bytes);
       }
       return;
@@ -724,15 +883,19 @@ export class ControllerClient {
     } catch {
       return;
     }
+    this.reconnect?.onServerActivity();
     switch (message.t) {
       case "joined":
         this.handleJoined(message);
         return;
       case "joinError":
-        this.fail(JOIN_ERROR_TEXT[message.reason]);
+        this.handleJoinError(message.reason);
         return;
       case "kick":
-        this.fail("The host removed this controller.");
+        this.handleKick(message.reason);
+        return;
+      case "hostStatus":
+        this.handleHostStatus(message.state);
         return;
       case "setLayout":
         this.handleSetLayout(message.slot, message.layout);
@@ -755,20 +918,43 @@ export class ControllerClient {
     }
   }
 
+  /**
+   * Handles both the first join and a session rejoin after a drop or suspend.
+   * Input levels and edges are deliberately kept across a reconnect, so a held
+   * button survives the gap and the stale state is corrected by the snapshot
+   * sent through the policy (FR-5.4, FR-7.3). An explicit leave or kick clears
+   * the input instead.
+   */
   private handleJoined(message: Extract<JsonControlMessage, { t: "joined" }>): void {
     this.joined = true;
-    this.pressMask = 0;
-    if (message.layout !== undefined) {
+    this.suspended = false;
+    this.socketOpen = true;
+    this.pendingJoin = null;
+
+    // The flow persists the session and moves to `joined`; it is also what
+    // makes the next bootstrap try the session before the room token.
+    const flowState = this.joinFlow.handleMessage(message);
+    this.notifyJoinState();
+    if (flowState.status === "joined") {
+      this.roomCode = flowState.code;
+    }
+
+    // Keep a mounted layout across a rejoin; D2 has no hot-swap (FR-8.2).
+    if (message.layout !== undefined && this.currentLayout === null) {
       this.applyLayout(message.layout);
     }
 
-    // Start the policy and emit the initial empty packet through it, so the
-    // host sees the slot alive and the packet obeys the same 4 ms spacing rule
-    // as every later send (D2-CTRL-04).
+    this.ensureReconnectController()?.onConnected(message.slot);
+    this.ensureSuspendController();
+    this.requestWakeLock();
+
+    // Start the policy and emit the current snapshot through it, so the host
+    // sees the slot alive and the packet obeys the same 4 ms spacing rule as
+    // every later send (D2-CTRL-04).
     this.sendLoop.start();
     this.sendInitialInput();
     this.startPing();
-    this.setState({ status: "connected", slot: message.slot, error: null });
+    this.setState({ status: "connected", slot: message.slot, error: null, host: this.state.host });
   }
 
   /**
@@ -851,42 +1037,526 @@ export class ControllerClient {
     }
   }
 
-  private fail(message: string): void {
-    this.teardown();
-    this.setState({ status: "disconnected", slot: null, error: message });
+  /** Pushes a flow transition into the visible connection state. */
+  private afterFlowChange(state: JoinFlowState): void {
+    const code = joinStateCode(state);
+    if (code !== null) {
+      this.roomCode = code;
+    }
+    switch (state.status) {
+      case "idle":
+        this.setState({ status: "disconnected", slot: null, error: null, host: null });
+        return;
+      case "joining":
+        this.setState({ status: "connecting", slot: null, error: null, host: null });
+        return;
+      case "joined":
+        return;
+      case "error":
+        this.setState({ status: "disconnected", slot: null, error: state.message, host: null });
+        return;
+      case "manual":
+        this.setState({
+          status: "disconnected",
+          slot: null,
+          error: joinStateNotice(state),
+          host: null,
+        });
+        return;
+    }
   }
 
-  /** Detaches handlers, stops every timer and clears per-connection state. */
-  private teardown(): void {
-    this.stopPing();
-    this.sendLoop.stop();
-
-    const mask = this.pressMask;
-    this.pressMask = 0;
-    for (let bit = 0; bit < 16; bit += 1) {
-      if ((mask & (1 << bit)) !== 0) {
-        this.input.setButton(bit, false);
-      }
+  private notifyJoinState(): void {
+    const state = this.joinFlow.state;
+    for (const listener of this.joinListeners) {
+      listener(state);
     }
-    this.input.clearEdges();
-    this.clearLayout();
-    this.lastScriptMs = 0;
+  }
 
+  /**
+   * Transport hook for `JoinFlow`. The flow can produce a join while a socket
+   * is still opening (pending) or while an unbound socket is open (a session →
+   * token fallback after `joinError`); both are supported.
+   */
+  private sendJoinMessage(message: JoinRequest): void {
+    const socket = this.socket;
+    if (socket !== null) {
+      if (!this.socketOpen) {
+        this.pendingJoin = message;
+        return;
+      }
+      try {
+        socket.send(stringifyJsonMessage(message));
+      } catch (error) {
+        this.closeSocketQuietly();
+        throw error;
+      }
+      return;
+    }
+    this.openSocket(message);
+  }
+
+  /** Opens a fresh socket and sends `join` as soon as it opens. */
+  private openSocket(join: JoinRequest): void {
+    this.closeSocketQuietly();
+    let socket: ControllerSocket;
+    try {
+      socket = this.createSocket(toWebSocketUrl(resolveServerOrigin(this.explicitOrigin)));
+    } catch (error) {
+      this.pendingJoin = null;
+      throw error;
+    }
+
+    this.socket = socket;
+    this.socketOpen = false;
+    this.pendingJoin = join;
+    const generation = ++this.socketGeneration;
+
+    socket.onopen = () => {
+      if (generation !== this.socketGeneration) {
+        return;
+      }
+      this.socketOpen = true;
+      const pending = this.pendingJoin;
+      this.pendingJoin = null;
+      if (pending === null) {
+        return;
+      }
+      try {
+        socket.send(stringifyJsonMessage(pending));
+      } catch {
+        this.handleSocketFailure();
+      }
+    };
+
+    socket.onmessage = (event) => {
+      if (generation !== this.socketGeneration) {
+        return;
+      }
+      this.handleMessage(event.data);
+    };
+
+    socket.onclose = () => {
+      if (generation !== this.socketGeneration) {
+        return;
+      }
+      this.handleSocketClosed();
+    };
+
+    // A browser `error` is always followed by `close`; let that path report it.
+    socket.onerror = () => {};
+  }
+
+  /** Detaches handlers and closes the socket without triggering a retry. */
+  private closeSocketQuietly(): void {
     this.socketGeneration += 1;
     const socket = this.socket;
     this.socket = null;
-    if (socket !== null) {
-      socket.onopen = null;
-      socket.onmessage = null;
-      socket.onclose = null;
-      socket.onerror = null;
-      try {
-        socket.close(1000, "client disconnect");
-      } catch {
-        // The socket may already be closed.
+    this.socketOpen = false;
+    this.pendingJoin = null;
+    if (socket === null) {
+      return;
+    }
+    socket.onopen = null;
+    socket.onmessage = null;
+    socket.onclose = null;
+    socket.onerror = null;
+    try {
+      socket.close(1000, "client disconnect");
+    } catch {
+      // The socket may already be closed.
+    }
+  }
+
+  /** A join could not be written on a socket that just opened. */
+  private handleSocketFailure(): void {
+    const phase = this.reconnect?.state.phase;
+    this.closeSocketQuietly();
+    if (phase === "connecting") {
+      this.reconnect?.onAttemptFailed();
+      if (this.state.status !== "disconnected") {
+        this.setState({ status: "reconnecting", slot: this.state.slot, error: null, host: null });
+      }
+      return;
+    }
+    this.handleSocketClosed();
+  }
+
+  /**
+   * The server closed the socket (or the send failed). A joined controller
+   * keeps its slot on the server for 30 s, so the reconnect machine reclaims
+   * it with a session join (FR-5.4, FR-7.14). Everything else falls back to
+   * the editable form.
+   */
+  private handleSocketClosed(): void {
+    this.socketGeneration += 1;
+    this.socket = null;
+    this.socketOpen = false;
+    this.pendingJoin = null;
+    this.stopPing();
+    this.sendLoop.stop();
+    const wasJoined = this.joined;
+    this.joined = false;
+
+    if (this.suspended) {
+      // Hidden: the reservation is running; the visible transition decides
+      // whether a same-socket rejoin or a reconnect is needed (FR-8.8).
+      this.setState({ status: "reconnecting", slot: this.state.slot, error: null, host: null });
+      return;
+    }
+
+    if (this.reconnect !== null && this.reconnect.state.phase !== "stopped") {
+      this.reconnect.onDisconnected();
+      const phase = this.reconnect.state.phase;
+      if (phase === "waiting" || phase === "connecting") {
+        // Keep the layout and the input; only the socket is gone.
+        this.setState({ status: "reconnecting", slot: this.state.slot, error: null, host: null });
+        return;
       }
     }
+
+    if (wasJoined) {
+      this.destroySuspend();
+      this.releaseWakeLock();
+      this.resetInput();
+      this.clearLayout();
+      this.roomCode = null;
+    }
+    this.setState({
+      status: "disconnected",
+      slot: null,
+      error: wasJoined
+        ? "Connection lost."
+        : "Could not connect to the game server. Check the connection and try again.",
+      host: null,
+    });
+  }
+
+  /**
+   * A visibility or socket failure handed control back to the reconnect
+   * layer. Reuses the existing machine when it is still live; a fresh one is
+   * seeded as `connected` so the first drop schedules the 250 ms attempt.
+   */
+  private restartReconnect(): void {
+    if (this.suspended) {
+      return;
+    }
+    this.stopPing();
+    this.sendLoop.stop();
     this.joined = false;
+
+    const reconnect = this.ensureReconnectController();
+    if (reconnect === null) {
+      this.teardownConnection();
+      this.destroySuspend();
+      this.releaseWakeLock();
+      this.setState({ status: "disconnected", slot: null, error: "Connection lost.", host: null });
+      return;
+    }
+
+    if (reconnect.state.phase === "idle") {
+      reconnect.onConnected(this.state.slot ?? 0);
+    }
+    reconnect.onDisconnected();
+    const phase = reconnect.state.phase;
+    if (phase === "waiting" || phase === "connecting") {
+      this.setState({ status: "reconnecting", slot: this.state.slot, error: null, host: null });
+    }
+  }
+
+  private ensureReconnectController(): ReconnectController | null {
+    if (this.roomCode === null) {
+      return null;
+    }
+    if (this.reconnect !== null && this.reconnect.state.phase !== "stopped") {
+      return this.reconnect;
+    }
+
+    const code = this.roomCode;
+    const controller = createReconnectController({
+      store: this.store,
+      code,
+      timers: this.reconnectTimers,
+      random: this.random,
+      onJoin: (message) => {
+        this.openRejoinSocket(message);
+      },
+      onStaleSocket: () => {
+        this.handleStaleSocket();
+      },
+      onState: (state) => {
+        this.handleReconnectState(state);
+      },
+      onStop: (reason) => {
+        this.handleReconnectStop(reason);
+      },
+    });
+    this.reconnect = controller;
+    return controller;
+  }
+
+  /** Opens the retry socket; a throw makes the machine schedule the next try. */
+  private openRejoinSocket(message: JoinRequest): void {
+    this.closeSocketQuietly();
+    this.openSocket(message);
+  }
+
+  /** The 7 s silence watchdog fired: discard the blackholed socket (FR-7.14). */
+  private handleStaleSocket(): void {
+    this.stopPing();
+    this.sendLoop.stop();
+    this.joined = false;
+    this.closeSocketQuietly();
+  }
+
+  private handleReconnectState(state: ReconnectState): void {
+    if (state.phase !== "waiting" && state.phase !== "connecting") {
+      return;
+    }
+    if (this.state.status === "reconnecting") {
+      return;
+    }
+    this.setState({
+      status: "reconnecting",
+      slot: state.slot ?? this.state.slot,
+      error: null,
+      host: null,
+    });
+  }
+
+  private handleReconnectStop(reason: ReconnectStopReason): void {
+    switch (reason) {
+      case "left":
+      case "kicked":
+        // The explicit path owns the teardown and the visible message.
+        return;
+      case "expired":
+      case "noSession":
+        // FR-5.5: the reservation is gone; fall back to the room token (held
+        // in the flow) or the manual form instead of spinning on the session.
+        this.abandonSession(JOIN_FLOW_MESSAGES.expired);
+        return;
+      case "rejected":
+        this.rejectJoin(this.lastJoinErrorReason ?? "expired");
+        return;
+    }
+  }
+
+  /** The stored session cannot be reclaimed; re-run join precedence. */
+  private abandonSession(error: string | null): void {
+    const code = this.roomCode;
+    if (code !== null) {
+      this.store.clear(code);
+    }
+    this.reconnect = null;
+    this.teardownConnection();
+    this.destroySuspend();
+    this.releaseWakeLock();
+
+    const flowState = this.joinFlow.retry();
+    this.afterFlowChange(flowState);
+    if (error !== null && flowState.status === "manual" && flowState.notice === null) {
+      this.setState({ status: "disconnected", slot: null, error, host: null });
+    }
+  }
+
+  /** Terminal join refusal: back to the form with the reason (FR-5.6). */
+  private rejectJoin(reason: JoinErrorReason): void {
+    this.reconnect = null;
+    this.teardownConnection();
+    this.destroySuspend();
+    this.releaseWakeLock();
+    this.joinFlow.leave();
+    this.notifyJoinState();
+    this.roomCode = null;
+    this.setState({
+      status: "disconnected",
+      slot: null,
+      error: JOIN_FLOW_MESSAGES[reason],
+      host: null,
+    });
+  }
+
+  /** The server refused a rejoin made by `SuspendController` itself. */
+  private handleRejoinedSessionRefused(reason: JoinErrorReason): void {
+    if (reason === "expired") {
+      this.abandonSession(JOIN_FLOW_MESSAGES.expired);
+      return;
+    }
+    this.rejectJoin(reason);
+  }
+
+  private handleJoinError(reason: JoinErrorReason): void {
+    this.lastJoinErrorReason = reason;
+
+    const phase = this.reconnect?.state.phase;
+    if (phase === "connecting" || phase === "waiting") {
+      // The flow is still `joined` from before the drop and ignores errors;
+      // the reconnect machine owns this refusal.
+      this.reconnect?.onJoinRejected(reason);
+      return;
+    }
+
+    if (!this.joined && this.joinFlow.state.status === "joined") {
+      this.handleRejoinedSessionRefused(reason);
+      return;
+    }
+
+    const flowState = this.joinFlow.handleMessage({ t: "joinError", reason });
+    this.notifyJoinState();
+    this.afterFlowChange(flowState);
+  }
+
+  private handleKick(reason: string): void {
+    const flowState = this.joinFlow.handleMessage({ t: "kick", reason });
+    this.notifyJoinState();
+    this.reconnect?.stop("kicked");
+    this.reconnect = null;
+    this.teardownConnection();
+    this.destroySuspend();
+    this.releaseWakeLock();
+    this.roomCode = null;
+    this.setState({
+      status: "disconnected",
+      slot: null,
+      error: joinStateNotice(flowState) ?? "The host removed this controller.",
+      host: null,
+    });
+  }
+
+  /** A9: the pill mirrors `Waiting for TV` / `TV paused` while connected. */
+  private handleHostStatus(host: HostStatusState): void {
+    if (this.state.status !== "connected" || this.state.host === host) {
+      return;
+    }
+    this.setState({ ...this.state, host });
+  }
+
+  /**
+   * Hidden: the server holds the slot for 30 s (SuspendController sends the
+   * `suspend` itself). Stop local traffic and the watchdog; the visible
+   * transition rejoins by session or restarts reconnect (FR-8.8).
+   */
+  private handleSuspend(): void {
+    this.suspended = true;
+    this.joined = false;
+    this.stopPing();
+    this.sendLoop.stop();
+    this.reconnect?.stop("left");
+    this.reconnect = null;
+  }
+
+  /** Visible: the rejoin `joined` will restart the policy; this is the guard. */
+  private resumeFromSuspend(): void {
+    this.suspended = false;
+    if (!this.joined || this.socket === null || !this.socketOpen) {
+      return;
+    }
+    this.sendLoop.start();
+    this.startPing();
+  }
+
+  /** The 30 s reservation is gone (or the store lost the session). */
+  private handleSessionLost(_reason: SessionLostReason): void {
+    this.abandonSession(JOIN_FLOW_MESSAGES.expired);
+  }
+
+  private ensureSuspendController(): void {
+    if (this.suspend !== null || this.roomCode === null || this.visibility === null) {
+      return;
+    }
+    const code = this.roomCode;
+    this.suspend = createSuspendController({
+      socket: {
+        isOpen: () => this.socket !== null && this.socketOpen,
+        send: (message) => {
+          const socket = this.socket;
+          if (socket === null || !this.socketOpen) {
+            throw new Error("Controller socket is not open");
+          }
+          socket.send(stringifyJsonMessage(message));
+        },
+      },
+      store: this.store,
+      code,
+      wakeLock: this.wakeLock,
+      visibility: this.visibility,
+      now: this.now,
+      onHide: () => {
+        this.handleSuspend();
+      },
+      onShow: () => {
+        this.resumeFromSuspend();
+      },
+      onReconnect: () => {
+        this.restartReconnect();
+      },
+      onSessionLost: (reason) => {
+        this.handleSessionLost(reason);
+      },
+    });
+    this.suspend.attach();
+  }
+
+  private destroySuspend(): void {
+    const suspend = this.suspend;
+    this.suspend = null;
+    if (suspend === null) {
+      return;
+    }
+    suspend.destroy();
+  }
+
+  private requestWakeLock(): void {
+    try {
+      const pending = this.wakeLock.request();
+      void Promise.resolve(pending).catch(() => {
+        // A refused Wake Lock must never affect input (AR-3).
+      });
+    } catch {
+      // Best effort only.
+    }
+  }
+
+  private releaseWakeLock(): void {
+    try {
+      const pending = this.wakeLock.release();
+      void Promise.resolve(pending).catch(() => {
+        // Best effort only.
+      });
+    } catch {
+      // Best effort only.
+    }
+  }
+
+  /** Full reset for an explicit leave, a kick or a terminal refusal. */
+  private teardownConnection(): void {
+    this.stopPing();
+    this.sendLoop.stop();
+    this.closeSocketQuietly();
+    this.joined = false;
+    this.suspended = false;
+    this.lastJoinErrorReason = null;
+    this.resetInput();
+    this.clearLayout();
+    this.lastScriptMs = 0;
+  }
+
+  /** Clears every level, edge and the D0 Test-button latch. */
+  private resetInput(): void {
+    this.pressMask = 0;
+    for (let bit = 0; bit < 16; bit += 1) {
+      this.input.setButton(bit, false);
+    }
+    this.input.setAxis("lx", 0);
+    this.input.setAxis("ly", 0);
+    this.input.setAxis("rx", 0);
+    this.input.setAxis("ry", 0);
+    this.input.setTrigger("lt", 0);
+    this.input.setTrigger("rt", 0);
+    this.input.setGyro(0, 0, 0);
+    this.input.setFlags(0);
+    this.input.clearEdges();
   }
 
   private setState(next: ControllerState): void {

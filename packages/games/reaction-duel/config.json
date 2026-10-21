@@ -1,0 +1,9 @@
+{
+  "mode": "fourButton",
+  "buttons": ["A", "B", "X", "Y"],
+  "roundsToWin": 3,
+  "minDelayMs": 2000,
+  "maxDelayMs": 6000,
+  "noTapTimeoutMs": 3000,
+  "tieThresholdMs": 1
+}

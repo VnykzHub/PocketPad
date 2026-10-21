@@ -8,10 +8,10 @@ import { describe, expect, test } from "vitest";
 import type { InputState } from "@lanpad/protocol";
 import {
   SLOT_RESERVATION_MS,
-  type JoinRateLimiter,
   type JoinResult,
   type RoomCredentials,
   type RoomRegistry,
+  type SimpleJoinRateLimiter,
 } from "../src/index.js";
 import { FakePeer, assertNoSecretsLogged, makeRegistry } from "./helpers.js";
 
@@ -38,6 +38,10 @@ function input(overrides: Partial<InputState> = {}): InputState {
 
 function wrongPin(pin: string): string {
   return pin === "0000" ? "0001" : "0000";
+}
+
+function wrongToken(token: string): string {
+  return (token[0] === "A" ? "B" : "A") + token.slice(1);
 }
 
 function expectOk(result: JoinResult): { slot: number; session: string } {
@@ -441,11 +445,11 @@ describe("D4 sessions and slots", () => {
     expect(sessions).not.toContain(replacement);
   });
 
-  test("[SR-5] only PIN-bearing joins consult the rate limiter", () => {
+  test("[SR-5] every token/PIN join consults the limiter before credential checks", () => {
     const allowed: string[] = [];
     const failures: string[] = [];
     const successes: string[] = [];
-    const limiter: JoinRateLimiter = {
+    const limiter: SimpleJoinRateLimiter = {
       allow: (ip) => {
         allowed.push(ip);
         return true;
@@ -457,19 +461,25 @@ describe("D4 sessions and slots", () => {
     const room = registry.createRoom();
     const peer = new FakePeer({ remoteAddress: "10.0.0.7" });
 
-    // Token-only: no PIN to guess, no limiter traffic. A successful join does
-    // reset the failure window (SR-5), but it never asks the limiter.
+    // Token-only: checked before the token comparison, so a locked-out IP
+    // cannot probe the 128-bit room token for free (FR-5.6).
     expectOk(registry.join({ code: room.code, token: room.roomToken }, peer));
-    expect(allowed).toHaveLength(0);
+    expect(allowed).toEqual(["10.0.0.7"]);
     expect(successes).toEqual(["10.0.0.7"]);
 
-    // PIN-only: checked before credential comparison and recorded.
+    // PIN-only: checked before credential comparison and recorded on failure.
     expect(registry.join({ code: room.code, pin: wrongPin(room.pin) }, peer)).toEqual({
       ok: false,
       reason: "badPin",
     });
-    expect(allowed).toEqual(["10.0.0.7"]);
+    expect(allowed).toEqual(["10.0.0.7", "10.0.0.7"]);
     expect(failures).toEqual(["10.0.0.7"]);
+
+    // A wrong token shares the same failure window as a wrong PIN for this IP.
+    expect(
+      registry.join({ code: room.code, token: wrongToken(room.roomToken) }, peer),
+    ).toEqual({ ok: false, reason: "badToken" });
+    expect(failures).toEqual(["10.0.0.7", "10.0.0.7"]);
 
     // A successful manual join resets the limiter.
     const replacement = joinWithPin(registry, room, peer);

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "id": "rd-four-button-v1",
+  "orientation": "any",
+  "background": "#101014",
+  "controls": [
+    {
+      "type": "button",
+      "id": "btn-a",
+      "x": "25%",
+      "y": "30%",
+      "label": "A",
+      "symbol": "▲",
+      "shape": "rounded",
+      "r": "18%",
+      "bit": 0
+    },
+    {
+      "type": "button",
+      "id": "btn-b",
+      "x": "75%",
+      "y": "30%",
+      "label": "B",
+      "symbol": "●",
+      "shape": "rounded",
+      "r": "18%",
+      "bit": 1
+    },
+    {
+      "type": "button",
+      "id": "btn-x",
+      "x": "25%",
+      "y": "70%",
+      "label": "X",
+      "symbol": "✕",
+      "shape": "rounded",
+      "r": "18%",
+      "bit": 2
+    },
+    {
+      "type": "button",
+      "id": "btn-y",
+      "x": "75%",
+      "y": "70%",
+      "label": "Y",
+      "symbol": "■",
+      "shape": "rounded",
+      "r": "18%",
+      "bit": 3
+    }
+  ]
+}

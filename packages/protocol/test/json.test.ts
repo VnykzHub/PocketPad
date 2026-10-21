@@ -153,6 +153,7 @@ describe("JSON framing and validation (D0-PROTO-03)", () => {
 
   test("[FR-7.9] layout bodies pass through unchanged for setLayout and joined", () => {
     const layout = {
+      id: "layout-v3",
       theme: "dark",
       groups: [{ id: "main", widgets: [{ type: "button", action: "jump" }] }],
       version: 3,
@@ -168,12 +169,11 @@ describe("JSON framing and validation (D0-PROTO-03)", () => {
       parseJsonMessage(JSON.stringify({ t: "joined", slot: 2, session: "s", serverTime: 5, layout })),
     ).toEqual({ t: "joined", slot: 2, session: "s", serverTime: 5, layout });
 
-    // The parser only requires presence, not a particular shape.
-    expect(parseJsonMessage('{"t":"setLayout","slot":8,"layout":null}')).toEqual({
-      t: "setLayout",
-      slot: 8,
-      layout: null,
-    });
+    // D5-PROTO-01: the body stays opaque but must be an object with an id.
+    expectProtocolError(
+      () => parseJsonMessage('{"t":"setLayout","slot":8,"layout":null}'),
+      "badType",
+    );
   });
 
   test("[FR-5.1] join accepts token, pin, session, or token+pin in QR PIN mode; not session+token", () => {
@@ -320,12 +320,11 @@ describe("JSON framing and validation (D0-PROTO-03)", () => {
       name: "x",
       data: null,
     });
-    expect(parseJsonMessage('{"t":"event","slot":1,"name":"","data":0}')).toEqual({
-      t: "event",
-      slot: 1,
-      name: "",
-      data: 0,
-    });
+    // D5-PROTO-01: names are 1..64 characters (an empty name is not routable).
+    expectProtocolError(
+      () => parseJsonMessage('{"t":"event","slot":1,"name":"","data":0}'),
+      "badLength",
+    );
 
     expectProtocolError(
       () => parseJsonMessage('{"t":"event","slot":0,"name":"x","data":null}'),
@@ -353,15 +352,15 @@ describe("JSON framing and validation (D0-PROTO-03)", () => {
   });
 
   test("[G4] host layout and panel messages validate slots", () => {
-    expect(parseJsonMessage('{"t":"setLayout","slot":"all","layout":{}}')).toEqual({
+    expect(parseJsonMessage('{"t":"setLayout","slot":"all","layout":{"id":"l1"}}')).toEqual({
       t: "setLayout",
       slot: "all",
-      layout: {},
+      layout: { id: "l1" },
     });
-    expect(parseJsonMessage('{"t":"setLayout","slot":1,"layout":{}}')).toEqual({
+    expect(parseJsonMessage('{"t":"setLayout","slot":1,"layout":{"id":"l1"}}')).toEqual({
       t: "setLayout",
       slot: 1,
-      layout: {},
+      layout: { id: "l1" },
     });
     expectProtocolError(
       () => parseJsonMessage('{"t":"setLayout","slot":0,"layout":null}'),
@@ -559,7 +558,7 @@ describe("JSON framing and validation (D0-PROTO-03)", () => {
     const text = JSON.stringify({
       t: "setLayout",
       slot: 2,
-      layout: { nested: { deep: [1, "two", null, true] } },
+      layout: { id: "canonical-v1", nested: { deep: [1, "two", null, true] } },
     });
     const parsed = parseJsonMessage(text);
     expect(JSON.parse(stringifyJsonMessage(parsed))).toEqual(parsed);

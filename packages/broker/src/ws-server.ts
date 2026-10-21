@@ -14,6 +14,7 @@ import {
   MAX_BINARY_FRAME_BYTES,
   MAX_JSON_FRAME_BYTES,
   MSG,
+  PROTOCOL_VERSION,
   ProtocolError,
   decodeHapticCmd,
   decodeInputInto,
@@ -28,6 +29,7 @@ import {
 import type { Logger, Peer } from "./peer.js";
 import type { RoomRegistry } from "./registry.js";
 import type { JoinRequest } from "./room.js";
+import { StatsTicker } from "./room/stats.js";
 
 /** Application close codes (frozen D0 contract). */
 export const CLOSE = {
@@ -53,6 +55,11 @@ export interface WsServerDeps {
   registry: RoomRegistry;
   config: WsServerConfig;
   logger: Logger;
+  /**
+   * Stats tick interval. Defaults to `STATS_INTERVAL_MS` (1 s, FR-7.14);
+   * tests shrink it so the stream is observable without sleeping.
+   */
+  statsIntervalMs?: number;
 }
 
 type SocketRole = "unbound" | "controller" | "host";
@@ -145,6 +152,21 @@ function isProtocolError(error: unknown): error is ProtocolError {
 export function attachWebSocketServer(server: Server, deps: WsServerDeps): WebSocketServer {
   const { registry, config, logger } = deps;
 
+  /*
+   * D4-SRV-03: telemetry is owned by the registry so the adapter and the
+   * registry agree on slot records; the ticker is transport-owned because its
+   * lifetime is the host socket's.
+   */
+  const stats = registry.statsCollector();
+  const statsTicker = new StatsTicker({
+    collector: stats,
+    now: () => registry.nowMs(),
+    ...(deps.statsIntervalMs === undefined ? {} : { intervalMs: deps.statsIntervalMs }),
+  });
+  const unsubscribeRoomExpired = registry.onRoomExpired((room) => {
+    statsTicker.stop(room);
+  });
+
   const wss = new WebSocketServer({
     noServer: true,
     maxPayload: MAX_JSON_FRAME_BYTES,
@@ -232,8 +254,16 @@ export function attachWebSocketServer(server: Server, deps: WsServerDeps): WebSo
           closeSocket(socket, CLOSE.policy, "host cannot join as a controller");
           return;
         }
-        if (state.role === "controller") {
+        // A suspended controller may rejoin on the same socket with its
+        // session (FR-8.8); any other second join is a policy violation.
+        const sameSocketRejoin = state.role === "controller" && message.session !== undefined;
+        if (state.role === "controller" && !sameSocketRejoin) {
           closeSocket(socket, CLOSE.policy, "socket is already joined");
+          return;
+        }
+        // A10: protocol version mismatch is reported, not fatal (FR-5.6).
+        if (message.v !== PROTOCOL_VERSION) {
+          sendMessage(peer, { t: "joinError", reason: "badVersion" });
           return;
         }
         const request: JoinRequest = { code: message.code };
@@ -254,6 +284,13 @@ export function attachWebSocketServer(server: Server, deps: WsServerDeps): WebSo
             serverTime: result.serverTime,
           });
         } else {
+          if (sameSocketRejoin) {
+            // The reservation lapsed (or the session is unknown): unbind the
+            // socket so the client can fall back to a token/PIN join.
+            state.role = "unbound";
+            state.code = null;
+            state.slot = null;
+          }
           // Keep the socket open so the client can correct the PIN (FR-5.6).
           sendMessage(peer, { t: "joinError", reason: result.reason });
         }
@@ -264,11 +301,21 @@ export function attachWebSocketServer(server: Server, deps: WsServerDeps): WebSo
           closeSocket(socket, CLOSE.policy, "controller cannot hostJoin");
           return;
         }
+        // A10: the host learns about a version mismatch the same way.
+        if (message.v !== PROTOCOL_VERSION) {
+          sendMessage(peer, { t: "joinError", reason: "badVersion" });
+          return;
+        }
         const result = registry.hostJoin(message.code, message.hostToken, peer);
         if (result.ok) {
           state.role = "host";
           state.code = message.code;
           state.slot = null;
+          // FR-7.14: the 1 Hz stats stream runs while a host is attached.
+          const room = registry.getRoom(message.code);
+          if (room !== undefined) {
+            statsTicker.start(room);
+          }
           sendMessage(peer, {
             t: "hostJoined",
             code: message.code,
@@ -292,24 +339,54 @@ export function attachWebSocketServer(server: Server, deps: WsServerDeps): WebSo
         state.slot = null;
         return;
       }
-      case "suspend":
+      case "suspend": {
+        if (state.role !== "controller" || state.code === null || state.slot === null) {
+          closeSocket(socket, CLOSE.policy, `${message.t} requires a joined controller`);
+          return;
+        }
+        // FR-8.8: hold the slot for 30 s and tell the host (FR-5.4). The peer
+        // guard keeps a stale socket from detaching a newer one.
+        registry.suspend(state.code, state.slot, registry.nowMs(), peer);
+        return;
+      }
       case "event": {
         if (state.role !== "controller" || state.code === null || state.slot === null) {
           closeSocket(socket, CLOSE.policy, `${message.t} requires a joined controller`);
           return;
         }
-        // Suspend reservations (D4) and event routing (D5) are not in D0.
+        // D5-SRV-01 owns event forwarding; D4 only records the activity so a
+        // controller that is sending events does not idle the room out.
+        registry.noteActivity(state.code, registry.nowMs());
         return;
       }
-      case "hostPause":
-      case "hostResume":
+      case "hostPause": {
+        if (state.role !== "host" || state.code === null) {
+          closeSocket(socket, CLOSE.policy, `${message.t} requires a host connection`);
+          return;
+        }
+        if (registry.hostPause(state.code, peer)) {
+          // Idempotent repeats still count as host activity (FR-5.2).
+          registry.noteActivity(state.code, registry.nowMs());
+        }
+        return;
+      }
+      case "hostResume": {
+        if (state.role !== "host" || state.code === null) {
+          closeSocket(socket, CLOSE.policy, `${message.t} requires a host connection`);
+          return;
+        }
+        if (registry.hostResume(state.code, peer)) {
+          registry.noteActivity(state.code, registry.nowMs());
+        }
+        return;
+      }
       case "setLayout":
       case "panel": {
         if (state.role !== "host" || state.code === null) {
           closeSocket(socket, CLOSE.policy, `${message.t} requires a host connection`);
           return;
         }
-        // Host pause (D4) and layout/panel routing (D5) are not in D0.
+        // Layout and panel routing are D5.
         return;
       }
       default: {
@@ -338,7 +415,15 @@ export function attachWebSocketServer(server: Server, deps: WsServerDeps): WebSo
     logger.debug?.("ws.connection", { connections: wss.clients.size });
 
     socket.on("pong", () => {
-      state.lastSeenAt = registry.nowMs();
+      const now = registry.nowMs();
+      state.lastSeenAt = now;
+      // FR-7.14: the pong closes the RTT sample opened by the heartbeat ping.
+      if (state.role === "controller" && state.code !== null && state.slot !== null) {
+        const room = registry.getRoom(state.code);
+        if (room !== undefined) {
+          stats.recordPong(room, state.slot, now);
+        }
+      }
     });
 
     socket.on("message", (data, isBinary) => {
@@ -370,9 +455,16 @@ export function attachWebSocketServer(server: Server, deps: WsServerDeps): WebSo
     socket.on("close", (code) => {
       states.delete(socket);
       if (state.role === "controller" && state.code !== null && state.slot !== null) {
-        registry.leave(state.code, state.slot, peer);
+        // FR-7.14: a dropped socket reserves the slot for 30 s instead of
+        // freeing it (FR-5.5 applies only to an explicit `leave`).
+        registry.detach(state.code, state.slot, registry.nowMs(), peer);
       } else if (state.role === "host" && state.code !== null) {
-        registry.hostLeave(state.code, peer);
+        const room = registry.getRoom(state.code);
+        // D4-SRV-03: host loss starts the 30 s recovery window and broadcasts
+        // `hostStatus lost`; the stats stream stops until the host returns.
+        if (registry.hostLeave(state.code, peer) && room !== undefined) {
+          statsTicker.stop(room);
+        }
       }
       // Log the close code only; close reasons can contain client-supplied text.
       logger.debug?.("ws.close", { code });
@@ -417,6 +509,13 @@ export function attachWebSocketServer(server: Server, deps: WsServerDeps): WebSo
         continue;
       }
       if (socket.readyState === WebSocket.OPEN) {
+        // Record the ping before sending so the pong maps to this sample.
+        if (state.role === "controller" && state.code !== null && state.slot !== null) {
+          const room = registry.getRoom(state.code);
+          if (room !== undefined) {
+            stats.recordPing(room, state.slot, now);
+          }
+        }
         socket.ping();
       }
     }
@@ -425,6 +524,8 @@ export function attachWebSocketServer(server: Server, deps: WsServerDeps): WebSo
 
   wss.on("close", () => {
     clearInterval(heartbeat);
+    unsubscribeRoomExpired();
+    statsTicker.stopAll();
     server.off("upgrade", handleUpgrade);
   });
 

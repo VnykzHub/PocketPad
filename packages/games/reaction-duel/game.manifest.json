@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "name": "Reaction Duel",
+  "entry": "index.js",
+  "layouts": ["layouts/rd-four-button-v1.json"],
+  "assetBudget": {
+    "initialBytes": 262144,
+    "totalBytes": 1048576
+  },
+  "minPlayers": 2,
+  "maxPlayers": 8,
+  "needsGyro": false
+}

@@ -1,0 +1,55 @@
+/*
+ * Host debug overlay styles (D3-RT-06).
+ *
+ * External stylesheet, imported by `Overlay.ts`, so the dev CSP's
+ * `style-src 'self'` is satisfied: no inline <style> and no style attributes.
+ * The panel is fixed-position, monospace and pointer-transparent so it never
+ * steals focus or taps from the game. `[hidden]` keeps the disabled default
+ * invisible even if another rule sets a display value.
+ */
+.debug-overlay {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 2147483647;
+  max-width: min(46ch, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  padding: 10px 12px;
+  border: 1px solid var(--line, #253154);
+  border-radius: 8px;
+  background: rgba(8, 12, 24, 0.88);
+  color: var(--text, #e8ecf8);
+  font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.debug-overlay[hidden] {
+  display: none !important;
+}
+
+.debug-overlay dl {
+  margin: 0;
+}
+
+.debug-overlay dl + dl {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line, #253154);
+}
+
+.debug-overlay__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.debug-overlay dt {
+  color: var(--muted, #9fb0d9);
+}
+
+.debug-overlay dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}

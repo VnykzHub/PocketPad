@@ -1,10 +1,14 @@
 /**
- * JSON framing, structural validation and frame caps (D0-PROTO-03).
+ * JSON framing, structural validation and frame caps (D0-PROTO-03; D5-PROTO-01).
  *
  * Every JSON control message on the wire goes through this module; no other
  * layer calls JSON.parse on socket text. Validation is structural only:
  * `layout`, `panel` and `event` bodies are opaque JsonValue and are never
- * interpreted here (FR-7.9).
+ * interpreted here (FR-7.9). The one exception is `setLayout.layout.id`, which
+ * the server needs as a routing/ack key (D5 contract 1).
+ *
+ * XSS-safe by construction (SR-13): event names are safe identifiers and are
+ * never rendered; bodies stay data.
  */
 import {
   MAX_CONTROLLERS,
@@ -18,17 +22,30 @@ import {
 import { ProtocolError } from "./errors.js";
 import type {
   ClientToServerMessage,
+  EventMessage,
   HostStatusState,
   HostToServerMessage,
   JoinErrorReason,
   JsonControlMessage,
   JsonValue,
+  LayoutAckForwardMessage,
+  LayoutAckMessage,
   ServerToClientMessage,
   SlotStats,
 } from "./messages.js";
 
 /** One TextEncoder for the life of the module; the JSON path is not the hot path. */
 const utf8Encoder = new TextEncoder();
+
+/** Layout ids are 1..64 characters (SDK `LayoutDocument.id`, D5 contract 1). */
+export const MAX_LAYOUT_ID_CHARS = 64;
+
+/**
+ * Event names are identifiers, never markup (D5-SEC-01, SR-13). Restricting
+ * them at the wire boundary means a hostile name can never reach a DOM
+ * attribute or a `switch` key as free text.
+ */
+const EVENT_NAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9_.-]{0,63}$/;
 
 const JOIN_ERROR_REASONS: ReadonlySet<string> = new Set<JoinErrorReason>([
   "roomFull",
@@ -47,12 +64,19 @@ const HOST_STATUS_STATES: ReadonlySet<string> = new Set<HostStatusState>([
   "lost",
 ]);
 
+/*
+ * These guards classify message kinds, not socket identity: `event` and
+ * `layoutAck` are controller-originated but also travel server->host, and
+ * `setLayout`/`panel` travel host->server->controller. Callers must still
+ * check the socket role (they already do for `setLayout`/`panel`).
+ */
 const CLIENT_TO_SERVER_TYPES: ReadonlySet<string> = new Set([
   "join",
   "hostJoin",
   "suspend",
   "leave",
   "event",
+  "layoutAck",
 ]);
 
 /*
@@ -217,11 +241,38 @@ function parseHostJoin(record: UnknownRecord): Extract<ClientToServerMessage, { 
   return { t: "hostJoin", v, code, hostToken };
 }
 
-function parseEvent(record: UnknownRecord): Extract<ClientToServerMessage, { t: "event" }> {
+/**
+ * Validates a `event` frame. `slot` is range-checked only; the broker owns the
+ * trust decision and must compare it with the authenticated peer before
+ * forwarding (D5-SRV-01). `data` stays opaque (FR-7.9).
+ */
+function parseEvent(record: UnknownRecord): EventMessage {
   const slot = requireSlot(record, "slot");
-  const name = requireStringLength(record, "name", 0, MAX_EVENT_NAME_CHARS);
+  const name = requireStringLength(record, "name", 1, MAX_EVENT_NAME_CHARS);
+  if (!EVENT_NAME_PATTERN.test(name)) {
+    bad(
+      "badValue",
+      `"name" must match ${EVENT_NAME_PATTERN.source} (event names are identifiers, not text)`,
+    );
+  }
   const data = requireJsonValue(record, "data");
   return { t: "event", slot, name, data };
+}
+
+/**
+ * Parses a `layoutAck`. A controller sends only `layoutId`; the server fills
+ * `slot` from the authenticated peer when forwarding to the host (D5 contract
+ * 2). Accepting an optional `slot` here keeps that forward parseable; the
+ * server must overwrite it and never trust a controller-supplied value.
+ */
+function parseLayoutAck(
+  record: UnknownRecord,
+): LayoutAckMessage | LayoutAckForwardMessage {
+  const layoutId = requireStringLength(record, "layoutId", 1, MAX_LAYOUT_ID_CHARS);
+  if (!hasOwn(record, "slot")) {
+    return { t: "layoutAck", layoutId };
+  }
+  return { t: "layoutAck", layoutId, slot: requireSlot(record, "slot") };
 }
 
 function parseSetLayout(record: UnknownRecord): Extract<HostToServerMessage, { t: "setLayout" }> {
@@ -237,8 +288,15 @@ function parseSetLayout(record: UnknownRecord): Extract<HostToServerMessage, { t
   } else {
     bad("badType", `"slot" must be "all" or an integer in 1..${MAX_CONTROLLERS}`);
   }
-  const layout = requireJsonValue(record, "layout");
-  return { t: "setLayout", slot, layout };
+
+  // The server needs `layout.id` as its routing/ack key, but never reads the
+  // rest of the body (FR-7.9). Full validation is SDK-side.
+  const layout = requireField(record, "layout");
+  if (!isRecord(layout)) {
+    bad("badType", `"layout" must be an object`);
+  }
+  requireStringLength(layout, "id", 1, MAX_LAYOUT_ID_CHARS);
+  return { t: "setLayout", slot, layout: layout as unknown as JsonValue };
 }
 
 function parsePanel(record: UnknownRecord): Extract<HostToServerMessage, { t: "panel" }> {
@@ -378,6 +436,8 @@ export function parseJsonMessage(text: string): JsonControlMessage {
       return { t: "leave" };
     case "event":
       return parseEvent(parsed);
+    case "layoutAck":
+      return parseLayoutAck(parsed);
     case "hostPause":
       return { t: "hostPause" };
     case "hostResume":
@@ -419,6 +479,17 @@ export function stringifyJsonMessage(message: JsonControlMessage): string {
   const text = JSON.stringify(message);
   assertJsonWithinLimit(text);
   return text;
+}
+
+/**
+ * Slot binding for controller events (FR-7.8, D5-SRV-01).
+ *
+ * The wire `slot` is never authoritative: the broker compares it with the slot
+ * assigned at join and drops mismatches with a counter instead of forwarding
+ * them. A boolean keeps the drop-vs-close policy in the adapter.
+ */
+export function isEventSlotBoundTo(event: EventMessage, authenticatedSlot: number): boolean {
+  return event.slot === authenticatedSlot;
 }
 
 /** True when the message type may be sent by a controller-role socket (hostJoin included for the host handshake). */

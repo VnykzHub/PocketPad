@@ -1,4 +1,10 @@
-import { PROTOCOL_VERSION, encodeInputFwd, type InputState } from "@lanpad/protocol";
+import {
+  PROTOCOL_VERSION,
+  encodeInputFwd,
+  type HostToServerMessage,
+  type InputState,
+  type SlotStats,
+} from "@lanpad/protocol";
 import { describe, expect, test } from "vitest";
 import {
   HostClient,
@@ -217,6 +223,7 @@ describe("HostClient socket wiring (D0-RT-01)", () => {
     });
 
     expect(messages).toEqual(["hostJoined"]);
+    expect(client.droppedMessageCount).toBe(2);
   });
 });
 
@@ -228,5 +235,413 @@ describe("keyboard start path (D0-RT-01)", () => {
     expect(shouldCreateRoomOnKey("Enter", "ready")).toBe(false);
     expect(shouldCreateRoomOnKey(" ", "idle")).toBe(false);
     expect(shouldCreateRoomOnKey("a", "failed")).toBe(false);
+  });
+});
+
+/** Deterministic host clock for D3-RT-03 time and instrumentation tests. */
+class FakeClock {
+  private current: number;
+
+  constructor(startMs: number) {
+    this.current = startMs;
+  }
+
+  readonly now = (): number => this.current;
+
+  advance(ms: number): void {
+    this.current += ms;
+  }
+}
+
+function fakeClientWithClock(sockets: FakeSocket[], clock: FakeClock): HostClient {
+  return new HostClient({
+    createWebSocket: (url) => {
+      const socket = new FakeSocket(url);
+      sockets.push(socket);
+      return socket;
+    },
+    now: clock.now,
+  });
+}
+
+function openSocket(sockets: FakeSocket[]): FakeSocket {
+  const socket = sockets[0];
+  if (socket === undefined) {
+    throw new Error("connect() did not create a socket");
+  }
+  socket.onopen?.({});
+  return socket;
+}
+
+function deliverJson(socket: FakeSocket, message: unknown): void {
+  socket.onmessage?.({ data: JSON.stringify(message) });
+}
+
+function inputState(tick: number, edges = 0): InputState {
+  return {
+    tick,
+    buttons: edges === 0 ? 0 : 0x0001,
+    edges,
+    lx: 0,
+    ly: 0,
+    rx: 0,
+    ry: 0,
+    gx: 0,
+    gy: 0,
+    gz: 0,
+    lt: 0,
+    rt: 0,
+    flags: 0,
+  };
+}
+
+async function connectedClient(
+  sockets: FakeSocket[],
+  clock: FakeClock,
+): Promise<{ client: HostClient; socket: FakeSocket }> {
+  const client = fakeClientWithClock(sockets, clock);
+  const connected = client.connect("http://localhost:8080");
+  const socket = openSocket(sockets);
+  await connected;
+  return { client, socket };
+}
+
+describe("host join and server time (D3-RT-03)", () => {
+  test("[FR-7.10] hostJoined sets serverTimeOffset from the injected clock and serverNow tracks it", async () => {
+    const sockets: FakeSocket[] = [];
+    const clock = new FakeClock(5_000);
+    const { client, socket } = await connectedClient(sockets, clock);
+
+    expect(client.serverNow()).toBeNull();
+    expect(client.serverTimeOffset).toBeNull();
+
+    const joined = client.hostJoin(ROOM_RESPONSE.code, ROOM_RESPONSE.hostToken);
+    deliverJson(socket, {
+      t: "hostJoined",
+      code: ROOM_RESPONSE.code,
+      serverTime: 1_700_000_000_123,
+    });
+
+    await expect(joined).resolves.toEqual({ serverTime: 1_700_000_000_123 });
+    expect(client.serverTimeOffset).toBe(1_700_000_000_123 - 5_000);
+    expect(client.serverNow()).toBe(1_700_000_000_123);
+
+    clock.advance(16.7);
+    expect(client.serverNow()).toBeCloseTo(1_700_000_000_123 + 16.7, 6);
+  });
+
+  test("[A2] hostJoin sends the host token and resolves only on the matching hostJoined code", async () => {
+    const sockets: FakeSocket[] = [];
+    const clock = new FakeClock(1_000);
+    const { client, socket } = await connectedClient(sockets, clock);
+
+    const joined = client.hostJoin(ROOM_RESPONSE.code, ROOM_RESPONSE.hostToken);
+    const joinFrame = JSON.parse(String(socket.sent[0])) as Record<string, unknown>;
+    expect(joinFrame).toEqual({
+      t: "hostJoin",
+      v: PROTOCOL_VERSION,
+      code: ROOM_RESPONSE.code,
+      hostToken: ROOM_RESPONSE.hostToken,
+    });
+    expect(joinFrame).not.toHaveProperty("roomToken");
+    expect(String(socket.sent[0])).not.toContain(ROOM_RESPONSE.roomToken);
+
+    let settled = false;
+    void joined.then(
+      () => {
+        settled = true;
+      },
+      () => {
+        settled = true;
+      },
+    );
+
+    deliverJson(socket, { t: "hostJoined", code: "ZZZZ", serverTime: 1 });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+
+    deliverJson(socket, { t: "hostJoined", code: ROOM_RESPONSE.code, serverTime: 1 });
+    await expect(joined).resolves.toEqual({ serverTime: 1 });
+  });
+
+  test("[A2] a joinError rejects the pending hostJoin without echoing the host token", async () => {
+    const sockets: FakeSocket[] = [];
+    const clock = new FakeClock(1_000);
+    const { client, socket } = await connectedClient(sockets, clock);
+
+    const joined = client.hostJoin(ROOM_RESPONSE.code, ROOM_RESPONSE.hostToken);
+    deliverJson(socket, { t: "joinError", reason: "badHostToken" });
+
+    let message = "";
+    try {
+      await joined;
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+    expect(message).toContain("badHostToken");
+    expect(message).not.toContain(ROOM_RESPONSE.hostToken);
+  });
+
+  test("[A2] hostJoin rejects before the socket is connected", async () => {
+    const client = new HostClient();
+    await expect(
+      client.hostJoin(ROOM_RESPONSE.code, ROOM_RESPONSE.hostToken),
+    ).rejects.toThrow(/connected host socket/);
+  });
+
+  test("[A2] createRoom stores the host token in per-room storage, never the room token", async () => {
+    const stored = new Map<string, string>();
+    const client = new HostClient({
+      fetch: async () => ({ ok: true, status: 201, json: async () => ROOM_RESPONSE }),
+      storage: {
+        setItem(key: string, value: string) {
+          stored.set(key, value);
+        },
+      },
+    });
+
+    const credentials = await client.createRoom("https://lanpad.example");
+
+    expect(stored.get(hostTokenStorageKey(credentials.code))).toBe(credentials.hostToken);
+    expect(stored.get(hostTokenStorageKey(credentials.code))).not.toBe(
+      credentials.roomToken,
+    );
+  });
+});
+
+describe("InputFwd routing (D3-RT-03)", () => {
+  test("[FR-7.11][PR-9.3] frames are delivered in arrival order into one reused packet", async () => {
+    const sockets: FakeSocket[] = [];
+    const clock = new FakeClock(1_000);
+    const { client, socket } = await connectedClient(sockets, clock);
+
+    const delivered: Array<{ slot: number; tick: number; edges: number }> = [];
+    const states: InputState[] = [];
+    client.onInput((slot, state) => {
+      delivered.push({ slot, tick: state.tick, edges: state.edges });
+      states.push(state);
+    });
+
+    socket.onmessage?.({ data: encodeInputFwd(2, inputState(100, 0x0001)) });
+    socket.onmessage?.({ data: encodeInputFwd(2, inputState(90)) });
+    socket.onmessage?.({ data: encodeInputFwd(5, inputState(101)) });
+
+    expect(delivered).toEqual([
+      { slot: 2, tick: 100, edges: 0x0001 },
+      { slot: 2, tick: 90, edges: 0 },
+      { slot: 5, tick: 101, edges: 0 },
+    ]);
+    expect(states).toHaveLength(3);
+    expect(states[0]).toBe(states[1]);
+    expect(states[1]).toBe(states[2]);
+    expect(client.inputPacketCount).toBe(3);
+  });
+
+  test("[FR-7.11] slots 1..8 are routed independently", async () => {
+    const sockets: FakeSocket[] = [];
+    const clock = new FakeClock(1_000);
+    const { client, socket } = await connectedClient(sockets, clock);
+
+    const seenSlots: number[] = [];
+    const seenTicks: number[] = [];
+    client.onInput((slot, state) => {
+      seenSlots.push(slot);
+      seenTicks.push(state.tick);
+    });
+
+    for (let slot = 1; slot <= 8; slot += 1) {
+      socket.onmessage?.({ data: encodeInputFwd(slot, inputState(slot * 10)) });
+    }
+
+    expect(seenSlots).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(seenTicks).toEqual([10, 20, 30, 40, 50, 60, 70, 80]);
+  });
+
+  test("[FR-7.17] input listeners receive decoded packets, never the socket", async () => {
+    const sockets: FakeSocket[] = [];
+    const clock = new FakeClock(1_000);
+    const { client, socket } = await connectedClient(sockets, clock);
+
+    const packets: Array<{ slot: number; state: InputState }> = [];
+    client.onInput((slot, state) => {
+      packets.push({ slot, state });
+    });
+    socket.onmessage?.({ data: encodeInputFwd(3, inputState(7)) });
+
+    const packet = packets[0];
+    if (packet === undefined) {
+      throw new Error("InputFwd frame was not delivered");
+    }
+    expect(packet.slot).toBe(3);
+    expect(packet.state).not.toBe(socket);
+    expect("send" in packet.state).toBe(false);
+    expect("close" in packet.state).toBe(false);
+    expect(Object.keys(packet.state).sort()).toEqual(
+      [
+        "buttons",
+        "edges",
+        "flags",
+        "gx",
+        "gy",
+        "gz",
+        "lt",
+        "lx",
+        "ly",
+        "rt",
+        "rx",
+        "ry",
+        "tick",
+      ].sort(),
+    );
+  });
+
+  test("malformed InputFwd frames are counted and never delivered", async () => {
+    const sockets: FakeSocket[] = [];
+    const clock = new FakeClock(1_000);
+    const { client, socket } = await connectedClient(sockets, clock);
+
+    let delivered = 0;
+    client.onInput(() => {
+      delivered += 1;
+    });
+
+    const badSlot = encodeInputFwd(1, inputState(1));
+    badSlot[1] = 9;
+    socket.onmessage?.({ data: badSlot });
+
+    expect(delivered).toBe(0);
+    expect(client.malformedInputCount).toBe(1);
+    expect(client.inputPacketCount).toBe(0);
+  });
+});
+
+describe("connection lifecycle (D3-RT-03, D4 groundwork)", () => {
+  test("[FR-7.16] an unexpected close sets state closed, notifies hooks and does not reconnect", async () => {
+    const sockets: FakeSocket[] = [];
+    const clock = new FakeClock(1_000);
+    const { client, socket } = await connectedClient(sockets, clock);
+    expect(client.state).toBe("connected");
+
+    const closes: WebSocketCloseInfo[] = [];
+    client.onClose((info) => closes.push(info));
+
+    const droppedJoin = client.hostJoin(ROOM_RESPONSE.code, ROOM_RESPONSE.hostToken);
+    const closeInfo: WebSocketCloseInfo = {
+      code: 1006,
+      reason: "host lost",
+      wasClean: false,
+    };
+    socket.onclose?.(closeInfo);
+
+    expect(client.state).toBe("closed");
+    expect(client.lastClose).toEqual(closeInfo);
+    expect(closes).toEqual([closeInfo]);
+    expect(sockets).toHaveLength(1);
+    await expect(droppedJoin).rejects.toThrow(/closed/);
+  });
+
+  test("[FR-7.16] close() marks the client closed and suppresses close listeners", async () => {
+    const sockets: FakeSocket[] = [];
+    const clock = new FakeClock(1_000);
+    const { client, socket } = await connectedClient(sockets, clock);
+
+    let closes = 0;
+    client.onClose(() => {
+      closes += 1;
+    });
+    client.close();
+
+    expect(client.state).toBe("closed");
+    expect(socket.closed).toBe(true);
+    expect(closes).toBe(0);
+  });
+});
+
+describe("host-only sends (D3-RT-03)", () => {
+  test("[A2] send() refuses controller messages and sends host control", async () => {
+    const sockets: FakeSocket[] = [];
+    const clock = new FakeClock(1_000);
+    const { client, socket } = await connectedClient(sockets, clock);
+
+    const controllerJoin = {
+      t: "join",
+      v: PROTOCOL_VERSION,
+      code: ROOM_RESPONSE.code,
+      pin: ROOM_RESPONSE.pin,
+    } as unknown as HostToServerMessage;
+
+    expect(() => client.send(controllerJoin)).toThrow(/only accepts host messages/);
+    expect(socket.sent).toHaveLength(0);
+
+    client.send({ t: "hostPause" });
+    expect(JSON.parse(String(socket.sent[0]))).toEqual({ t: "hostPause" });
+  });
+});
+
+describe("server message dispatch (D3-RT-03)", () => {
+  test("player events and stats reach their typed callbacks", async () => {
+    const sockets: FakeSocket[] = [];
+    const clock = new FakeClock(1_000);
+    const { client, socket } = await connectedClient(sockets, clock);
+
+    const players: Array<{ event: string; slot: number }> = [];
+    client.onPlayer((event, slot) => players.push({ event, slot }));
+    const stats: SlotStats[][] = [];
+    client.onServerStats((slots) => stats.push(slots));
+
+    deliverJson(socket, { t: "playerJoined", slot: 1 });
+    deliverJson(socket, { t: "playerLeft", slot: 2 });
+    deliverJson(socket, { t: "playerSuspended", slot: 3 });
+    deliverJson(socket, { t: "playerResumed", slot: 3 });
+
+    const slotStats: SlotStats = {
+      slot: 1,
+      rttMs: 12,
+      jitterMs: 2,
+      lastInputAgeMs: 16,
+      packetsPerSecond: 60,
+      drops: 0,
+    };
+    deliverJson(socket, { t: "stats", slots: [slotStats] });
+
+    expect(players).toEqual([
+      { event: "joined", slot: 1 },
+      { event: "left", slot: 2 },
+      { event: "suspended", slot: 3 },
+      { event: "resumed", slot: 3 },
+    ]);
+    expect(stats).toHaveLength(1);
+    expect(stats[0]).toEqual([slotStats]);
+  });
+});
+
+describe("input instrumentation (D3-RT-03)", () => {
+  test("packet count, decode p95 and per-slot age use the injected clock", async () => {
+    const sockets: FakeSocket[] = [];
+    let nowMs = 0;
+    const client = new HostClient({
+      createWebSocket: (url) => {
+        const socket = new FakeSocket(url);
+        sockets.push(socket);
+        return socket;
+      },
+      now: () => {
+        nowMs += 1;
+        return nowMs;
+      },
+    });
+    const connected = client.connect("http://localhost:8080");
+    const socket = openSocket(sockets);
+    await connected;
+
+    socket.onmessage?.({ data: encodeInputFwd(1, inputState(1)) });
+    socket.onmessage?.({ data: encodeInputFwd(1, inputState(2)) });
+    socket.onmessage?.({ data: encodeInputFwd(1, inputState(3)) });
+
+    expect(client.inputPacketCount).toBe(3);
+    expect(client.decodeP95Ms).toBe(1);
+    expect(client.lastInputAgeMs(1)).toBeGreaterThanOrEqual(0);
+    expect(client.lastInputAgeMs(8)).toBe(-1);
+    expect(client.lastInputAgeMs(0)).toBe(-1);
   });
 });

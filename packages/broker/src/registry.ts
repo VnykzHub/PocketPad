@@ -24,6 +24,8 @@ import {
 } from "@lanpad/protocol";
 import type { Logger, Peer } from "./peer.js";
 import { constantTimeEqual, generateToken as createToken } from "./auth/tokens.js";
+import { HostRecovery } from "./room/host.js";
+import { StatsCollector } from "./room/stats.js";
 import {
   ROOM_MAX_LIFETIME_MS,
   type ControllerSlot,
@@ -42,7 +44,6 @@ import {
   reserveSlot,
 } from "./room/sessions.js";
 
-export { constantTimeEqual };
 export { SLOT_RESERVATION_MS } from "./room/sessions.js";
 
 /** Bounded retries for a colliding room code (20 bits, so collisions are rare). */
@@ -58,6 +59,9 @@ const DEFAULT_MAX_BUFFERED_BYTES = 262_144;
  * SR-5 limiter shapes. D0 and the existing tests use `allow`; D4-SRV-01's
  * `createJoinRateLimiter` exposes `check`/`recordFailure`/`recordSuccess` and
  * is accepted directly, so wiring it needs no adapter.
+ *
+ * The union is exported as `RegistryJoinRateLimiter` so the barrel can export
+ * D4-SRV-01's frozen `JoinRateLimiter` interface under its own name.
  */
 export interface SimpleJoinRateLimiter {
   allow(remoteAddress: string, now: number): boolean;
@@ -74,10 +78,10 @@ export interface AccountableJoinRateLimiter {
   recordSuccess(remoteAddress: string, now: number): void;
 }
 
-export type JoinRateLimiter = SimpleJoinRateLimiter | AccountableJoinRateLimiter;
+export type RegistryJoinRateLimiter = SimpleJoinRateLimiter | AccountableJoinRateLimiter;
 
 function isAccountableLimiter(
-  limiter: JoinRateLimiter,
+  limiter: RegistryJoinRateLimiter,
 ): limiter is AccountableJoinRateLimiter {
   return typeof (limiter as Partial<AccountableJoinRateLimiter>).check === "function";
 }
@@ -88,8 +92,8 @@ export interface RoomRegistryDeps {
   logger: Logger;
   /** Transport buffer ceiling for level-only input dropping. */
   maxBufferedBytes?: number;
-  /** Optional SR-5 limiter. Absent means allow every PIN attempt. */
-  rateLimiter?: JoinRateLimiter;
+  /** Optional SR-5 limiter. Absent means allow every token/PIN attempt. */
+  rateLimiter?: RegistryJoinRateLimiter;
 }
 
 function normalizeCode(code: string): string {
@@ -102,7 +106,13 @@ export class RoomRegistry {
   private readonly randomBytes: (n: number) => Uint8Array;
   private readonly logger: Logger;
   private readonly maxBufferedBytes: number;
-  private readonly rateLimiter: JoinRateLimiter | undefined;
+  private readonly rateLimiter: RegistryJoinRateLimiter | undefined;
+  /** One host state machine per registry (D4-SRV-03). */
+  private readonly hosts: HostRecovery;
+  /** One telemetry store per registry; the adapter shares it (D4-SRV-03). */
+  private readonly stats: StatsCollector;
+  /** Transport hooks told when a room leaves the map (adapter stops its ticker). */
+  private readonly roomExpiredListeners = new Set<(room: Room) => void>();
 
   constructor(deps: RoomRegistryDeps) {
     this.now = deps.now;
@@ -110,11 +120,39 @@ export class RoomRegistry {
     this.logger = deps.logger;
     this.maxBufferedBytes = deps.maxBufferedBytes ?? DEFAULT_MAX_BUFFERED_BYTES;
     this.rateLimiter = deps.rateLimiter;
+    this.stats = new StatsCollector();
+    this.hosts = new HostRecovery({
+      logger: deps.logger,
+      onRoomExpired: (room) => {
+        // HostRecovery has already kicked the controllers and cleared them.
+        if (this.rooms.get(room.code) === room) {
+          this.rooms.delete(room.code);
+        }
+        this.notifyRoomExpired(room);
+      },
+    });
   }
 
   /** Server clock used for timestamps and heartbeats; shared with the adapter. */
   nowMs(): number {
     return this.now();
+  }
+
+  /** The registry's telemetry store, shared with the WS adapter (D4-SRV-03). */
+  statsCollector(): StatsCollector {
+    return this.stats;
+  }
+
+  /**
+   * Registers a listener invoked after a room expires for any reason (idle,
+   * maximum age or a lapsed host reservation). Used by the adapter to stop the
+   * room's 1 Hz stats timer. Returns an unsubscribe function.
+   */
+  onRoomExpired(listener: (room: Room) => void): () => void {
+    this.roomExpiredListeners.add(listener);
+    return () => {
+      this.roomExpiredListeners.delete(listener);
+    };
   }
 
   /** Number of live rooms (used by `GET /healthz`). */
@@ -166,8 +204,11 @@ export class RoomRegistry {
 
   /**
    * Authenticates the host socket with the 128-bit host token (A2).
-   * A second live host is rejected; the same peer may re-authenticate.
-   * D4-SRV-03 adds the 30 s host reservation around this.
+   *
+   * D4-SRV-03 delegates the state machine to the registry's `HostRecovery`:
+   * a first attach activates the room, a reload inside the 30 s reservation
+   * resumes it and replays the slot table, and a lapsed reservation expires
+   * the room. `badCode` stays here; the registry owns room lookup.
    */
   hostJoin(
     codeInput: string,
@@ -183,16 +224,13 @@ export class RoomRegistry {
       this.expireRoom(room, now);
       return { ok: false, reason: "expired" };
     }
-    if (!constantTimeEqual(hostToken, room.hostToken)) {
-      return { ok: false, reason: "badHostToken" };
+    const result = this.hosts.hostJoin(room, hostToken, peer, now);
+    if (!result.ok) {
+      return result;
     }
-    if (room.host !== null && room.host !== peer) {
-      return { ok: false, reason: "badHostToken" };
-    }
-    room.host = peer;
-    room.state = "active";
+    // A repeated hostJoin from the live host is valid host traffic (FR-5.2)
+    // even though HostRecovery deliberately stays idempotent (G4).
     room.lastActivityAt = now;
-    this.logger.info("room.join", { code: room.code, slot: 0, role: "host" });
     return { ok: true };
   }
 
@@ -220,15 +258,28 @@ export class RoomRegistry {
     const hasSession = session !== undefined;
 
     if (hasSession && (hasToken || hasPin)) {
-      this.logRejectedJoin(room, "badToken");
-      return { ok: false, reason: "badToken" };
-    }
-    if (!hasSession && !hasToken && !hasPin) {
+      // Malformed. No credential is compared, but the rejection is counted so
+      // an abusive peer cannot probe combinations for free.
+      this.recordJoinFailure(peer.remoteAddress, now);
       this.logRejectedJoin(room, "badToken");
       return { ok: false, reason: "badToken" };
     }
     if (session !== undefined) {
+      // A session rejoin is not a token/PIN credential attempt. It must stay
+      // usable behind a shared IP that some other device has locked out.
       return this.rejoin(room, session, peer, now);
+    }
+
+    // SR-5: every token/PIN attempt is checked before any credential
+    // comparison, so a locked-out IP cannot probe the room token either.
+    if (!this.checkJoinAllowed(peer.remoteAddress, now)) {
+      this.logRejectedJoin(room, "rateLimited");
+      return { ok: false, reason: "rateLimited" };
+    }
+    if (!hasToken && !hasPin) {
+      this.recordJoinFailure(peer.remoteAddress, now);
+      this.logRejectedJoin(room, "badToken");
+      return { ok: false, reason: "badToken" };
     }
 
     // A11: a QR token alone cannot enter a room that requires the PIN. No PIN
@@ -238,14 +289,8 @@ export class RoomRegistry {
       return { ok: false, reason: "badPin" };
     }
 
-    // SR-5 guards PIN attempts. A 128-bit room token cannot be brute-forced in
-    // a room's lifetime, so token-only joins skip the limiter. A token+PIN pair
-    // only checks the PIN when the room requires it (A11).
+    // A token+PIN pair only checks the PIN when the room requires it (A11).
     const checksPin = hasPin && (!hasToken || room.requirePinForQr);
-    if (checksPin && !this.checkJoinAllowed(peer.remoteAddress, now)) {
-      this.logRejectedJoin(room, "rateLimited");
-      return { ok: false, reason: "rateLimited" };
-    }
 
     if (token !== undefined) {
       if (!constantTimeEqual(token, room.roomToken)) {
@@ -320,13 +365,18 @@ export class RoomRegistry {
     room.lastActivityAt = now;
     controller.lastInputAt = now;
     controller.lastSeenAt = now;
+    this.stats.recordInput(room, slot, now);
 
     const host = room.host;
-    if (host === null) {
+    if (host === null || !this.hosts.acceptsInput(room)) {
+      // No host, host lost or host paused (FR-9.2): count the drop instead of
+      // queueing input for a room that cannot consume it.
+      this.stats.recordDrop(room, slot);
       room.droppedInputs += 1;
       return;
     }
     if (state.edges === 0 && (host.bufferedAmount ?? 0) > this.maxBufferedBytes) {
+      this.stats.recordDrop(room, slot);
       room.droppedInputs += 1;
       this.logger.debug?.("input.drop", { code: room.code, slot });
       return;
@@ -425,18 +475,44 @@ export class RoomRegistry {
     return true;
   }
 
-  /** Detaches the host socket. D4-SRV-03 adds the 30 s host reservation. */
+  /**
+   * Detaches the host socket. D4-SRV-03 keeps the room recoverable for 30 s
+   * and broadcasts `hostStatus lost` through the registry's `HostRecovery`.
+   */
   hostLeave(codeInput: string, peer: Peer): boolean {
-    const code = normalizeCode(codeInput);
-    const room = this.rooms.get(code);
-    if (!room || room.host !== peer) {
+    const room = this.rooms.get(normalizeCode(codeInput));
+    if (room === undefined) {
       return false;
     }
-    room.host = null;
-    room.state = "hostLost";
-    room.lastActivityAt = this.now();
-    this.logger.info("room.leave", { code: room.code, slot: 0, role: "host" });
-    return true;
+    return this.hosts.hostLeave(room, peer, this.now());
+  }
+
+  /** FR-9.2 host pause: controllers see `hostStatus paused` (A9). */
+  hostPause(codeInput: string, peer: Peer): boolean {
+    const now = this.now();
+    const room = this.rooms.get(normalizeCode(codeInput));
+    if (room === undefined) {
+      return false;
+    }
+    if (isRoomExpired(room, now)) {
+      this.expireRoom(room, now);
+      return false;
+    }
+    return this.hosts.hostPause(room, peer, now);
+  }
+
+  /** FR-9.2 host resume: controllers see `hostStatus active` again (A9). */
+  hostResume(codeInput: string, peer: Peer): boolean {
+    const now = this.now();
+    const room = this.rooms.get(normalizeCode(codeInput));
+    if (room === undefined) {
+      return false;
+    }
+    if (isRoomExpired(room, now)) {
+      this.expireRoom(room, now);
+      return false;
+    }
+    return this.hosts.hostResume(room, peer, now);
   }
 
   /**
@@ -459,11 +535,18 @@ export class RoomRegistry {
 
   /**
    * Expires live reservations (FR-5.5) and rooms past the 10 min idle or 4 h
-   * maximum limit (FR-5.2). The adapter calls this once per second; `now` is
-   * explicit so tests and P5 load simulations drive time directly.
+   * maximum limit (FR-5.2), and gives `HostRecovery` the first look at every
+   * room so a lapsed 30 s host reservation kicks its controllers (FR-7.16).
+   * The adapter calls this once per second; `now` is explicit so tests and P5
+   * load simulations drive time directly.
    */
   sweep(now: number = this.now()): void {
     for (const room of [...this.rooms.values()]) {
+      // A host-lost room that hits its deadline is removed by the expiry
+      // listener, so it must not also be treated as an idle room below.
+      if (this.hosts.sweep(room, now)) {
+        continue;
+      }
       this.expireReservationsFor(room, now);
       if (isRoomExpired(room, now)) {
         this.expireRoom(room, now);
@@ -519,6 +602,9 @@ export class RoomRegistry {
     controller.peer = peer;
     controller.lastSeenAt = now;
     room.lastActivityAt = now;
+    // A rejoined controller is a successful join and clears the IP's SR-5
+    // failure window like any other successful credential join.
+    this.recordJoinSuccess(peer.remoteAddress, now);
     this.logger.info("room.join", {
       code: room.code,
       slot: controller.slot,
@@ -649,6 +735,22 @@ export class RoomRegistry {
         peer.close(1000, "room expired");
       } catch {
         // Same as above.
+      }
+    }
+    this.notifyRoomExpired(room);
+  }
+
+  /**
+   * Tells transport hooks that the room left the registry. Listeners are
+   * diagnostics only: a failing listener must not keep a room alive or throw
+   * from a timer-driven sweep.
+   */
+  private notifyRoomExpired(room: Room): void {
+    for (const listener of [...this.roomExpiredListeners]) {
+      try {
+        listener(room);
+      } catch {
+        this.logger.debug?.("room.expireListenerFailed", { code: room.code });
       }
     }
   }

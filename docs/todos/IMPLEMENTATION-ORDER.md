@@ -10,11 +10,11 @@
 | # | Stage | Plan file | Entry gate | Parallel with | Status |
 |---:|---|---|---|---|---|
 | 1 | D0 Foundations | `phase-1-dev/D0-foundations.md` | approved plan | — | Complete (local acceptance; CI run pending) |
-| 2 | D1 Device probes | `phase-1-dev/D1-device-probes.md` | D0 exit | — | In progress — desktop probes/docs done; actual TV, E2 full, E14 pending |
+| 2 | D1 Device probes | `phase-1-dev/D1-device-probes.md` | D0 exit | — | In progress — desktop probes/docs done; actual TV, E2 full, E14 deferred |
 | 3 | D2 Controller v0 | `phase-1-dev/D2-controller-v0.md` | D1 E1–E3 recorded | — | Implementation done; manual acceptance pending |
-| 4 | D3 Runtime v0 | `phase-1-dev/D3-runtime-v0.md` | D2 exit | — | Not started |
-| 5 | D4 Pairing/sessions | `phase-1-dev/D4-pairing-sessions.md` | D3 exit | — | Foundation modules done; end-to-end wiring pending |
-| 6 | D5 Layouts/events | `phase-1-dev/D5-layouts-events.md` | D4 exit | — | Not started |
+| 4 | D3 Runtime v0 | `phase-1-dev/D3-runtime-v0.md` | D2 exit | — | In progress (Wave 2; desktop provisional target) |
+| 5 | D4 Pairing/sessions | `phase-1-dev/D4-pairing-sessions.md` | D3 exit | — | In progress (Wave 2 close-out wiring) |
+| 6 | D5 Layouts/events | `phase-1-dev/D5-layouts-events.md` | D4 exit | — | In progress (Wave 2 SDK/protocol/controls) |
 | 7 | D6 Sensors/haptics | `phase-1-dev/D6-sensors-haptics.md` | D5 exit | — | Not started |
 | 8 | D7 Proof games | `phase-1-dev/D7-proof-games.md` | D6 exit | — | Not started |
 | 9 | Dev Exit Gate | `phase-1-dev/GATE-dev-exit.md` | D7 + all E1–E17 | — | Not started |
@@ -145,9 +145,17 @@
 - D2 controller v0 — `wdeejqzrj` (`wf_21277d8a-2eb`).
 - D4 session foundation — `w4j3ngqny` (`wf_ca3aee14-a1c`).
 
-**Integration gate:** `npm run check` is green — typecheck, lint, 59 test files / 661 tests, build, size (controller 16,605 gz; host 5,739 gz) and stage-D0 trace with 0 missing / 0 unknown.
+**Wave 1 integration gate:** `npm run check` green — typecheck, lint, 59 test files / 661 tests, build, size (controller 16,605 gz; host 5,739 gz) and stage-D0 trace with 0 missing / 0 unknown. Checkpoint commits: `d326559`, `d454f85`.
 
-**Next action:** close out D4 end-to-end wiring, D2 manual device acceptance and D2 RESULTS row, and D1 actual-TV/E2-full/E14. Then start Wave 2 (D3 runtime + D7-SDK-01), followed by Reaction Duel four-button. The platformer follows after D7-RT-01.
+**Wave 2 running (2026-10-21):**
+- D3 runtime v0 — `wyqpp0wp8` (`wf_6ef70fed-d7b`).
+- D4 close-out wiring — `w9bllbzpc` (`wf_6595d802-0b9`).
+- D5 contracts/controls — `wm15jx0dy` (`wf_a2030ee4-769`).
+- Reaction Duel content — `w5qw3xkpw` (`wf_5ad3a8f2-cf8`).
+
+**TV assumption:** actual-TV probing is deferred by user decision. Desktop Chrome 155 (WebGL2 yes, binary WS yes, RTX 3050 Ti) is the provisional v1 target. Agents must mark TV rows PENDING and must not claim TV measurements. Revisit the TV matrix before the Dev Exit Gate.
+
+**Next action:** Wave 2 integration gate, then D7-SDK-01 and the Reaction Duel adapter. D5-SRV-01, D5-CTRL-02 hot-swap, D5-RT-01/SEC/QA, D4-HOST-02 and D6 follow; the platformer follows after D7-RT-01.
 
 ## 7. Accelerated first-game track — Reaction Duel four-button (2026-10-21)
 
@@ -179,7 +187,7 @@ needed for the platformer and physics proof games.
 | Wave | Runs in parallel | Depends on | Integration gate |
 |---|---|---|---|
 | 1 (running) | D1 probes and docs; D2 controller; D4 protocol/server/join/reconnect; platformer plan (deferred) | D0 | Full `npm run check`, trace and docs reconciliation |
-| 2 | D3-RT-01/03 after D2-RT-01; D3-RT-02/05/07 after E1; D5-SDK-01 after D2-LAYOUT-01; D5-PROTO-01 after D4-PROTO-01 | Wave 1 | Full check; D3 cube-on-TV; D5 SDK/protocol tests |
+| 2 (running) | D3-RT-01/03 → RT-02/05/06/07 → RT-04/SDK/TOOL/EXP/QA; D4 close-out wiring/QA; D5-SDK-01 + PROTO-01 → CTRL-01/03/04/05; Reaction Duel layout + pure rules | Wave 1 | Full check; D3 desktop cube; D5 contract/control tests; RD rules tests; TV rows PENDING |
 | 3 | D3-SDK/TOOL/EXP/QA; D7-SDK-01; GAME-RD four-button; D7-RT-01 (platformer path); D4-HOST-02; D5-CTRL-01..05 after D5-SDK + D4-CTRL-01; D5-SRV-01 after D4-SRV-02 | E1 + D2 + D4 proto/server | Full check; Reaction Duel playable on LAN |
 | 4 | GAME-PF platformer after D7-RT-01; D5-RT-01/SEC/EXP/QA; D6-CTRL/SRV/RT after D5 | Wave 3 | Platformer playable on LAN; D5/D6 exit |
 | 5 | D7 proof games, D7-RT-02/PERF/EXP/QA, hub after D4-HOST-01 | D6 + D4/D5 | Dev Exit Gate |

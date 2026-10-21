@@ -27,6 +27,7 @@
 import {
   parseLength,
   type ButtonControl,
+  type Control,
   type DpadControl,
   type Length,
   type StickControl,
@@ -35,6 +36,7 @@ import type { InputState } from "@lanpad/protocol";
 import type { InputStore } from "../input/InputStore.js";
 import { MIN_TOUCH_TARGET_PX, type HitRect } from "../touch/hitTest.js";
 import type { TouchBinding } from "../touch/touchEngine.js";
+import type { ControlEventSink } from "./eventSink.js";
 
 /** Surface size in CSS pixels; viewport dimensions for percent lengths. */
 export interface SurfaceSize {
@@ -57,6 +59,12 @@ export interface ControlContext {
   /** Current surface size, used to resolve percent lengths. */
   surfaceSize: SurfaceSize;
   debug?: ControlDebugHooks;
+  /**
+   * Event queue sink (D5-CTRL-05). Optional so input-only tests and the
+   * pre-D5 shell keep working; an event-emitting control without a sink stays
+   * interactive locally but sends nothing.
+   */
+  events?: ControlEventSink;
 }
 
 /**
@@ -84,6 +92,14 @@ export type RenderedControl = ButtonControl | DpadControl | StickControl;
 /** Class toggled on a control (and dpad zones) while pressed. */
 export const PRESSED_CLASS = "is-pressed";
 
+/**
+ * Fixed size of the gyro "Enable motion" prompt. The layout schema gives a
+ * gyro control no size field (D2-LAYOUT-01), so the prompt uses a comfortable
+ * 44 px-high pill centered on its layout position.
+ */
+export const GYRO_PROMPT_WIDTH_PX = 168;
+export const GYRO_PROMPT_HEIGHT_PX = 44;
+
 /** Resolved rendered box of a control, in viewport CSS pixels. */
 export interface ControlBox {
   centerX: number;
@@ -92,6 +108,11 @@ export interface ControlBox {
   top: number;
   width: number;
   height: number;
+  /**
+   * True when AR-5 raised the requested box to the 44 px minimum. The debug
+   * overlay paints these with a dotted warning outline (D5-CTRL-01 step 2).
+   */
+  undersized: boolean;
 }
 
 /** Parses and resolves one layout length against a pixel reference. */
@@ -126,27 +147,43 @@ export function clampTouchTarget(edgePx: number): number {
   return Math.max(MIN_TOUCH_TARGET_PX, edgePx);
 }
 
+/** The box a layout asks for, before the AR-5 44 px floor is applied. */
+function requestedEdges(control: Control, surface: SurfaceSize): { width: number; height: number } {
+  switch (control.type) {
+    case "button": {
+      const sizePx = resolveControlSize(control.r, surface);
+      const edge = control.shape === "circle" ? sizePx * 2 : sizePx;
+      return { width: edge, height: edge };
+    }
+    case "dpad":
+    case "stick":
+    case "trigger": {
+      const edge = resolveControlSize(control.size, surface);
+      return { width: edge, height: edge };
+    }
+    case "gyro":
+      return { width: GYRO_PROMPT_WIDTH_PX, height: GYRO_PROMPT_HEIGHT_PX };
+    default:
+      return {
+        width: resolveLength(control.w, surface.width),
+        height: resolveLength(control.h, surface.height),
+      };
+  }
+}
+
 /**
- * Resolves the rendered box for a supported control.
+ * Resolves the rendered box for any v1 control (D2 + D5).
  *
  * A circle's `r` is its radius, so its box is `2r` square; `rounded` and
  * `square` treat `r` as the edge length (the schema's "radius/size" wording).
- * All boxes are clamped to the AR-5 minimum and centered on `(x, y)`.
+ * `size` is square; `w`/`h` resolve against the surface width/height; a gyro
+ * prompt has a fixed pill size. All boxes are clamped to the AR-5 minimum and
+ * centered on `(x, y)`, so the visual box and the hit rect never disagree.
  */
-export function measureControl(control: RenderedControl, surface: SurfaceSize): ControlBox {
-  let width: number;
-  let height: number;
-
-  if (control.type === "button") {
-    const sizePx = resolveControlSize(control.r, surface);
-    const edge = control.shape === "circle" ? sizePx * 2 : sizePx;
-    width = clampTouchTarget(edge);
-    height = width;
-  } else {
-    width = clampTouchTarget(resolveControlSize(control.size, surface));
-    height = width;
-  }
-
+export function measureControl(control: Control, surface: SurfaceSize): ControlBox {
+  const requested = requestedEdges(control, surface);
+  const width = clampTouchTarget(requested.width);
+  const height = clampTouchTarget(requested.height);
   const centerX = resolveX(control.x, surface);
   const centerY = resolveY(control.y, surface);
 
@@ -157,6 +194,7 @@ export function measureControl(control: RenderedControl, surface: SurfaceSize): 
     top: centerY - height / 2,
     width,
     height,
+    undersized: requested.width < MIN_TOUCH_TARGET_PX || requested.height < MIN_TOUCH_TARGET_PX,
   };
 }
 
@@ -165,7 +203,7 @@ export function measureControl(control: RenderedControl, surface: SurfaceSize): 
  * The renderer and `TouchEngine.setControls` share this function so the visual
  * box and the hit area can never drift apart (AR-5).
  */
-export function controlHitRect(control: RenderedControl, surface: SurfaceSize): HitRect {
+export function controlHitRect(control: Control, surface: SurfaceSize): HitRect {
   const box = measureControl(control, surface);
   return {
     controlId: control.id,
@@ -185,7 +223,7 @@ export function controlHitRect(control: RenderedControl, surface: SurfaceSize): 
  */
 export function applyControlElementStyle(
   element: HTMLElement,
-  control: RenderedControl,
+  control: Control,
   box: ControlBox,
   ctx: ControlContext,
 ): void {
@@ -201,8 +239,16 @@ export function applyControlElementStyle(
   style.setProperty("-webkit-user-select", "none");
   style.setProperty("-webkit-touch-callout", "none");
 
+  // Layouts that ask for less than the AR-5 minimum are enlarged at render
+  // time; the flag makes the debug overlay show where the layout is at fault.
+  if (box.undersized) {
+    element.dataset["targetClamped"] = "true";
+  }
+
   if (ctx.debug?.outline === true) {
-    style.outline = "1px dashed rgba(255, 255, 255, 0.65)";
+    style.outline = box.undersized
+      ? "2px dotted rgba(255, 120, 120, 0.95)"
+      : "1px dashed rgba(255, 255, 255, 0.65)";
     style.outlineOffset = "-1px";
   }
 

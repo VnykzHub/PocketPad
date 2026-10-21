@@ -1,5 +1,5 @@
 /**
- * JSON control-message catalogue (D0-PROTO-01).
+ * JSON control-message catalogue (D0-PROTO-01; D5-PROTO-01 extends it).
  *
  * One discriminated union on `t` covers every JSON control message in both
  * directions. Later stages add variants; they must never add a side-channel
@@ -48,6 +48,67 @@ export interface SlotStats {
   drops: number;
 }
 
+/** One sampled point of a batched freehand stroke; normalized 0..1, `t` in ms. */
+export interface StrokePoint {
+  x: number;
+  y: number;
+  t: number;
+}
+
+/**
+ * `event.data` for canvas controls (D5 contract 5). Points are normalized
+ * 0..1; a controller batches them into `start` / `move`* / `end` phases so a
+ * stroke never becomes one event per point (FR-7.8).
+ */
+export interface StrokeEventData {
+  points: StrokePoint[];
+  color: string;
+  width: number;
+  phase: "start" | "move" | "end";
+}
+
+/**
+ * `event.data` for text and choice controls (D5 contract 6). `value` is the
+ * submitted answer or the picked option; text is already truncated to the
+ * control's `maxLen`.
+ */
+export interface ValueEventData {
+  value: string;
+}
+
+/**
+ * Controller → server → host user event (spec §7.2).
+ *
+ * `data` is deliberately opaque: the server forwards it unchanged and games
+ * validate their own schema (FR-7.9). `slot` is advisory on the client leg;
+ * the server must compare it with the authenticated peer and must never route
+ * on the value the controller supplied (D5-SRV-01).
+ */
+export interface EventMessage {
+  t: "event";
+  slot: number;
+  name: string;
+  data: JsonValue;
+}
+
+/**
+ * Controller → server layout confirmation (spec §7.2; D5 contract 2).
+ *
+ * The controller reports only the id it applied. The server adds `slot` from
+ * the authenticated peer when forwarding to the host (`LayoutAckForwardMessage`);
+ * a controller never owns that field.
+ */
+export interface LayoutAckMessage {
+  t: "layoutAck";
+  layoutId: string;
+}
+
+/** Server → host forward of a layout ack, with the slot filled from the peer. */
+export interface LayoutAckForwardMessage extends LayoutAckMessage {
+  /** Authenticated slot; never taken from the controller's frame. */
+  slot: number;
+}
+
 /** Messages a socket in the controller role may send (plus `hostJoin` for the host handshake). */
 export type ClientToServerMessage =
   | {
@@ -62,7 +123,8 @@ export type ClientToServerMessage =
   | { t: "hostJoin"; v: number; code: string; hostToken: string }
   | { t: "suspend" }
   | { t: "leave" }
-  | { t: "event"; slot: number; name: string; data: JsonValue };
+  | EventMessage
+  | LayoutAckMessage;
 
 /** Messages only the host socket may send. */
 export type HostToServerMessage =
@@ -83,6 +145,8 @@ export type ServerToClientMessage =
   | { t: "playerResumed"; slot: number }
   | { t: "setLayout"; slot: number | "all"; layout: JsonValue }
   | { t: "panel"; slot: number; content: JsonValue }
+  | EventMessage
+  | LayoutAckForwardMessage
   | { t: "kick"; reason: string }
   | { t: "stats"; slots: SlotStats[] };
 

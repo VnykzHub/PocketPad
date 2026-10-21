@@ -5,9 +5,11 @@
 import { describe, expect, test } from "vitest";
 import { decodeInputFwd, type InputState } from "@lanpad/protocol";
 import {
+  HOST_RESERVATION_MS,
   ROOM_IDLE_TIMEOUT_MS,
   ROOM_MAX_LIFETIME_MS,
   constantTimeEqual,
+  createJoinRateLimiter,
 } from "../src/index.js";
 import { FakePeer, assertNoSecretsLogged, makeRegistry } from "./helpers.js";
 
@@ -358,5 +360,154 @@ describe("RoomRegistry security invariants", () => {
     registry.sweep();
 
     assertNoSecretsLogged(calls, [room.pin, room.roomToken, room.hostToken, session]);
+  });
+});
+
+describe("RoomRegistry D4 host and telemetry wiring", () => {
+  test("[FR-9.2][A9] hostPause/hostResume gate input and notify controllers", () => {
+    const { registry, clock } = makeRegistry();
+    const credentials = registry.createRoom();
+    const room = registry.getRoom(credentials.code);
+    if (room === undefined) {
+      throw new Error("created room is missing from the registry");
+    }
+    const host = new FakePeer();
+    const controller = new FakePeer();
+    expect(registry.hostJoin(credentials.code, credentials.hostToken, host)).toEqual({ ok: true });
+    const joined = registry.join({ code: credentials.code, pin: credentials.pin }, controller);
+    if (!joined.ok) {
+      throw new Error(`controller join failed: ${joined.reason}`);
+    }
+    controller.sent.length = 0;
+
+    // Only the live host may pause; controllers see the A9 status.
+    expect(registry.hostPause(credentials.code, new FakePeer())).toBe(false);
+    expect(registry.hostPause(credentials.code, host)).toBe(true);
+    expect(controller.jsonMessages()).toEqual([{ t: "hostStatus", state: "paused" }]);
+
+    host.sent.length = 0;
+    registry.routeInput(credentials.code, joined.slot, input({ edges: 0b1 }));
+    expect(host.binaryFrames()).toHaveLength(0);
+    expect(room.controllers.get(joined.slot)?.drops).toBe(1);
+
+    expect(registry.hostResume(credentials.code, host)).toBe(true);
+    expect(controller.jsonMessages()).toContainEqual({ t: "hostStatus", state: "active" });
+    registry.routeInput(credentials.code, joined.slot, input({ tick: 7, edges: 0b1 }));
+    expect(host.binaryFrames()).toHaveLength(1);
+    const forwarded = host.binaryFrames()[0];
+    if (forwarded === undefined) {
+      throw new Error("input was not forwarded after resume");
+    }
+    expect(decodeInputFwd(forwarded)).toMatchObject({ slot: joined.slot, state: { tick: 7 } });
+
+    // FR-7.14: the shared collector sees the forwarded and dropped frames.
+    expect(registry.statsCollector().collect(room, clock.now())).toEqual([
+      expect.objectContaining({ slot: joined.slot, packetsPerSecond: 2, drops: 1 }),
+    ]);
+  });
+
+  test("[FR-7.16][A9][G4] registry host loss recovers inside 30 s and expires afterwards", () => {
+    const { registry, clock } = makeRegistry();
+    const credentials = registry.createRoom();
+    const room = registry.getRoom(credentials.code);
+    if (room === undefined) {
+      throw new Error("created room is missing from the registry");
+    }
+    const host = new FakePeer();
+    const controller = new FakePeer();
+    expect(registry.hostJoin(credentials.code, credentials.hostToken, host)).toEqual({ ok: true });
+    const joined = registry.join({ code: credentials.code, pin: credentials.pin }, controller);
+    if (!joined.ok) {
+      throw new Error(`controller join failed: ${joined.reason}`);
+    }
+    controller.sent.length = 0;
+
+    expect(registry.hostLeave(credentials.code, host)).toBe(true);
+    expect(room.state).toBe("hostLost");
+    expect(controller.jsonMessages()).toEqual([{ t: "hostStatus", state: "lost" }]);
+
+    // A reload just inside the reservation resumes without a duplicate replay.
+    clock.advance(HOST_RESERVATION_MS - 1);
+    const resumedHost = new FakePeer();
+    expect(registry.hostJoin(credentials.code, credentials.hostToken, resumedHost)).toEqual({
+      ok: true,
+    });
+    expect(room.state).toBe("active");
+    expect(controller.jsonMessages()).toEqual([
+      { t: "hostStatus", state: "lost" },
+      { t: "hostStatus", state: "active" },
+    ]);
+    expect(
+      resumedHost.jsonMessages().filter((message) => message.t === "playerJoined"),
+    ).toEqual([{ t: "playerJoined", slot: joined.slot }]);
+
+    // A second loss that is not recovered expires the room on the next sweep.
+    expect(registry.hostLeave(credentials.code, resumedHost)).toBe(true);
+    clock.advance(HOST_RESERVATION_MS);
+    registry.sweep();
+
+    expect(registry.getRoom(credentials.code)).toBeUndefined();
+    expect(registry.roomCount()).toBe(0);
+    expect(controller.jsonMessages()).toContainEqual({ t: "kick", reason: "hostLost" });
+    expect(controller.closes).toEqual([{ code: 1000, reason: "host lost" }]);
+  });
+
+  test("[SR-5][FR-5.6] the limiter runs before token and PIN comparison", () => {
+    const { registry, clock } = makeRegistry({
+      rateLimiter: createJoinRateLimiter({
+        maxAttempts: 1,
+        windowMs: 60_000,
+        lockoutMs: 1_000,
+      }),
+    });
+    const credentials = registry.createRoom();
+    const peer = new FakePeer({ remoteAddress: "10.0.0.9" });
+    const otherPeer = new FakePeer({ remoteAddress: "10.0.0.10" });
+    const wrongToken =
+      (credentials.roomToken[0] === "A" ? "B" : "A") + credentials.roomToken.slice(1);
+
+    // A wrong token locks the IP immediately (maxAttempts 1).
+    expect(registry.join({ code: credentials.code, token: wrongToken }, peer)).toEqual({
+      ok: false,
+      reason: "badToken",
+    });
+    // The correct token is refused while locked out: the limiter precedes the
+    // credential comparison, so a lockout cannot be bypassed by guessing right.
+    expect(registry.join({ code: credentials.code, token: credentials.roomToken }, peer)).toEqual({
+      ok: false,
+      reason: "rateLimited",
+    });
+    // Another IP is unaffected by this peer's lockout.
+    expect(
+      registry.join({ code: credentials.code, token: credentials.roomToken }, otherPeer),
+    ).toMatchObject({ ok: true });
+
+    clock.advance(1_000);
+    expect(
+      registry.join({ code: credentials.code, token: credentials.roomToken }, peer),
+    ).toMatchObject({ ok: true });
+  });
+
+  test("[FR-7.14][G4] one stats collector per registry records forwarded input", () => {
+    const { registry, clock } = makeRegistry();
+    const credentials = registry.createRoom();
+    const host = new FakePeer();
+    expect(registry.hostJoin(credentials.code, credentials.hostToken, host)).toEqual({ ok: true });
+    const joined = registry.join({ code: credentials.code, pin: credentials.pin }, new FakePeer());
+    if (!joined.ok) {
+      throw new Error(`controller join failed: ${joined.reason}`);
+    }
+    const room = registry.getRoom(credentials.code);
+    if (room === undefined) {
+      throw new Error("created room is missing from the registry");
+    }
+
+    expect(registry.statsCollector()).toBe(registry.statsCollector());
+    registry.routeInput(credentials.code, joined.slot, input({ tick: 1 }));
+    registry.routeInput(credentials.code, joined.slot, input({ tick: 2 }));
+
+    expect(registry.statsCollector().collect(room, clock.now())).toEqual([
+      expect.objectContaining({ slot: joined.slot, packetsPerSecond: 2, drops: 0 }),
+    ]);
   });
 });

@@ -1,9 +1,16 @@
 /**
- * @lanpad/sdk layout validator (D2-LAYOUT-01; FR-8.4, FR-7.7, FR-8.3, AR-5).
+ * @lanpad/sdk layout validator (D2-LAYOUT-01, D5-SDK-01; FR-8.1, FR-8.4,
+ * FR-7.7, FR-8.10, SR-13, AR-5).
  *
  * The same pure function runs on the host and on the controller: a layout is
  * only rendered after it passes here, so neither side trusts the other's
  * parsing. There is no DOM, network or dependency use.
+ *
+ * D5 adds the cross-control rules the controller depends on for hot-swap and
+ * private panels: a gyro control needs a non-gyro fallback (FR-8.10 groundwork),
+ * and every event name must match the wire-safe pattern (SR-13) in addition to
+ * the 64-character limit. Event names may be shared across controls; use
+ * `layoutEventNames` for the layout-wide list.
  *
  * Error strings are stable and field-addressed (`controls[2].bit: ...`) so the
  * host and controller can surface the same message and tests can lock them.
@@ -13,6 +20,7 @@
  */
 
 import { tryParseLength, type LayoutDocument } from "./layout.js";
+import { isValidEventName } from "./ugc.js";
 
 const MAX_LAYOUT_BYTES = 16_384;
 const MIN_CONTROLS = 1;
@@ -43,6 +51,25 @@ const CONTROL_TYPES = new Set([
   "text",
   "canvas",
 ]);
+
+/**
+ * Control types that can act as the non-gyro fallback required by FR-8.10.
+ * `panel` is display-only, so a panel does not make a gyro layout playable.
+ */
+const FALLBACK_CONTROL_TYPES = new Set([
+  "button",
+  "dpad",
+  "stick",
+  "trigger",
+  "touchpad",
+  "slider",
+  "choice",
+  "text",
+  "canvas",
+]);
+
+/** Text of the shared event-name rule (D5-SEC-01; SR-13). */
+const EVENT_NAME_RULE = "^[a-zA-Z][a-zA-Z0-9_.-]{0,63}$";
 
 const ORIENTATIONS = ["portrait", "landscape", "any"] as const;
 const BUTTON_SHAPES = ["circle", "rounded", "square"] as const;
@@ -137,6 +164,32 @@ function validateStringField(
     }
   }
   return value;
+}
+
+/**
+ * Validates an event name: 1..64 characters and the wire-safe pattern shared
+ * with the event queue (SR-13). Length errors are reported first so existing
+ * field-addressed messages stay stable.
+ */
+function validateEventField(
+  record: UnknownRecord,
+  path: string,
+  errors: string[],
+): string | undefined {
+  const label = fieldLabel(path, "event");
+  const event = validateStringField(record, "event", path, errors, {
+    min: MIN_EVENT_CHARS,
+    max: MAX_EVENT_CHARS,
+  });
+
+  if (event === undefined) {
+    return undefined;
+  }
+  if (!isValidEventName(event)) {
+    errors.push(`${label}: must match ${EVENT_NAME_RULE}`);
+    return undefined;
+  }
+  return event;
 }
 
 function validateEnumField<T extends string>(
@@ -370,10 +423,7 @@ function validateChoice(
 ): void {
   validateLengthField(control, "w", path, errors);
   validateLengthField(control, "h", path, errors);
-  validateStringField(control, "event", path, errors, {
-    min: MIN_EVENT_CHARS,
-    max: MAX_EVENT_CHARS,
-  });
+  validateEventField(control, path, errors);
 
   const options = control.options;
   if (options === undefined) {
@@ -547,10 +597,7 @@ function validateControl(
     case "text": {
       validateLengthField(control, "w", path, errors);
       validateLengthField(control, "h", path, errors);
-      validateStringField(control, "event", path, errors, {
-        min: MIN_EVENT_CHARS,
-        max: MAX_EVENT_CHARS,
-      });
+      validateEventField(control, path, errors);
       if (!isIntegerInRange(control.maxLen, MIN_TEXT_LEN, MAX_TEXT_LEN)) {
         if (control.maxLen === undefined) {
           errors.push(`${path}.maxLen: required`);
@@ -566,10 +613,7 @@ function validateControl(
     case "canvas": {
       validateLengthField(control, "w", path, errors);
       validateLengthField(control, "h", path, errors);
-      validateStringField(control, "event", path, errors, {
-        min: MIN_EVENT_CHARS,
-        max: MAX_EVENT_CHARS,
-      });
+      validateEventField(control, path, errors);
       const maxStrokePoints = control.maxStrokePoints;
       if (
         maxStrokePoints !== undefined &&
@@ -677,6 +721,30 @@ export function validateLayout(
         channelOwners,
       );
     }
+
+    // FR-8.10 groundwork: a motion layout is only playable when the same
+    // layout also offers a non-gyro input control. D6 enforces the runtime
+    // fallback flow; the validator rejects documents that can never fall back.
+    const gyroPaths: string[] = [];
+    let hasFallback = false;
+    for (let index = 0; index < controls.length; index += 1) {
+      const control = controls[index];
+      if (!isRecord(control) || typeof control.type !== "string") {
+        continue;
+      }
+      if (control.type === "gyro") {
+        gyroPaths.push(`controls[${index}]`);
+      } else if (FALLBACK_CONTROL_TYPES.has(control.type)) {
+        hasFallback = true;
+      }
+    }
+    if (!hasFallback) {
+      for (const path of gyroPaths) {
+        errors.push(
+          `${path}.type: gyro control requires a non-gyro fallback control in the same layout`,
+        );
+      }
+    }
   }
 
   validateSensors(value.sensors, errors);
@@ -684,4 +752,27 @@ export function validateLayout(
   return errors.length > 0
     ? { ok: false, errors }
     : { ok: true, layout: value as unknown as LayoutDocument };
+}
+
+/**
+ * Returns the layout-wide list of event names emitted by `choice`, `text` and
+ * `canvas` controls, unique and in document order. Names may be shared (for
+ * example several answer inputs); `panel` is display-only in v1 and never
+ * contributes an event name.
+ */
+export function layoutEventNames(layout: LayoutDocument): string[] {
+  const names: string[] = [];
+  const seen = new Set<string>();
+
+  for (const control of layout.controls) {
+    if (control.type !== "choice" && control.type !== "text" && control.type !== "canvas") {
+      continue;
+    }
+    if (!seen.has(control.event)) {
+      seen.add(control.event);
+      names.push(control.event);
+    }
+  }
+
+  return names;
 }

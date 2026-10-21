@@ -4,7 +4,12 @@
  */
 import { expect } from "vitest";
 import { parseJsonMessage, type JsonControlMessage } from "@lanpad/protocol";
-import { RoomRegistry, type JoinRateLimiter, type Logger, type Peer } from "../src/index.js";
+import {
+  RoomRegistry,
+  type Logger,
+  type Peer,
+  type RegistryJoinRateLimiter,
+} from "../src/index.js";
 
 /** One structured log call captured by the test logger. */
 export interface LogCall {
@@ -108,7 +113,7 @@ export interface RegistryHarness {
 export interface RegistryOptions {
   seed?: number;
   maxBufferedBytes?: number;
-  rateLimiter?: JoinRateLimiter;
+  rateLimiter?: RegistryJoinRateLimiter;
 }
 
 export function makeRegistry(options: RegistryOptions = {}): RegistryHarness {
