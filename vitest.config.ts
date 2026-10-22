@@ -24,6 +24,7 @@ export default defineConfig({
       nodeProject("packages/broker"),
       nodeProject("packages/dev-server"),
       nodeProject("packages/games/reaction-duel"),
+      nodeProject("packages/games/platformer"),
       nodeProject("packages/runtime"),
       {
         root: "packages/controller",

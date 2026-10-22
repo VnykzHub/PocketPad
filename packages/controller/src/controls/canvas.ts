@@ -36,6 +36,8 @@ import type { TouchBinding } from "../touch/touchEngine.js";
 export const DEFAULT_STROKE_COLOR = "#ffffff";
 /** Default ink width in CSS pixels. */
 export const DEFAULT_STROKE_WIDTH = 6;
+/** Empty-state copy (CP-17). The stylesheet draws the frame, never the words. */
+export const CANVAS_EMPTY_LABEL = "Draw here";
 
 const MAX_STROKE_WIDTH = 32;
 const MIN_STROKE_WIDTH = 1;
@@ -82,12 +84,13 @@ export function createCanvasControl(
   element.classList.add("control", "control-canvas");
   element.setAttribute("role", "application");
   element.setAttribute("aria-label", "drawing canvas");
-  element.style.overflow = "hidden";
-  element.style.borderRadius = "12px";
-  element.style.background = "rgba(0, 0, 0, 0.25)";
-  element.style.border = "1px solid rgba(255, 255, 255, 0.30)";
+  element.classList.add("is-empty");
   element.dataset["strokeColor"] = ink.color;
   element.dataset["strokeWidth"] = String(ink.width);
+  element.dataset["emptyLabel"] = CANVAS_EMPTY_LABEL;
+
+  const empty = createPart("span", "empty");
+  empty.textContent = CANVAS_EMPTY_LABEL;
 
   const canvas = createPart("canvas", "canvas");
   const ratio =
@@ -98,11 +101,7 @@ export function createCanvasControl(
       : 1;
   canvas.width = Math.max(1, Math.round(box.width * ratio));
   canvas.height = Math.max(1, Math.round(box.height * ratio));
-  canvas.style.display = "block";
-  canvas.style.width = "100%";
-  canvas.style.height = "100%";
-  canvas.style.pointerEvents = "none";
-  element.append(canvas);
+  element.append(empty, canvas);
 
   let context: CanvasRenderingContext2D | null = null;
   try {
@@ -185,7 +184,6 @@ export function createCanvasControl(
     }
     pressed = active;
     setPressedClass(element, active);
-    element.style.opacity = active ? "0.96" : "1";
     notifyDebugState(ctx, control.id, active);
   };
 
@@ -212,6 +210,7 @@ export function createCanvasControl(
       applyVisual(true);
       const point = batcher.begin(binding.startX, binding.startY, box);
       if (point !== null) {
+        element.classList.remove("is-empty");
         drawDot(point);
         lastPoint = point;
       }

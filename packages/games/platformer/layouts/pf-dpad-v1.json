@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "pf-dpad-v1",
+  "orientation": "landscape",
+  "background": "#101014",
+  "controls": [
+    {
+      "type": "dpad",
+      "id": "move",
+      "x": "18%",
+      "y": "66%",
+      "size": "36%",
+      "bits": {
+        "up": 8,
+        "down": 9,
+        "left": 10,
+        "right": 11
+      }
+    },
+    {
+      "type": "button",
+      "id": "jump",
+      "x": "84%",
+      "y": "68%",
+      "label": "Jump",
+      "symbol": "↑",
+      "shape": "circle",
+      "r": "16%",
+      "bit": 0
+    }
+  ]
+}

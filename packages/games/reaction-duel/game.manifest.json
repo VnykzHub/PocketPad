@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "name": "Reaction Duel",
+  "description": "Match the signal. First to three rounds wins.",
   "entry": "index.js",
   "layouts": ["layouts/rd-four-button-v1.json"],
   "assetBudget": {

@@ -14,9 +14,9 @@
  * - the press packet leaves in the same call as `touchstart`, so the send
  *   policy adds no waiting for the next cadence tick (G2).
  *
- * jsdom is enough for the DOM assertions because the renderer writes classes
- * and `transform`/`opacity` synchronously; real-device same-frame capture is
- * the manual half of D2-QA-01.
+ * jsdom is enough for the DOM assertions because the renderer toggles the
+ * pressed-state class synchronously (styles.css owns the fill and scale);
+ * real-device same-frame capture is the manual half of D2-QA-01.
  */
 import { describe, expect, it } from "vitest";
 import type { ButtonControl } from "@lanpad/sdk";
@@ -236,10 +236,12 @@ describe("[FR-8.7] same-frame feedback", () => {
     button.onTouchStart(binding());
 
     // No await, timer advance or animation frame sits between the handler and
-    // these assertions: this is the state visible during the touch event.
+    // these assertions: this is the state visible during the touch event. The
+    // pressed fill/scale is a stylesheet rule on `.is-pressed`, so the class is
+    // the visual state the handler writes.
     expect(button.element.classList.contains("is-pressed")).toBe(true);
-    expect(button.element.style.transform).toContain("scale(0.92)");
-    expect(button.element.style.opacity).toBe("0.72");
+    expect(button.element.style.transform).toBe("");
+    expect(button.element.style.opacity).toBe("");
     expect(button.element.getAttribute("aria-pressed")).toBe("true");
     expect(harness.store.snapshot(0).buttons).toBe(JUMP_BIT);
     // The feedback never waits for the network: the packet is already out.
@@ -249,7 +251,6 @@ describe("[FR-8.7] same-frame feedback", () => {
     button.onTouchEnd(binding());
 
     expect(button.element.classList.contains("is-pressed")).toBe(false);
-    expect(button.element.style.transform).toContain("scale(1)");
     expect(button.element.getAttribute("aria-pressed")).toBe("false");
     expect(harness.store.snapshot(0).buttons).toBe(0);
 

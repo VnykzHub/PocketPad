@@ -8,8 +8,14 @@ import { describe, expect, it } from "vitest";
 import type { ButtonControl, Control, DpadControl, StickControl } from "@lanpad/sdk";
 import { InputStore } from "../src/input/InputStore.js";
 import {
+  applyControlClasses,
   clampTouchTarget,
   controlHitRect,
+  makeControlFocusable,
+  PRESSED_CLASS,
+  setDisabled,
+  setPressed,
+  setUnavailable,
   type ControlContext,
   type ControlRenderer,
   type SurfaceSize,
@@ -89,9 +95,11 @@ describe("[FR-8.7] same-frame pressed state", () => {
 
     // Everything below is asserted after the handler returns with no frame
     // boundary in between: the state was visible during the event (FR-8.7).
+    // The press fill/scale is a stylesheet rule on `.is-pressed`; the renderer
+    // only toggles the class, so there is no inline colour or opacity.
     expect(renderer.element.classList.contains("is-pressed")).toBe(true);
-    expect(renderer.element.style.transform).toContain("scale(0.92)");
-    expect(renderer.element.style.opacity).toBe("0.72");
+    expect(renderer.element.style.transform).toBe("");
+    expect(renderer.element.style.opacity).toBe("");
     expect(renderer.element.getAttribute("aria-pressed")).toBe("true");
     expect(ctx.input.snapshot(0).buttons).toBe(1 << BUTTON.bit);
     expect(ctx.input.snapshot(0).edges).toBe(1 << BUTTON.bit);
@@ -100,7 +108,6 @@ describe("[FR-8.7] same-frame pressed state", () => {
     renderer.onTouchEnd(touch);
 
     expect(renderer.element.classList.contains("is-pressed")).toBe(false);
-    expect(renderer.element.style.transform).toContain("scale(1)");
     expect(ctx.input.snapshot(0).buttons).toBe(0);
     // The press edge survives the release until the host polls it (FR-7.3).
     expect(ctx.input.snapshot(0).edges).toBe(1 << BUTTON.bit);
@@ -140,8 +147,13 @@ describe("[FR-8.1] controls render and map from layout data", () => {
     expect(button.element.style.top).toBe("236px");
     expect(button.element.style.width).toBe("88px");
     expect(button.element.style.height).toBe("88px");
-    expect(button.element.style.borderRadius).toBe("50%");
+    expect(button.element.dataset["shape"]).toBe("circle");
     expect(part(button, "label").textContent).toBe("Jump");
+    // Visual state lives in styles.css; the renderer emits classes and shape
+    // data only, never inline colours or opacity.
+    expect(button.element.style.background).toBe("");
+    expect(button.element.style.border).toBe("");
+    expect(button.element.style.opacity).toBe("");
 
     expect(dpad.element.dataset["controlType"]).toBe("dpad");
     expect(dpad.element.style.left).toBe("100px");
@@ -151,7 +163,16 @@ describe("[FR-8.1] controls render and map from layout data", () => {
     for (const direction of ["up", "right", "down", "left"]) {
       const zone = part(dpad, `zone-${direction}`);
       expect(zone.dataset["direction"]).toBe(direction);
+      const glyph = zone.querySelector<HTMLElement>('[data-part="glyph"]');
+      // The arrow is drawn (clip-path), not a text or emoji glyph (CP-08).
+      expect(glyph?.getAttribute("aria-hidden")).toBe("true");
+      expect(glyph?.textContent).toBe("");
+      expect(glyph?.style.clipPath).toContain("polygon");
+      // Pressed state is the class; wedges carry no inline fill or opacity.
+      expect(zone.style.opacity).toBe("");
+      expect(zone.style.background).toBe("");
     }
+    expect(part(dpad, "hub")).not.toBeNull();
 
     expect(stick.element.dataset["controlType"]).toBe("stick");
     expect(stick.element.style.left).toBe("300px");
@@ -166,6 +187,26 @@ describe("[FR-8.1] controls render and map from layout data", () => {
       "move",
       "look",
     ]);
+  });
+
+  it("[FR-8.1] a layout symbol becomes a drawn glyph beside the required label", () => {
+    const ctx = freshContext();
+    const withSymbol = { ...BUTTON, id: "sym", label: "A", symbol: "▲" } as ButtonControl & {
+      symbol: string;
+    };
+    const renderer = createControl(withSymbol, ctx);
+
+    const glyph = part(renderer, "symbol");
+    expect(glyph.textContent).toBe("");
+    expect(glyph.getAttribute("aria-hidden")).toBe("true");
+    expect(glyph.style.clipPath).toContain("polygon");
+    expect(part(renderer, "label").textContent).toBe("A");
+    // The glyph is decorative; the required label remains the accessible name.
+    expect(renderer.element.getAttribute("aria-label")).toBe("A");
+
+    // A layout without a symbol gets no glyph element at all.
+    const plain = createControl(BUTTON, ctx);
+    expect(plain.element.querySelector('[data-part="symbol"]')).toBeNull();
   });
 
   it("[FR-8.1] dpad cardinal presses set one bit and diagonals set exactly two", () => {
@@ -207,10 +248,12 @@ describe("[FR-8.1] controls render and map from layout data", () => {
     const floating: StickControl = { ...STICK, id: "float", mode: "floating" };
     const floatingRenderer = createControl(floating, freshContext());
     const floatBase = part(floatingRenderer, "base");
-    expect(floatBase.style.opacity).toBe("0");
+    // A floating base is not mounted visually until the first touch (CP-09);
+    // that is the `hidden` state, not an inline opacity.
+    expect(floatBase.hidden).toBe(true);
 
     floatingRenderer.onTouchStart(binding(1, "float", 300, 150));
-    expect(floatBase.style.opacity).toBe("1");
+    expect(floatBase.hidden).toBe(false);
     // Layout center is (400, 200); the base moved (-100, -50) to the touch.
     expect(floatBase.style.transform).toBe(
       "translate(-50%, -50%) translate3d(-100px, -50px, 0)",
@@ -341,9 +384,13 @@ describe("[FR-8.3] feedback stays on transform and opacity", () => {
     expect(boxStyle(dpad.element)).toEqual(dpadBox);
     expect(boxStyle(stick.element)).toEqual(stickBox);
 
-    // Pressed feedback is expressed with transform/opacity on the control or
-    // its parts, and the knob moved through transform only.
-    expect(button.element.style.transform).toContain("scale(1)");
+    // Button and d-pad feedback is the `is-pressed` class; styles.css applies
+    // the scale and fill, so the renderer writes no inline transform/opacity.
+    // The stick knob still moves through a transform only.
+    expect(button.element.classList.contains("is-pressed")).toBe(false);
+    expect(dpad.element.classList.contains("is-pressed")).toBe(false);
+    expect(button.element.style.transform).toBe("");
+    expect(dpad.element.style.transform).toBe("");
     expect(part(stick, "knob").style.transform).toContain("translate3d");
     expect(part(stick, "knob").style.transition).toContain("120ms");
   });
@@ -445,5 +492,74 @@ describe("[FR-8.2] layout hot-swap", () => {
     const renderer = createControl(gyro, ctx);
     expect(renderer.id).toBe("aim");
     expect(builtId).toBe("aim");
+  });
+});
+
+describe("[FR-8.1] shared control grammar", () => {
+  it("[FR-8.1] applyControlClasses adds the base and per-type classes idempotently", () => {
+    const element = document.createElement("div");
+
+    applyControlClasses(element, "dpad");
+    applyControlClasses(element, "dpad");
+
+    expect(element.className).toBe("control control-dpad");
+    expect(element.classList.contains(PRESSED_CLASS)).toBe(false);
+  });
+
+  it("[FR-8.1] setPressed toggles only the shared press class", () => {
+    const element = document.createElement("div");
+    applyControlClasses(element, "button");
+
+    setPressed(element, true);
+    expect(element.classList.contains(PRESSED_CLASS)).toBe(true);
+    expect(element.classList.contains("control-button")).toBe(true);
+
+    setPressed(element, false);
+    expect(element.classList.contains(PRESSED_CLASS)).toBe(false);
+  });
+
+  it("[FR-8.1] disabled and unavailable are independent states sharing aria-disabled", () => {
+    const element = document.createElement("div");
+    applyControlClasses(element, "gyro");
+
+    setDisabled(element, true);
+    expect(element.classList.contains("is-disabled")).toBe(true);
+    expect(element.getAttribute("aria-disabled")).toBe("true");
+
+    // Switching disabled off leaves the separately applied unavailable state.
+    setUnavailable(element, true);
+    setDisabled(element, false);
+    expect(element.classList.contains("is-disabled")).toBe(false);
+    expect(element.classList.contains("is-unavailable")).toBe(true);
+    expect(element.getAttribute("aria-disabled")).toBe("true");
+
+    setUnavailable(element, false);
+    expect(element.getAttribute("aria-disabled")).toBeNull();
+  });
+
+  it("[FR-8.1] disabling a pressed control drops the stale press visual", () => {
+    const element = document.createElement("div");
+    setPressed(element, true);
+
+    setDisabled(element, true);
+    expect(element.classList.contains(PRESSED_CLASS)).toBe(false);
+
+    setDisabled(element, false);
+    expect(element.classList.contains(PRESSED_CLASS)).toBe(false);
+  });
+
+  it("[FR-8.1] makeControlFocusable adds a tab stop only where none exists", () => {
+    const div = document.createElement("div");
+    makeControlFocusable(div);
+    expect(div.tabIndex).toBe(0);
+
+    const nativeButton = document.createElement("button");
+    makeControlFocusable(nativeButton);
+    expect(nativeButton.hasAttribute("tabindex")).toBe(false);
+
+    const programmaticOnly = document.createElement("div");
+    programmaticOnly.tabIndex = -1;
+    makeControlFocusable(programmaticOnly);
+    expect(programmaticOnly.tabIndex).toBe(-1);
   });
 });

@@ -1,5 +1,6 @@
 /**
- * Touchpad control renderer (D5-CTRL-01; FR-8.1, FR-8.3, FR-8.7, FR-7.7, AR-5).
+ * Touchpad control renderer (D5-CTRL-01; CP-12; FR-8.1, FR-8.3, FR-8.7,
+ * FR-7.7, AR-5).
  *
  * Maps the absolute touch position to `rx`/`ry` i16 values in
  * [-32767, 32767]: the box center is (0, 0), the right edge is +32767 on x and
@@ -14,16 +15,23 @@
  * snap, so it pre-inverts that curve: feeding `0.08 + s * 0.92` along the
  * touch direction makes the store encode exactly `s * 32767`. That keeps the
  * pad linear without adding a second, pad-specific path through the store.
+ *
+ * Visual contract (CP-12): the element carries `.control` +
+ * `.control-touchpad` and `.is-pressed`; `styles.css` owns the pad surface,
+ * both crosshair axes, the trail and the pressed knob colour. The renderer
+ * owns geometry only — two crosshair lines, an 18% knob, a 1px trail from the
+ * centre to the knob and the `Look` label.
  */
 import type { TouchpadControl } from "@lanpad/sdk";
 import type { InputState } from "@lanpad/protocol";
 import { DEFAULT_STICK_DEADZONE, MAX_AXIS_VALUE } from "../input/InputStore.js";
 import {
+  applyControlClasses,
   applyControlElementStyle,
   createPart,
   measureControl,
   notifyDebugState,
-  setPressedClass,
+  setPressed,
   type ControlContext,
   type ControlRenderer,
 } from "./control.js";
@@ -31,10 +39,9 @@ import type { TouchBinding } from "../touch/touchEngine.js";
 
 /** Radial fraction of the half-extent that snaps to dead center. */
 const CENTER_SNAP_RATIO = 0.02;
-const IDLE_OPACITY = "0.85";
-const PRESSED_OPACITY = "1";
 const CENTER_TRANSFORM = "translate(-50%, -50%)";
 const KNOB_RETURN_TRANSITION = "transform 120ms ease-out";
+const KNOB_SCALE = "18%";
 
 interface EncodedAxis {
   x: number;
@@ -72,38 +79,34 @@ export function createTouchpadControl(
 
   const element = document.createElement("div");
   applyControlElementStyle(element, control, box, ctx);
-  element.classList.add("control", "control-touchpad");
+  applyControlClasses(element, "touchpad");
   element.setAttribute("role", "application");
   element.setAttribute("aria-label", "touchpad");
-  element.style.borderRadius = "14px";
-  element.style.background = "rgba(255, 255, 255, 0.07)";
-  element.style.border = "1px solid rgba(255, 255, 255, 0.30)";
-  element.style.overflow = "hidden";
 
-  const crosshair = createPart("div", "crosshair");
-  crosshair.style.position = "absolute";
-  crosshair.style.left = "50%";
-  crosshair.style.top = "50%";
-  crosshair.style.width = "1px";
-  crosshair.style.height = "100%";
-  crosshair.style.background = "rgba(255, 255, 255, 0.14)";
-  crosshair.style.transform = "translate(-50%, 0)";
-  crosshair.style.pointerEvents = "none";
-  element.append(crosshair);
+  const crosshairX = createPart("div", "crosshair-x");
+  element.append(crosshairX);
+
+  const crosshairY = createPart("div", "crosshair-y");
+  element.append(crosshairY);
+
+  const radiusX = box.width / 2;
+  const radiusY = box.height / 2;
+  const maxTrailLength = Math.hypot(radiusX, radiusY);
+
+  const trail = createPart("div", "trail");
+  trail.style.width = `${maxTrailLength}px`;
+  trail.hidden = true;
+  element.append(trail);
 
   const knob = createPart("div", "knob");
-  knob.style.position = "absolute";
-  knob.style.left = "50%";
-  knob.style.top = "50%";
-  knob.style.width = "18%";
-  knob.style.height = "18%";
-  knob.style.borderRadius = "50%";
-  knob.style.background = "rgba(255, 255, 255, 0.45)";
-  knob.style.border = "1px solid rgba(255, 255, 255, 0.65)";
+  knob.style.width = KNOB_SCALE;
+  knob.style.height = KNOB_SCALE;
   knob.style.transform = CENTER_TRANSFORM;
-  knob.style.opacity = IDLE_OPACITY;
-  knob.style.pointerEvents = "none";
   element.append(knob);
+
+  const label = createPart("span", "label");
+  label.textContent = "Look";
+  element.append(label);
 
   let activeIdentifier: number | null = null;
   let axisX = 0;
@@ -115,8 +118,8 @@ export function createTouchpadControl(
       return;
     }
     pressed = active;
-    setPressedClass(element, active);
-    knob.style.opacity = active ? PRESSED_OPACITY : IDLE_OPACITY;
+    setPressed(element, active);
+    trail.hidden = !active;
     notifyDebugState(ctx, control.id, active);
   };
 
@@ -143,10 +146,16 @@ export function createTouchpadControl(
       ctx.input.setAxis("ry", y * feed);
     }
 
-    const radiusX = box.width / 2;
-    const radiusY = box.height / 2;
+    const knobX = x * radiusX;
+    const knobY = y * radiusY;
     knob.style.transition = "none";
-    knob.style.transform = `${CENTER_TRANSFORM} translate3d(${(x * radiusX).toFixed(2)}px, ${(y * radiusY).toFixed(2)}px, 0)`;
+    knob.style.transform = `${CENTER_TRANSFORM} translate3d(${knobX.toFixed(2)}px, ${knobY.toFixed(2)}px, 0)`;
+
+    const trailLength = Math.hypot(knobX, knobY);
+    const trailAngle = Math.atan2(knobY, knobX);
+    trail.style.transform =
+      `translate(0, -50%) rotate(${trailAngle.toFixed(4)}rad) ` +
+      `scaleX(${(trailLength / maxTrailLength).toFixed(4)})`;
   };
 
   const release = (binding: TouchBinding): void => {
@@ -206,6 +215,7 @@ export function createTouchpadControl(
       ctx.input.setAxis("rx", 0);
       ctx.input.setAxis("ry", 0);
       applyVisual(false);
+      trail.hidden = true;
       element.remove();
     },
   };

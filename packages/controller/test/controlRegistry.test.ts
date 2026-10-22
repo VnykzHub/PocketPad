@@ -513,6 +513,12 @@ describe("[FR-8.7] same-frame analog feedback", () => {
 
     expect(part(renderer, "fill").style.transform).toBe("scaleX(0.5)");
     expect(ctx.input.snapshot(0).rt).toBe(128);
+    // CP-11: the 32 px thumb and the channel/value readout follow the value.
+    expect(part(renderer, "thumb").style.transform).toContain("translate3d(104px");
+    expect(part(renderer, "label").textContent).toBe("RT 50%");
+
+    renderer.onTouchEnd(binding(1, "power", 400, 40));
+    expect(part(renderer, "label").textContent).toBe("RT");
   });
 });
 
@@ -600,8 +606,11 @@ describe("[FR-8.3] feedback and scrolling stay on transform/opacity", () => {
 
     expect(part(trigger, "fill").style.transform).toContain("scaleY");
     expect(part(slider, "fill").style.transform).toContain("scaleX");
-    expect(part(choice, "selection").style.opacity).toBe("1");
-    expect(part(choice, "selection").style.transform).toContain("translate3d");
+    const selectedOption = choice.element.querySelector<HTMLElement>(
+      '[data-part="option"][aria-selected="true"]',
+    );
+    expect(selectedOption?.classList.contains("is-selected")).toBe(true);
+    expect(part(choice, "list").style.transform).toContain("translate3d");
   });
 
   it("[FR-8.3] a choice drag scrolls by transform and selects nothing", () => {
@@ -617,7 +626,7 @@ describe("[FR-8.3] feedback and scrolling stay on transform/opacity", () => {
     expect(part(renderer, "list").style.transform).toContain("-80.00px");
   });
 
-  it("[FR-8.3] text and canvas press states use transform/opacity", () => {
+  it("[FR-8.3] text and canvas press states use the shared class and transform", () => {
     const { ctx } = freshContext();
     const text = createControl(TEXT, ctx);
     const canvas = createControl(CANVAS, ctx);
@@ -628,9 +637,13 @@ describe("[FR-8.3] feedback and scrolling stay on transform/opacity", () => {
     expect(part(text, "send").style.transform).toContain("scale(0.96)");
     text.onTouchEnd(binding(1, "answer", 540, 360));
 
+    // CP-17: the stylesheet owns the press visual; the renderer toggles the
+    // shared state class and leaves inline styling empty.
     canvas.onTouchStart(binding(2, "draw", 480, 40));
-    expect(canvas.element.style.opacity).toBe("0.96");
+    expect(canvas.element.classList.contains("is-pressed")).toBe(true);
+    expect(canvas.element.style.opacity).toBe("");
     canvas.onTouchEnd(binding(2, "draw", 480, 40));
+    expect(canvas.element.classList.contains("is-pressed")).toBe(false);
 
     expect(boxStyle(text.element)).toEqual(textBox);
     expect(boxStyle(canvas.element)).toEqual(canvasBox);
@@ -659,7 +672,9 @@ describe("[FR-8.1] choice behavior", () => {
     renderer.onTouchEnd(binding(2, "pick", 100, 170));
     expect(sink.events).toHaveLength(2);
     expect(sink.events[1]?.data).toEqual({ value: "b" });
-    expect(part(renderer, "selection").style.transform).toContain("44px");
+    expect(rows[1]?.getAttribute("aria-selected")).toBe("true");
+    expect(rows[1]?.classList.contains("is-selected")).toBe(true);
+    expect(rows[0]?.classList.contains("is-selected")).toBe(false);
 
     // Re-tapping the current selection is local state only.
     renderer.onTouchStart(binding(3, "pick", 100, 170));
@@ -681,6 +696,35 @@ describe("[FR-8.1] choice behavior", () => {
 
     expect(sink.events).toHaveLength(0);
     expect(renderer.element.querySelectorAll('[aria-selected="true"]')).toHaveLength(1);
+  });
+});
+
+describe("[CP-14] choice scroll affordance", () => {
+  it("[CP-14] shows a scrollbar only when the list overflows and clears the pressed row on drag", () => {
+    const { ctx } = freshContext();
+    const scrollable = createControl(CHOICE_MANY, ctx);
+    const scrollbar = part(scrollable, "scrollbar");
+
+    expect(scrollbar.hidden).toBe(false);
+    expect(scrollable.element.dataset["scrollable"]).toBe("true");
+    // 92 px of track (96 px box minus the 2 px insets) over 176 px of rows:
+    // a 48.09 px thumb with 43.91 px travel.
+    expect(scrollbar.style.height).toBe("48.09px");
+
+    const rows = scrollable.element.querySelectorAll<HTMLElement>('[data-part="option"]');
+    scrollable.onTouchStart(binding(1, "pick-many", 100, 120));
+    expect(rows[0]?.classList.contains("is-pressed")).toBe(true);
+
+    const beforeDrag = scrollbar.style.transform;
+    scrollable.onTouchMove(binding(1, "pick-many", 100, 40, 100, 120));
+    expect(rows[0]?.classList.contains("is-pressed")).toBe(false);
+    expect(scrollbar.style.transform).not.toBe(beforeDrag);
+    expect(scrollbar.style.transform).toContain("43.91px");
+    scrollable.onTouchEnd(binding(1, "pick-many", 100, 40, 100, 120));
+
+    const fixed = createControl(CHOICE, ctx);
+    expect(part(fixed, "scrollbar").hidden).toBe(true);
+    expect(fixed.element.dataset["scrollable"]).toBeUndefined();
   });
 });
 
@@ -905,8 +949,9 @@ describe("[FR-8.1] gyro placeholder", () => {
     expect(renderer.element.getAttribute("aria-disabled")).toBe("true");
 
     renderer.onTouchStart(binding(1, "tilt", 80, 80));
-    expect(renderer.element.style.transform).toContain("scale(0.96)");
+    expect(renderer.element.classList.contains("is-pressed")).toBe(true);
     renderer.onTouchEnd(binding(1, "tilt", 80, 80));
+    expect(renderer.element.classList.contains("is-pressed")).toBe(false);
 
     expect(sink.events).toHaveLength(0);
     const snapshot = ctx.input.snapshot(0);

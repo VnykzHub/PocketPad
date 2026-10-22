@@ -398,3 +398,110 @@ remain Open.
 The tracker reconciliation changed docs only. No code, root config or
 `docs/RESULTS.md` experiment row was edited by that work. TV, Android, LAN and
 iOS evidence remains PENDING.
+
+---
+
+## 12. Wave 6 — connected layout fix and Coin Run slice (2026-10-22)
+
+> **Status:** code in the working tree, **uncommitted**; this section is a docs
+> reconciliation written by the docs task. Added: the connected-flag fix and
+> the Coin Run platformer slice (`GAME-PF-01`..`05` code plus scoped tests;
+> `GAME-PF-06` PENDING). **No stage exit is claimed and the Dev Exit Gate has
+> not started.** No device, LAN or browser run was performed by this wave. The
+> §10.8 rules still apply.
+
+### 12.1 Root cause and the connected-layout fix
+
+**Symptom:** opening a phone controller for Reaction Duel showed the D0
+**Test** button instead of the game's four-button layout.
+
+**Root cause:** a phone's first controller packet carries `tick = 0` and an
+all-zero input state. Reaction Duel's old `isPresent` predicate required
+`tick > 0 || buttons !== 0 || edges !== 0 || axes !== 0`, so a freshly joined
+slot was never treated as present. `applyLayout` therefore never ran, the
+broker never sent `setLayout`, and the phone stayed on the default D0 control
+surface.
+
+**Fix (packet-driven presence, not an input heuristic):**
+
+1. `ControllerState` in `packages/runtime/src/input/types.ts` gains
+   `readonly connected: boolean`.
+2. `InputMapper.apply()` sets `record.connected = true` **before** the
+   tick-staleness check, so the first `tick = 0` packet already counts.
+   `pollAll()` publishes `state.connected = record.connected`;
+   `reset()`/`clearRecord()` clear it on disconnect.
+3. `GameControllerState` in `sdk/src/game-api.ts` mirrors
+   `readonly connected: boolean`.
+4. Reaction Duel replaces the `isPresent` heuristic with
+   `player.connected` and adds `addConnectedPlayer`, which calls
+   `model?.addPlayer(slot)`; a reconnect reuses the slot and keeps its score
+   (the old `reuseSlot` path reset it).
+5. Coin Run uses the same flag in `isConnectedSlot(player, maxPlayers)`:
+   a connection edge applies the slot layout once, disconnect clears the
+   layout and idles the body, and a later packet re-applies it.
+
+**Evidence:** `packages/runtime/test/inputMapper.test.ts` (25 tests,
+including tick-0 marks connected, an all-zero packet creates no edges, and
+reset clears the flag); `packages/games/reaction-duel/test/game.test.ts`
+(24 tests, 4 files / 73 total); Coin Run connectivity tests in
+`packages/games/platformer/test/game.test.ts` (`[FR-8.2]` tick-0 layout,
+disconnect/reconnect, disconnected-with-input is not present, throwing
+layouts API).
+
+### 12.2 Coin Run implementation map
+
+| Work item | Files | Status |
+|---|---|---|
+| `GAME-PF-01` package/manifest/layouts/route | `game.manifest.json`, `layouts/pf-dpad-v1.json`, `layouts/pf-stick-v1.json`, `src/game.ts`, `README.md` | Code + tests |
+| `GAME-PF-02` level/world | `src/level.ts`, `src/level-01.json`, `src/world.ts` | Code + tests |
+| `GAME-PF-03` input/player | `src/input.ts`, `src/player.ts`, `src/config.ts` | Code + tests |
+| `GAME-PF-04` rules/flow | local phase machine and score in `src/game.ts`, results content in `src/hud.ts` | Code + tests; deviations below |
+| `GAME-PF-05` camera/render/HUD | `src/camera.ts`, `src/render.ts`, `src/hud.ts` | Code + tests; deviations below |
+| `GAME-PF-06` replay/budgets/device run | — | **PENDING** (`test/replay.test.ts` does not exist) |
+
+Scoped test files: `game.test.ts` 19, `player.test.ts` 20, `level.test.ts`
+27, `camera.test.ts` 11, `layout.test.ts` 5, `manifest.test.ts` 4 — **6 files
+/ 86 tests, green.**
+
+**Deviations from the plan (recorded, not hidden):** no `src/index.ts` (the
+default export is in `src/game.ts`); no `rules.ts`/`rules.test.ts`; phases use
+a local `lobby → countdown(3000 ms) → playing → results` machine, not
+`RoundManager`; results are painted by the game, not `ResultsScreen`, and
+there is no Back callback; no edge arrows; no draw-call debug counter; no
+audio; no `render.test.ts`, `hud.test.ts` or `replay.test.ts`; the README
+still has stale `?game=platformer`/`packages/games/dist` lines.
+
+### 12.3 Scoped verification (this task)
+
+| Suite | Result |
+|---|---|
+| `packages/games/platformer` | 6 files / 86 tests, green |
+| `packages/runtime` selected — `inputMapper`, `gameRegistry`, `bundledGames`, `physics` | 4 files / 61 tests, green |
+| `packages/dev-server` — `gamesRoute` | 1 file / 16 tests, green |
+| `packages/games/reaction-duel` | 4 files / 73 tests, green |
+
+The **full `npm run check` was not run by this docs task**; the integration
+agent is authoritative. The last recorded full gate is §11: 113 test files /
+1,354 tests, build and size green, trace 0 missing / 0 unknown. No new number
+from this wave should be treated as a gate result.
+
+### 12.4 Remaining device and LAN work
+
+- `GAME-PF-06` acceptance runs A (1 player, d-pad), B (2 players, d-pad +
+  stick), C (4 players, mixed) on a TV host + Android Chrome phones, with
+  device/browser versions.
+- The connected fix must be re-verified on real phones: a fresh join shows the
+  platformer layout, not the D0 Test surface; a reload becomes a new slot and
+  the old body idles.
+- Reaction Duel two-phone LAN re-check after the fix.
+- Numbers still missing: initial/total gzip, max draw calls, frame p50/p95,
+  input-to-canvas p95, join-to-first-input, 10-minute memory.
+- 60 s replay trace, size-gate check, trace-checker coverage for Coin Run.
+- 4-player readability, off-screen edge arrows, Back-to-start, audio.
+- No commits exist for any of this work; the tree is dirty.
+
+### 12.5 Rules unchanged
+
+No revert, clean, checkout or commit; no stage exit or Dev Exit Gate claim;
+PENDING device rows stay PENDING; `docs/RESULTS.md` is append-only and no
+measurement may be invented.

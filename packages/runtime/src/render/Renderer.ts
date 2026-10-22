@@ -47,11 +47,27 @@ export interface RendererCapabilities {
   compressedFormats: string[];
 }
 
+/**
+ * Actual CSS-pixel size of the drawing surface. Games draw in a fixed
+ * 1280x720 design space (HP-04) and use this to scale and letterbox; the
+ * backing store and DPR stay the renderer's business.
+ */
+export interface RendererSize {
+  readonly width: number;
+  readonly height: number;
+}
+
 export interface Renderer {
   readonly backend: RendererBackend;
   init(canvas: HTMLCanvasElement): Promise<RendererCapabilities>;
   /** Sizes the backing store; CSS size is the upscaled presentation (FR-9.4). */
   resize(cssWidth: number, cssHeight: number, dpr: number): void;
+  /**
+   * CSS size last passed to `resize`, or a zero size before the first resize.
+   * Optional so test doubles and third-party backends keep implementing the
+   * frozen interface: games feature-detect it and draw 1:1 when it is absent.
+   */
+  readonly size?: RendererSize;
   beginFrame(alpha: number): void;
   endFrame(): void;
   dispose(): void;

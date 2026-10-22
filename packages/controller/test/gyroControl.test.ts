@@ -220,9 +220,12 @@ describe("[FR-8.10][FR-12.1] gyro control D5 contract", () => {
     expect(renderer.element.dataset["controlType"]).toBe("gyro");
 
     renderer.onTouchStart(binding());
-    expect(renderer.element.style.transform).toContain("scale(0.96)");
+    expect(renderer.element.classList.contains("is-pressed")).toBe(true);
     renderer.onTouchEnd(binding());
-    expect(renderer.element.style.transform).not.toContain("scale(0.96)");
+    expect(renderer.element.classList.contains("is-pressed")).toBe(false);
+    // Press feedback is the shared class, never an inline transform/opacity.
+    expect(renderer.element.style.transform).toBe("");
+    expect(renderer.element.style.opacity).toBe("");
 
     await settle();
     expect(target.listeners.size).toBe(0);
@@ -233,6 +236,72 @@ describe("[FR-8.10][FR-12.1] gyro control D5 contract", () => {
     expect(snapshot.gz).toBe(0);
     expect(snapshot.flags).toBe(0);
     expect(renderer.element.dataset["motionState"]).toBe("insecure-context");
+  });
+});
+
+describe("[CP-13] gyro visual states", () => {
+  it("[CP-13] shows the plan's fallback copy and unavailable card when motion is blocked", () => {
+    const { renderer } = makeHarness({
+      environment: { isSecureContext: false, hasDeviceMotionEvent: true },
+    });
+
+    expect(part(renderer, "reason").textContent).toBe("Motion needs HTTPS");
+    expect(part(renderer, "reason").hidden).toBe(false);
+    expect(part(renderer, "level").hidden).toBe(true);
+    expect(part(renderer, "recenter").hidden).toBe(true);
+    expect(renderer.element.classList.contains("control-gyro")).toBe(true);
+    expect(renderer.element.classList.contains("is-unavailable")).toBe(true);
+  });
+
+  it("[CP-13] swaps the fallback copy for the level and recenter once granted", async () => {
+    const { renderer } = makeHarness({
+      environment: {
+        isSecureContext: true,
+        hasDeviceMotionEvent: true,
+        requestPermission: async () => "granted",
+      },
+      requestPermission: async () => "granted",
+    });
+
+    renderer.onTouchStart(binding());
+    renderer.onTouchEnd(binding());
+    await settle();
+
+    expect(renderer.element.dataset["motionState"]).toBe("granted");
+    expect(part(renderer, "reason").hidden).toBe(true);
+    expect(part(renderer, "level").hidden).toBe(false);
+    const recenter = part(renderer, "recenter");
+    expect(recenter.hidden).toBe(false);
+    expect(recenter.textContent).toBe("Recenter");
+    expect(renderer.element.classList.contains("is-unavailable")).toBe(false);
+    expect(renderer.element.classList.contains("is-disabled")).toBe(false);
+    // The D5 label contract is preserved even though the level is the face.
+    expect(part(renderer, "label").textContent).toBe("Motion on");
+  });
+
+  it("[CP-13] moves the level bubble with the sampled rate and recenters it", async () => {
+    const h = makeHarness({ control: { ...GYRO, smoothing: 1 } });
+    h.renderer.onTouchStart(binding());
+    h.renderer.onTouchEnd(binding());
+    await settle();
+
+    h.target.emit(ZERO_RATE);
+    h.setNow(600);
+    h.target.emit(ZERO_RATE);
+    h.setNow(700);
+    h.target.emit({ alpha: 0, beta: 400, gamma: 0 });
+    h.interval.tick();
+    h.interval.tick();
+
+    const bubble = part(h.renderer, "bubble");
+    expect(bubble.style.transform).toContain("translate3d(9px, 0px, 0)");
+
+    // A second tap recalibrates: the next sample carries the recenter flag and
+    // the display returns to centre without changing the emitted mapping.
+    h.renderer.onTouchStart(binding(2));
+    h.renderer.onTouchEnd(binding(2));
+    h.interval.tick();
+    expect(bubble.style.transform).toContain("translate3d(0px, 0px, 0)");
   });
 });
 
@@ -423,6 +492,7 @@ describe("[FR-7.5][FR-7.6][FR-8.5] gyro control sampling", () => {
 
     h.timers.advance(1000);
     expect(h.renderer.element.dataset["motionState"]).toBe("no-data");
+    expect(h.renderer.element.classList.contains("is-unavailable")).toBe(true);
     expect(part(h.renderer, "label").textContent).toBe("Enable motion");
   });
 });

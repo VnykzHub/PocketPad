@@ -13,7 +13,7 @@
   },
   "files": ["dist"],
   "scripts": {
-    "build": "node -e \"require('node:fs').rmSync('dist/assets',{recursive:true,force:true})\" && tsc -b && tsc -p tsconfig.test.json && vite build",
+    "build": "node -e \"const fs=require('node:fs');fs.rmSync('dist/assets',{recursive:true,force:true});fs.rmSync('dist/tsconfig.tsbuildinfo',{force:true})\" && tsc -b && tsc -p tsconfig.test.json && vite build",
     "test": "vitest run --root ../.. --project packages/runtime",
     "typecheck": "tsc -p tsconfig.test.json"
   },

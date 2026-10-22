@@ -66,6 +66,7 @@ describe("discovery", () => {
     expect(reactionDuel).toEqual({
       slug: "reaction-duel",
       name: "Reaction Duel",
+      description: "Match the signal. First to three rounds wins.",
       minPlayers: 2,
       maxPlayers: 8,
       needsGyro: false,
@@ -74,6 +75,20 @@ describe("discovery", () => {
     expect(getGames()).toBe(games);
     expect(Object.isFrozen(games)).toBe(true);
     expect(Object.isFrozen(reactionDuel)).toBe(true);
+  });
+
+  test("[FR-10.3][A12] the Coin Run platformer is discovered at /games/platformer/", () => {
+    const platformer = getGames().find((entry) => entry.slug === "platformer");
+    expect(platformer).toEqual({
+      slug: "platformer",
+      name: "Coin Run",
+      description: "Race across a shared level and collect 20 coins.",
+      minPlayers: 1,
+      maxPlayers: 4,
+      needsGyro: false,
+      manifestUrl: "/games/platformer/game.manifest.json",
+    });
+    expect(discoverBundledGames().map((entry) => entry.slug)).toContain("platformer");
   });
 
   test("slugFromManifestPath handles Vite keys and rejects other paths", () => {

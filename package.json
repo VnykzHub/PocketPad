@@ -13,8 +13,8 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "typecheck": "tsc -b && npm run typecheck:games",
-    "typecheck:games": "tsc -p packages/games/reaction-duel/tsconfig.json --noEmit",
-    "lint": "eslint .",
+    "typecheck:games": "tsc -p packages/games/reaction-duel/tsconfig.json --noEmit && tsc -p packages/games/platformer/tsconfig.json --noEmit",
+    "lint": "eslint . --ignore-pattern \".github/**\"",
     "test": "vitest run",
     "size": "node tools/size-budget/dist/cli.js",
     "trace": "node tools/trace-check/dist/cli.js --stage D0",

@@ -484,3 +484,43 @@ number is claimed.
 | E7 | 2026-10-22 | android phone | PENDING | PENDING | `rotationRate` units/signs/axes, portrait and landscape; HTTP vs HTTPS secure context; 60 s drift | not run | PENDING | `experiments/e07/` and `docs/SENSOR-TESTING.md` do not exist. iOS leg is deferred per A5, not failed. |
 | E8 | 2026-10-22 | android phone (two if available) | PENDING | PENDING | 10/20 Hz patterns: 10 ms, 20 ms, [10,30], [20,40], long patterns | not run | PENDING | `experiments/e08/` does not exist. Whether 20 Hz is distinct or stutters is unmeasured. |
 | Swing feasibility | 2026-10-22 | android phone | PENDING | PENDING | 30 swings per direction; peak magnitude and axis; false positives/negatives | not run | PENDING | `experiments/e07-swing/` does not exist. No go/no-go for Sword Swing Duel is issued from desktop code. |
+
+## Coin Run — platformer slice (2026-10-22)
+
+The Coin Run code is in the working tree (`packages/games/platformer/`,
+`GAME-PF-01`..`05` code-complete; `GAME-PF-06` pending). **No device, browser
+or LAN run exists, so every row below is PENDING and no measurement is
+claimed.** A unit test asserts a full fake-renderer frame stays at or below
+120 draw calls; that is a code contract, not a device frame measurement.
+
+| Experiment | Date | Device | OS | Browser | Conditions | Measurement | Verdict | Notes |
+|---|---|---|---|---|---|---|---|---|
+| GAME-PF-06 run A | 2026-10-22 | tv + 1 phone | PENDING | PENDING | d-pad; move, jump, coins, fall/respawn, goal, results | not run | PENDING | No TV or phone run. Verifies a single player can finish the level and see results. |
+| GAME-PF-06 run B (priority) | 2026-10-22 | tv + 2 phones | PENDING | PENDING | d-pad + stick; shared score, simultaneous pickups, camera, rematch | not run | PENDING | The 2-player flow is unit-tested; no phone run exists. Also re-checks that a fresh join shows the platformer layout after the connected-flag fix. |
+| GAME-PF-06 run C | 2026-10-22 | tv + 4 phones | PENDING | PENDING | mixed layouts; four bodies independent, labels readable, no stuck slot | not run | PENDING | Four-player is code-supported but untested on hardware. |
+| Coin Run budgets | 2026-10-22 | tv + phone | PENDING | PENDING | Initial/total gzip bytes, max draw calls, frame p50/p95, input-to-canvas p95, join-to-first-input | not run | PENDING | No size-gate, frame-time or latency measurement exists for this game. |
+| Coin Run 10-minute run | 2026-10-22 | tv + phone | PENDING | PENDING | Continuous play, memory samples, rematch twice | not run | PENDING | No leak, crash or stuck-slot evidence. Not an E17 soak. |
+| Coin Run replay | 2026-10-22 | desktop | PENDING | PENDING | 60 s, 2-player recorded trace through `Game.simulate` | not run | PENDING | `test/replay.test.ts` does not exist. Determinism is tested only for short fixed input sequences. |
+
+---
+
+## UI wave (Wave 7) — automated size gate (2026-10-22)
+
+> Scope: `npm run size` run by the independent verifier on the working tree.
+> No browser, phone or TV was attached; this is a build-size measurement only.
+> It updates the current-tree totals from the wave-5 note and changes no device
+> row. All TV/Android/LAN rows above stay **PENDING**.
+
+| Target | Env | Files | Raw bytes | Gzip bytes | Budget (gz) | Status |
+|---|---:|---:|---:|---:|---:|---|
+| controller | dev | 1 | 140948 | 40723 | 40960 | ok |
+| host | dev | 6 | 236606 | 74424 | 3145728 | ok |
+
+Controller: 237 gzip bytes (0.58%) of dev headroom remain (99.42% used); prod
+target 51,200 B; hard cap 61,440 B. Host: 2.37% of the dev target used; prod
+target 3,670,016 B; hard cap 5,242,880 B. No production-env run was performed.
+
+Delta from the wave-5 gate: controller 37,911 -> 40,723 gz (+2,812 B, +7.4%);
+host 55,754 -> 74,424 gz (+18,670 B, +33.5%). These are size-gate totals; no
+per-game frame, memory or latency number is claimed. See
+`docs/todos/CHECKPOINT-2026-10-22-ui.md` §3.2.

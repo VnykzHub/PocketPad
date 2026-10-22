@@ -26,6 +26,8 @@ export interface GameEntry {
   readonly slug: string;
   /** Human-readable manifest name (sorted by this). */
   readonly name: string;
+  /** Optional one-line launcher copy; empty when the manifest omits it. */
+  readonly description: string;
   readonly minPlayers: number;
   readonly maxPlayers: number;
   readonly needsGyro: boolean;
@@ -115,11 +117,17 @@ export function createGameRegistry(
       );
     }
     const manifest: GameManifest = result.manifest;
+    // `description` is additive and optional; validators preserve extra
+    // properties, so read it defensively rather than trusting the cast.
+    const rawDescription = (manifest as { description?: unknown }).description;
+    const description =
+      typeof rawDescription === "string" ? rawDescription.trim() : "";
     bySlug.set(
       source.slug,
       Object.freeze({
         slug: source.slug,
         name: manifest.name,
+        description,
         minPlayers: manifest.minPlayers,
         maxPlayers: manifest.maxPlayers,
         needsGyro: manifest.needsGyro,

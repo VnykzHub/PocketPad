@@ -5,3 +5,6 @@ coverage/
 .env.*
 *.local
 *.log
+.taste-skill/
+*.stackdump
+.github/skills/impeccable/scripts/bin/

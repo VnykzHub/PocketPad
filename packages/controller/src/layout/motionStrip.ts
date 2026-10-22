@@ -154,21 +154,6 @@ export function createMotionStatusStrip(
   element.style.width = `${bounds.width}px`;
   element.style.height = `${bounds.height}px`;
   element.style.zIndex = String(MOTION_STRIP_Z);
-  element.style.boxSizing = "border-box";
-  element.style.display = "flex";
-  element.style.alignItems = "center";
-  element.style.gap = "8px";
-  element.style.padding = "8px";
-  element.style.borderRadius = "14px";
-  element.style.background = "rgba(24, 24, 27, 0.9)";
-  element.style.border = "1px solid rgba(255, 255, 255, 0.28)";
-  element.style.color = "#f4f4f5";
-  element.style.font = "500 12px/15px system-ui, sans-serif";
-  element.style.overflow = "hidden";
-  element.style.touchAction = "none";
-  element.style.userSelect = "none";
-  element.style.setProperty("-webkit-user-select", "none");
-  element.style.setProperty("-webkit-touch-callout", "none");
   // The TouchEngine owns the strip's hit area; the DOM must never become a
   // native pointer target (D6-CTRL-03: no touch stealing outside the bounds).
   element.style.pointerEvents = "none";
@@ -179,25 +164,12 @@ export function createMotionStatusStrip(
   const status = createPart("span", "motion-status");
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
-  status.style.flex = "1 1 auto";
-  status.style.minWidth = "0";
-  // Three lines of the longest fallback sentence fit the 44 px content box.
-  status.style.font = "500 12px/14px system-ui, sans-serif";
-  status.style.pointerEvents = "none";
 
   const action = createPart("span", "motion-action");
   action.setAttribute("role", "button");
   action.tabIndex = 0;
-  action.style.flex = "0 0 auto";
   action.style.width = `${MOTION_STRIP_ACTION_WIDTH_PX}px`;
   action.style.height = `${String(MOTION_STRIP_ACTION_HEIGHT_PX)}px`;
-  action.style.display = "flex";
-  action.style.alignItems = "center";
-  action.style.justifyContent = "center";
-  action.style.borderRadius = "999px";
-  action.style.background = "rgba(255, 255, 255, 0.16)";
-  action.style.font = "600 13px/1 system-ui, sans-serif";
-  action.style.pointerEvents = "none";
 
   element.append(status, action);
 
@@ -254,9 +226,6 @@ export function createMotionStatusStrip(
 
   const setPressed = (active: boolean): void => {
     element.dataset["pressed"] = active ? "true" : "false";
-    action.style.background = active
-      ? "rgba(255, 255, 255, 0.32)"
-      : "rgba(255, 255, 255, 0.16)";
   };
 
   const release = (touch: TouchBinding): void => {

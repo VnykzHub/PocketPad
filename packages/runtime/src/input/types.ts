@@ -21,6 +21,13 @@ export type { InputState };
 export interface ControllerState {
   /** Slot number, 1..8. */
   slot: number;
+  /**
+   * A controller is connected on this slot (FR-8.2, FR-5.4). Set by the first
+   * accepted packet, including a tick-0 all-zero packet, and cleared by
+   * `InputMapper.reset(slot)`. Never derived from `tick` or button/axis values:
+   * a freshly joined phone is present before its clock has synced.
+   */
+  readonly connected: boolean;
   /** u16 button level bitfield (FR-7.2). */
   buttons: number;
   /** u16 press edges accumulated since the last poll (FR-7.3, FR-7.12). */

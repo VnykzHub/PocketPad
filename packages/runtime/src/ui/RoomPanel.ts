@@ -1,10 +1,17 @@
 /**
  * Room panel (D4-HOST-01; FR-5.1, FR-5.6, SR-10, AR-4).
  *
- * Renders the join affordances for the TV: a large QR, the 4-character room
- * code, the 4-digit PIN, the persistent "anyone with this code can join"
- * notice and the manual join line. It owns no game, room or network logic;
- * the host shell feeds it room credentials and host-join state.
+ * The lobby's single source of room credentials and the join affordances for
+ * the TV: the 120px room code, the PIN, the QR, the persistent "anyone with
+ * this code can join" notice and the manual join line (PAGE-PLANS HP-02).
+ * Nothing else in the lobby renders the code or PIN. It owns no game, room or
+ * network logic; the host shell feeds it room credentials and host-join state.
+ *
+ * The root carries `data-state` so the shell can show HP-01 (boot) instead of
+ * the hero until a room exists, and resume HP-06 without a stale QR:
+ *   - `empty`   no room yet; the shell hides the panel
+ *   - `live`    a fresh room with code, PIN and a QR
+ *   - `resumed` a reloaded host session; no PIN and never a stale QR
  *
  * Secrets: the room token is accepted only to build the QR URL. It is never
  * written to text content, an attribute or a log. If QR rendering fails the
@@ -28,6 +35,11 @@ export const SECURITY_NOTICE =
 export const NEW_ROOM_LABEL = "New room";
 export const QR_FALLBACK_TEXT =
   "QR unavailable: enter the code and PIN below.";
+/** Caption under a working QR (PAGE-PLANS HP-02: caption `--muted`). */
+export const QR_CAPTION = "Scan to join";
+
+/** Room-panel layout state; drives the host shell's boot/lobby swap. */
+export type RoomPanelState = "empty" | "live" | "resumed";
 
 /** The credentials the panel needs from `POST /api/rooms`. */
 export interface RoomPanelRoom {
@@ -72,10 +84,10 @@ export class RoomPanel {
 
   private readonly renderQr: QrRenderer;
   private readonly publicOrigin: string;
-  private readonly codeEl: HTMLDivElement;
-  private readonly pinEl: HTMLDivElement;
+  private readonly codeEl: HTMLElement;
+  private readonly pinEl: HTMLElement;
   private readonly qrCanvas: HTMLCanvasElement;
-  private readonly qrFallback: HTMLElement;
+  private readonly qrCaption: HTMLElement;
   private readonly manualEl: HTMLParagraphElement;
   private readonly statusEl: HTMLSpanElement;
   private readonly onNewRoom: (() => void) | undefined;
@@ -95,6 +107,40 @@ export class RoomPanel {
     const layout = document.createElement("div");
     layout.className = "room-panel__layout";
 
+    // HP-02 hero: the only place the code and PIN are rendered in the lobby.
+    const hero = document.createElement("div");
+    hero.className = "room-panel__hero";
+
+    const label = document.createElement("p");
+    label.className = "room-panel__label";
+    label.textContent = "Room code";
+
+    const digits = document.createElement("div");
+    digits.className = "room-panel__digits";
+
+    this.codeEl = document.createElement("h1");
+    this.codeEl.className = "room-panel__code";
+    this.codeEl.textContent = "----";
+
+    this.pinEl = document.createElement("div");
+    this.pinEl.className = "room-panel__pin";
+    this.pinEl.textContent = "PIN ----";
+
+    digits.append(this.codeEl, this.pinEl);
+
+    this.statusEl = document.createElement("span");
+    this.statusEl.className = "room-panel__status";
+    this.statusEl.setAttribute("role", "status");
+    this.statusEl.setAttribute("aria-live", "polite");
+    this.statusEl.dataset["kind"] = "waiting";
+    this.statusEl.textContent = hostStatusText("waiting");
+
+    const topline = document.createElement("div");
+    topline.className = "room-panel__topline";
+    topline.append(this.statusEl);
+
+    hero.append(label, digits, topline);
+
     const qrFigure = document.createElement("figure");
     qrFigure.className = "room-panel__qr";
 
@@ -106,39 +152,20 @@ export class RoomPanel {
     this.qrCanvas.setAttribute("aria-label", "QR code to join the room");
     this.qrCanvas.hidden = true;
 
-    this.qrFallback = document.createElement("figcaption");
-    this.qrFallback.className = "room-panel__qr-fallback";
-    this.qrFallback.textContent = "Preparing QR code…";
+    this.qrCaption = document.createElement("figcaption");
+    this.qrCaption.className = "room-panel__qr-fallback";
+    this.qrCaption.textContent = "Preparing QR code…";
 
-    qrFigure.append(this.qrCanvas, this.qrFallback);
-
-    const digits = document.createElement("div");
-    digits.className = "room-panel__digits";
-
-    this.codeEl = document.createElement("div");
-    this.codeEl.className = "room-panel__code";
-    this.codeEl.setAttribute("aria-label", "Room code");
-    this.codeEl.textContent = "----";
-
-    this.pinEl = document.createElement("div");
-    this.pinEl.className = "room-panel__pin";
-    this.pinEl.setAttribute("aria-label", "Room PIN");
-    this.pinEl.textContent = "PIN ----";
-
-    digits.append(this.codeEl, this.pinEl);
-    layout.append(qrFigure, digits);
-
-    const notice = document.createElement("p");
-    notice.className = "room-panel__notice";
-    notice.setAttribute("role", "note");
-    notice.textContent = SECURITY_NOTICE;
+    qrFigure.append(this.qrCanvas, this.qrCaption);
 
     this.manualEl = document.createElement("p");
     this.manualEl.className = "room-panel__manual";
     this.manualEl.textContent = manualJoinInstruction(this.publicOrigin);
 
-    const actions = document.createElement("div");
-    actions.className = "room-panel__actions";
+    const notice = document.createElement("p");
+    notice.className = "room-panel__notice";
+    notice.setAttribute("role", "note");
+    notice.textContent = SECURITY_NOTICE;
 
     this.newRoomButton = document.createElement("button");
     this.newRoomButton.type = "button";
@@ -146,16 +173,15 @@ export class RoomPanel {
     this.newRoomButton.textContent = NEW_ROOM_LABEL;
     this.newRoomButton.addEventListener("click", this.handleNewRoom);
 
-    this.statusEl = document.createElement("span");
-    this.statusEl.className = "room-panel__status";
-    this.statusEl.setAttribute("role", "status");
-    this.statusEl.setAttribute("aria-live", "polite");
-    this.statusEl.textContent = hostStatusText("waiting");
+    topline.append(this.newRoomButton);
 
-    actions.append(this.newRoomButton, this.statusEl);
+    // HP-02 order: hero (status + New room), QR, manual line, security notice.
+    layout.append(hero, qrFigure, this.manualEl, notice);
 
     root.classList.add("room-panel");
-    root.replaceChildren(layout, notice, this.manualEl, actions);
+    root.dataset["state"] = "empty";
+    root.replaceChildren(layout);
+    this.syncHostClasses();
   }
 
   /**
@@ -166,17 +192,21 @@ export class RoomPanel {
     if (room === null) {
       this.lastRoomKey = "";
       this.qrGeneration += 1;
+      this.root.dataset["state"] = "empty";
       this.codeEl.textContent = "----";
       this.pinEl.textContent = "PIN ----";
       this.qrCanvas.hidden = true;
-      this.qrFallback.textContent = "Waiting for a room…";
-      this.qrFallback.hidden = false;
+      this.qrCaption.textContent = "Waiting for a room…";
+      this.qrCaption.hidden = false;
+      this.syncHostClasses();
       return;
     }
 
     const roomKey = `${room.code}\u0000${room.roomToken}`;
     const changed = roomKey !== this.lastRoomKey;
     this.lastRoomKey = roomKey;
+    this.root.dataset["state"] = "live";
+    this.syncHostClasses();
     this.codeEl.textContent = room.code;
     this.pinEl.textContent = `PIN ${room.pin}`;
     this.manualEl.textContent = manualJoinInstruction(this.publicOrigin);
@@ -194,6 +224,7 @@ export class RoomPanel {
   /** D4-HOST-02 status line: waiting, connected, reconnecting or lost. */
   setHostStatus(kind: HostStatusKind): void {
     this.statusEl.textContent = hostStatusText(kind);
+    this.statusEl.dataset["kind"] = kind;
   }
 
   /**
@@ -205,13 +236,16 @@ export class RoomPanel {
   setResumedRoom(code: string): void {
     this.lastRoomKey = "";
     this.qrGeneration += 1;
+    this.root.dataset["state"] = "resumed";
+    this.syncHostClasses();
     this.codeEl.textContent = code;
     this.pinEl.textContent = "PIN ----";
     this.qrCanvas.hidden = true;
-    this.qrFallback.textContent =
+    this.qrCaption.textContent =
       "Room resumed — phones already connected stay in the game.";
-    this.qrFallback.hidden = false;
+    this.qrCaption.hidden = false;
     this.statusEl.textContent = hostStatusText("connected");
+    this.statusEl.dataset["kind"] = "connected";
   }
 
   /** Removes listeners and panel content (host teardown). */
@@ -220,7 +254,19 @@ export class RoomPanel {
     this.qrGeneration += 1;
     this.newRoomButton.removeEventListener("click", this.handleNewRoom);
     this.root.classList.remove("room-panel");
+    delete this.root.dataset["state"];
+    this.syncHostClasses();
     this.root.replaceChildren();
+  }
+
+  /** Mirrors the room state onto the host so CSS never needs :has(). */
+  private syncHostClasses(): void {
+    const host = this.root.closest(".host");
+    if (host === null) return;
+    const state = this.root.dataset["state"];
+    host.classList.toggle("room-empty", state === "empty");
+    host.classList.toggle("room-live", state === "live");
+    host.classList.toggle("room-resumed", state === "resumed");
   }
 
   private readonly handleNewRoom = (): void => {
@@ -238,8 +284,8 @@ export class RoomPanel {
     }
 
     this.qrCanvas.hidden = true;
-    this.qrFallback.textContent = "Preparing QR code…";
-    this.qrFallback.hidden = false;
+    this.qrCaption.textContent = "Preparing QR code…";
+    this.qrCaption.hidden = false;
 
     try {
       await renderJoinQr(this.qrCanvas, joinUrl, this.renderQr);
@@ -247,7 +293,8 @@ export class RoomPanel {
         return;
       }
       this.qrCanvas.hidden = false;
-      this.qrFallback.hidden = true;
+      this.qrCaption.textContent = QR_CAPTION;
+      this.qrCaption.hidden = false;
     } catch {
       if (this.destroyed || generation !== this.qrGeneration) {
         return;
@@ -259,7 +306,7 @@ export class RoomPanel {
 
   private showQrFallback(): void {
     this.qrCanvas.hidden = true;
-    this.qrFallback.textContent = QR_FALLBACK_TEXT;
-    this.qrFallback.hidden = false;
+    this.qrCaption.textContent = QR_FALLBACK_TEXT;
+    this.qrCaption.hidden = false;
   }
 }

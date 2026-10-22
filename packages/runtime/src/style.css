@@ -1,257 +1,1195 @@
 /*
- * Host page shell styles (D0-RT-01). External stylesheet so the dev CSP's
- * `style-src 'self'` is satisfied (no inline <style> or style attributes).
- * TV-first: large room code/PIN and high-contrast text.
+ * PocketPad host shell — DESIGN.md (`true-black-flat`).
+ *
+ * Tokens are the contract: true black ground, elevation by lightness alone,
+ * one lime accent confined to live data/state, Inter, host type scale, a 64px
+ * top bar and a 48px safe margin. No gradients, no shadows on resting cards,
+ * no glass, no emoji, no tracked capitals.
+ *
+ * External stylesheet so the dev CSP's `style-src 'self'` holds (no inline
+ * <style> or style attributes). Host-only: the controller has its own sheet.
  */
+
 :root {
-  color-scheme: dark;
-  --bg: #0b1020;
-  --surface: #141b31;
-  --line: #253154;
-  --text: #e8ecf8;
-  --muted: #9fb0d9;
-  --ok-bg: #14532d;
-  --ok-text: #dcfce7;
-  --bad-bg: #7f1d1d;
-  --bad-text: #fee2e2;
+  /* ground and elevation */
+  --ground: #000000;
+  --surface: #111111;
+  --raised: #2a2a2a;
+  --border: #1a1a1a; /* structural rule only, never a card outline */
+  --rule: #161616;
+  --control: #444444; /* interactive outline when one is needed */
+  /* Legacy alias: packages/runtime/src/debug/overlay.css reads --line. */
+  --line: var(--rule);
+
+  /* text */
+  --text: #ffffff;
+  --muted: #b4b4b4;
+  --faint: #949494;
+
+  /* signal */
+  --accent: #c6f24e; /* live input, connected state, focus ring */
+  --positive: #c6f24e;
+  --negative: #e5484d;
+  --warning: #e5a93b;
+
+  /* player identity — eight hues, at least 60° apart, readable on #000 */
+  --player-1: #4cb3f0;
+  --player-2: #ff9f45;
+  --player-3: #c58cff;
+  --player-4: #4fd1a1;
+  --player-5: #ff7aa8;
+  --player-6: #f2d05c;
+  --player-7: #8fb8ff;
+  --player-8: #ff6b6b;
+
+  /* shape */
+  --radius-card: 20px;
+  --radius-control: 999px;
+  --radius-field: 14px;
+
+  /* spacing — 4px base */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* motion */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-press: 120ms;
+  --dur-state: 160ms;
+  --dur-enter: 220ms;
+  --dur-panel: 280ms;
+
+  /* host scale (10-foot, 1080p baseline) */
+  --host-title: 64px;
+  --host-subtitle: 32px;
+  --host-body: 24px;
+  --host-meta: 18px;
+  --host-code: 120px;
+  --host-pin: 48px;
+  --host-action: 28px;
+  --host-gap: 24px;
+  --host-pad: 40px;
+  --host-target: 64px;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--bg);
+  background: var(--ground);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "Inter", "Inter var", system-ui, -apple-system, "Segoe UI",
+    Roboto, sans-serif;
+  font-size: var(--host-body);
+  font-weight: 400;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
 }
 
-#app {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 24px;
+[hidden] {
+  display: none !important;
+}
+
+/* One focus ring for the whole host: 3px lime, 2px offset, instant. */
+button:focus,
+a:focus,
+[tabindex]:focus {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* -------------------------------------------------------------------------
+ * Host frame (PAGE-PLANS §2)
+ * ---------------------------------------------------------------------- */
+
+.host {
+  min-height: 100vh;
   display: grid;
-  gap: 20px;
+  grid-template-rows: 64px minmax(0, 1fr);
 }
 
-.top {
+.top-bar {
+  height: 64px;
+  padding: 0 var(--space-7);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-5);
+  border-bottom: 1px solid var(--rule);
+  background: var(--ground);
 }
 
-h1 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-h2 {
-  margin: 0 0 8px;
-  font-size: 14px;
+.top-bar__wordmark {
+  font-size: 28px;
   font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-#connection {
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: var(--surface);
-  font-size: 18px;
-  white-space: nowrap;
-}
-
-#connection[data-state="ok"] {
-  background: var(--ok-bg);
-  color: var(--ok-text);
-}
-
-#connection[data-state="bad"] {
-  background: var(--bad-bg);
-  color: var(--bad-text);
-}
-
-.room {
-  display: flex;
-  align-items: baseline;
-  gap: 32px;
-  flex-wrap: wrap;
-}
-
-#room-code {
-  font-size: 72px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: -0.01em;
   line-height: 1;
-  font-variant-numeric: tabular-nums;
 }
 
-#room-pin {
-  font-size: 40px;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
+.top-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
 }
 
-.hint {
-  margin: 0;
+.host-fullscreen {
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out);
+}
+
+.host-fullscreen:active {
+  transform: scale(0.97);
+}
+
+.host-fullscreen:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--host-meta);
   color: var(--muted);
-  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: color var(--dur-state) var(--ease-out);
+}
+
+.status-pill::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--faint);
+  transition: background-color var(--dur-state) var(--ease-out);
+}
+
+.status-pill[data-state="ok"]::before {
+  background: var(--accent);
+}
+
+.status-pill[data-state="bad"]::before {
+  background: var(--negative);
 }
 
 /*
- * Room panel (D4-HOST-01). TV-first: the code and PIN are sized for a couch,
- * the QR is a 384 px canvas shown at 320 CSS px so it stays sharp, and the
- * security notice is never dismissible. `[hidden]` wins over the display
- * rules used by the canvas/fallback swap.
+ * HP-02: the code is the hero in the lobby, so the top bar carries no room
+ * chip there. The chip (main.ts's "Connected — room CODE") returns on the
+ * stage, when the canvas is visible.
  */
-.room-panel {
-  flex-basis: 100%;
+.host.room-live .status-pill,
+.host.room-resumed .status-pill {
+  visibility: hidden;
+}
+
+.host.stage-active .status-pill {
+  visibility: visible;
+}
+
+.host-body {
+  min-width: 0;
+  min-height: 0;
+  padding: var(--space-6) var(--space-7) var(--space-7);
   display: grid;
-  gap: 16px;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  grid-template-areas:
+    "boot boot"
+    "room game"
+    "roster roster";
+  align-content: start;
+  gap: var(--host-gap);
+}
+
+/* The stage owns the screen: no lobby chrome, no roster (HP-04). */
+.host.stage-active .host-body {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "game";
+  padding: 0 var(--space-2) var(--space-2);
+  place-items: center;
+}
+
+/* Fit the 16:9 stage inside a 1080p TV without overflowing the viewport. */
+.host.stage-active .lanpad-canvas {
+  width: min(100%, calc((100dvh - 64px - 16px) * 16 / 9));
+  max-height: calc(100dvh - 64px - 16px);
+  aspect-ratio: 16 / 9;
+}
+
+.host.stage-active .boot,
+.host.stage-active .room,
+.host.stage-active .roster {
+  display: none;
+}
+
+/* -------------------------------------------------------------------------
+ * HP-01 — boot and room creation
+ * ---------------------------------------------------------------------- */
+
+.boot {
+  grid-area: boot;
+  display: none;
+  justify-items: center;
+  align-content: center;
+  gap: var(--space-3);
+  min-height: calc(100vh - 64px - 96px);
+  text-align: center;
+}
+
+.host.room-empty .boot {
+  display: grid;
+}
+
+.host.room-empty .room,
+.host.room-empty .roster {
+  display: none;
+}
+
+.boot__progress,
+.boot__failure {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  max-width: 720px;
+}
+
+.boot__failure {
+  display: none;
+}
+
+.host.connection-bad .boot__progress {
+  display: none;
+}
+
+.host.connection-bad .boot__failure {
+  display: grid;
+}
+
+.boot__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--faint);
+  transition: background-color var(--dur-state) var(--ease-out);
+}
+
+.boot__dot--bad {
+  background: var(--negative);
+}
+
+.boot__title {
+  font-size: var(--host-title);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.boot__subtitle {
+  font-size: var(--host-body);
+  color: var(--muted);
+}
+
+.boot__retry {
+  margin: var(--space-5) 0 0;
+}
+
+/* -------------------------------------------------------------------------
+ * Lobby (HP-02) + room panel (D4-HOST-01)
+ * ---------------------------------------------------------------------- */
+
+.room {
+  grid-area: room;
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+}
+
+.room__hint {
+  min-height: 1.45em;
+  font-size: var(--host-meta);
+  color: var(--muted);
+}
+
+.room__hint:empty {
+  min-height: 0;
+}
+
+.room-panel {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
 }
 
 .room-panel:empty {
   display: none;
 }
 
-.room-panel__layout {
-  display: flex;
-  align-items: center;
-  gap: 40px;
-  flex-wrap: wrap;
+/* HP-01: no code or PIN until the room exists. */
+.room-panel[data-state="empty"] {
+  display: none;
 }
 
+.room-panel__layout {
+  display: grid;
+  gap: var(--space-5);
+  justify-items: start;
+}
+
+.room-panel__hero {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.room-panel__label {
+  font-size: var(--host-meta);
+  color: var(--muted);
+}
+
+/* DESIGN host "Room code block": code and PIN on one line, PIN smaller. */
+.room-panel__digits {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-5);
+}
+
+.room-panel__code {
+  font-size: clamp(72px, 7.5vw, var(--host-code));
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  transition: color var(--dur-state) var(--ease-out);
+}
+
+/* Lime marks the live room, never decoration (DESIGN colour use). */
+.room-panel[data-state="live"] .room-panel__code,
+.room-panel[data-state="resumed"] .room-panel__code {
+  color: var(--accent);
+}
+
+.room-panel__pin {
+  font-size: clamp(36px, 3vw, var(--host-pin));
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.room-panel__status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--host-meta);
+  color: var(--muted);
+}
+
+.room-panel__status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--faint);
+  transition: background-color var(--dur-state) var(--ease-out);
+}
+
+.room-panel__status[data-kind="connected"]::before {
+  background: var(--accent);
+}
+
+.room-panel__status[data-kind="reconnecting"]::before {
+  background: var(--warning);
+}
+
+.room-panel__status[data-kind="lost"]::before {
+  background: var(--negative);
+}
+
+/* QR card: surface, 20px radius, 320 CSS px QR, muted caption. */
 .room-panel__qr {
   margin: 0;
-  flex: 0 0 auto;
-  min-width: 320px;
-  min-height: 320px;
-  padding: 12px;
+  max-width: 100%;
+  padding: var(--space-4);
   display: grid;
-  place-items: center;
-  background: #ffffff;
-  border-radius: 12px;
+  justify-items: center;
+  gap: var(--space-3);
+  background: var(--surface);
+  border-radius: var(--radius-card);
 }
 
 .room-panel__qr-canvas {
   display: block;
   width: 320px;
-  height: 320px;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  background: #ffffff;
+  border-radius: 12px;
   image-rendering: pixelated;
 }
 
 .room-panel__qr-fallback {
-  max-width: 300px;
-  padding: 12px;
-  color: #1f2937;
-  font-size: 18px;
-  line-height: 1.4;
+  max-width: 320px;
+  font-size: var(--host-meta);
+  line-height: 1.45;
+  color: var(--muted);
   text-align: center;
 }
 
-.room-panel__digits {
-  display: grid;
-  gap: 8px;
-}
-
-.room-panel__code {
-  font-size: clamp(72px, 9vw, 128px);
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.room-panel__pin {
-  font-size: clamp(40px, 5vw, 72px);
-  font-weight: 700;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
+.room-panel__manual {
+  max-width: 60ch;
+  font-size: var(--host-meta);
+  color: var(--faint);
 }
 
 .room-panel__notice {
-  margin: 0;
-  padding: 12px 16px;
-  border-left: 4px solid #f59e0b;
-  background: #2a2313;
-  color: #fde68a;
-  font-size: 18px;
-}
-
-.room-panel__manual {
-  margin: 0;
+  max-width: 60ch;
+  font-size: var(--host-meta);
   color: var(--muted);
-  font-size: 18px;
 }
 
 .room-panel__actions {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.room-panel__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
 }
 
 .room-panel__new-room {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 10px 20px;
-  border: 2px solid var(--line);
-  border-radius: 10px;
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: 0 var(--space-5);
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
   background: var(--surface);
   color: var(--text);
-  font: inherit;
-  font-weight: 600;
+  font-size: var(--host-meta);
+  font-weight: 500;
   cursor: pointer;
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    border-color var(--dur-state) var(--ease-out);
 }
 
-.room-panel__new-room:hover,
-.room-panel__new-room:focus-visible {
+.room-panel__new-room:hover {
   border-color: var(--text);
-  outline: 3px solid var(--text);
+}
+
+.room-panel__new-room:active {
+  transform: scale(0.97);
+}
+
+.room-panel__new-room:focus-visible {
+  outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
 
-.room-panel__status {
-  color: var(--muted);
-  font-size: 16px;
+/* -------------------------------------------------------------------------
+ * HP-08 — player roster
+ * ---------------------------------------------------------------------- */
+
+.roster {
+  grid-area: roster;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
 }
 
-.room-panel [hidden] {
-  display: none !important;
+.roster__title {
+  flex: 0 0 auto;
+  font-size: var(--host-meta);
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.roster__mount {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--control) var(--ground);
+}
+
+.slot-roster {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.slot-row {
+  position: relative;
+  flex: 1 0 132px;
+  min-height: 56px;
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.slot-row[data-slot="1"] {
+  --slot-hue: var(--player-1);
+}
+.slot-row[data-slot="2"] {
+  --slot-hue: var(--player-2);
+}
+.slot-row[data-slot="3"] {
+  --slot-hue: var(--player-3);
+}
+.slot-row[data-slot="4"] {
+  --slot-hue: var(--player-4);
+}
+.slot-row[data-slot="5"] {
+  --slot-hue: var(--player-5);
+}
+.slot-row[data-slot="6"] {
+  --slot-hue: var(--player-6);
+}
+.slot-row[data-slot="7"] {
+  --slot-hue: var(--player-7);
+}
+.slot-row[data-slot="8"] {
+  --slot-hue: var(--player-8);
+}
+
+.slot-row__swatch {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--slot-hue, var(--control));
+}
+
+.slot-row__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slot-row__state {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 16px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* State is never colour alone: every row keeps its word. */
+.slot-row[data-state="connected"]::before {
+  content: "";
+  position: absolute;
+  inset: 12px auto 12px 0;
+  width: 2px;
+  border-radius: var(--radius-control);
+  background: var(--accent);
+}
+
+.slot-row[data-state="reconnecting"] .slot-row__state::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--warning);
+}
+
+.slot-row[data-state="open"] .slot-row__swatch {
+  background: transparent;
+  border: 2px solid var(--control);
+}
+
+.slot-row[data-state="open"] .slot-row__name,
+.slot-row[data-state="open"] .slot-row__state {
+  color: var(--faint);
+}
+
+/* -------------------------------------------------------------------------
+ * Actions
+ * ---------------------------------------------------------------------- */
+
+.action {
+  min-height: var(--host-target);
+  padding: 0 var(--space-6);
+  border: 0;
+  border-radius: var(--radius-control);
+  font-size: var(--host-action);
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background-color 80ms linear;
+}
+
+.action:active {
+  transform: scale(0.97);
+}
+
+.action--primary {
+  min-height: 56px;
+  background: var(--text);
+  color: var(--ground);
+}
+
+/* -------------------------------------------------------------------------
+ * HP-03 — game shelf
+ * ---------------------------------------------------------------------- */
+
+.lanpad-launcher {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.lanpad-launcher__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.lanpad-launcher__title {
+  font-size: clamp(40px, 4vw, var(--host-title));
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.lanpad-launcher__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.lanpad-launcher__search {
+  width: min(320px, 100%);
+  height: 48px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--control);
+  border-radius: var(--radius-field);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 20px;
+}
+
+.lanpad-launcher__search::placeholder {
+  color: var(--faint);
+}
+
+.lanpad-launcher__search:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.lanpad-launcher__filters {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.lanpad-launcher__filter {
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    color var(--dur-state) var(--ease-out),
+    background-color var(--dur-state) var(--ease-out);
+}
+
+.lanpad-launcher__filter[aria-pressed="true"] {
+  background: var(--text);
+  color: var(--ground);
+  border-color: var(--text);
+}
+
+.lanpad-launcher__filter:active {
+  transform: scale(0.97);
+}
+
+.lanpad-launcher__filter:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A PS5-style horizontal shelf: one row, scrolls sideways as games grow. */
+.lanpad-launcher__grid {
+  display: flex;
+  gap: var(--host-gap);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  padding-bottom: var(--space-3);
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: var(--control) var(--ground);
+}
+
+.lanpad-launcher__grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.lanpad-launcher__grid::-webkit-scrollbar-track {
+  background: var(--ground);
+}
+
+.lanpad-launcher__grid::-webkit-scrollbar-thumb {
+  background: var(--control);
+  border-radius: 999px;
+}
+
+.lanpad-launcher__card {
+  display: flex;
+  flex: 0 0 340px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-height: 300px;
+  padding: var(--space-4);
+  scroll-snap-align: start;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background-color var(--dur-state) var(--ease-out);
+}
+
+.lanpad-launcher__card:active {
+  transform: scale(0.98);
+}
+
+.lanpad-launcher__card:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lanpad-launcher__card:hover {
+    background: var(--raised);
+  }
+}
+
+.lanpad-launcher__card-art {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 112px;
+  border-radius: calc(var(--radius-card) - 6px);
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 48px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.lanpad-launcher__card-title {
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.lanpad-launcher__card-meta {
+  font-size: var(--host-meta);
+  color: var(--muted);
+}
+
+.lanpad-launcher__card-description {
+  font-size: 20px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.lanpad-launcher__card-description[data-missing="true"] {
+  color: var(--faint);
+}
+
+.lanpad-launcher__card-connected {
+  margin-top: auto;
+  font-size: var(--host-meta);
+  color: var(--accent);
+}
+
+.lanpad-launcher__no-match,
+.lanpad-launcher__empty {
+  padding: var(--space-6);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: var(--host-body);
+}
+
+.lanpad-launcher__empty {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.lanpad-launcher__empty-title {
+  font-size: var(--host-subtitle);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.lanpad-launcher__empty-hint {
+  font-size: var(--host-body);
+}
+
+/* Debug-only raw input table; fixed so it stays visible during play. */
+.debug-input {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 40;
+  max-height: 45vh;
+  overflow: auto;
+  padding: 12px;
+  background: var(--surface);
+  border-radius: 12px;
+}
+
+/* -------------------------------------------------------------------------
+ * Start screen (D3-RT-05) — the lobby's one primary action
+ * ---------------------------------------------------------------------- */
+
+#game-root {
+  grid-area: game;
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
 }
 
 #game-root:empty {
   display: none;
 }
 
+.lanpad-start {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-4);
+  text-align: left;
+}
+
+.lanpad-start__title {
+  font-size: var(--host-subtitle);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.lanpad-start__button {
+  min-height: var(--host-target);
+  padding: 0 var(--space-6);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--text);
+  color: var(--ground);
+  font-size: var(--host-action);
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out);
+}
+
+.lanpad-start__button:active {
+  transform: scale(0.97);
+}
+
+.lanpad-start__audio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--host-meta);
+  color: var(--muted);
+}
+
+.lanpad-start__audio::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--faint);
+  transition: background-color var(--dur-state) var(--ease-out);
+}
+
+.lanpad-start__audio[data-state="unlocked"]::before {
+  background: var(--accent);
+}
+
+.lanpad-start__audio[data-state="unavailable"]::before {
+  background: var(--warning);
+}
+
+/*
+ * DESIGN.md bans emoji. The audio row draws its own 8px dot above; the icon
+ * span stays in the DOM (empty) for API compatibility.
+ */
+.lanpad-start__audio-icon {
+  display: none;
+}
+
+.lanpad-start__hint {
+  min-height: 1.45em;
+  font-size: var(--host-meta);
+  color: var(--faint);
+}
+
+.lanpad-start__hint:empty {
+  min-height: 0;
+}
+
+.lanpad-progress {
+  width: min(480px, 100%);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.lanpad-progress-track {
+  height: 8px;
+  background: var(--raised);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+.lanpad-progress-fill {
+  width: 0;
+  height: 100%;
+  background: var(--text);
+  transition: width var(--dur-state) var(--ease-out);
+}
+
+.lanpad-progress[data-mode="indeterminate"] .lanpad-progress-fill {
+  opacity: 0.4;
+}
+
+.lanpad-progress-label {
+  font-size: var(--host-meta);
+  color: var(--muted);
+}
+
+/* -------------------------------------------------------------------------
+ * HP-07 — notices (renderer failure, room ended, game stopped)
+ * ---------------------------------------------------------------------- */
+
+.lanpad-notice,
+.lanpad-error {
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
+  justify-items: start;
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  animation: lanpad-notice-in var(--dur-enter) var(--ease-out) both;
+}
+
+.lanpad-notice__title,
+.lanpad-notice h2,
+.lanpad-error h2 {
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.lanpad-notice__message,
+.lanpad-notice p,
+.lanpad-error p {
+  font-size: var(--host-body);
+  color: var(--text);
+}
+
+.lanpad-notice__hints {
+  margin: 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--host-meta);
+  color: var(--muted);
+}
+
+.lanpad-notice__action {
+  margin-top: var(--space-2);
+  min-height: 56px;
+  padding: 0 var(--space-6);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--text);
+  color: var(--ground);
+  font-size: var(--host-action);
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out);
+}
+
+.lanpad-notice__action:active {
+  transform: scale(0.97);
+}
+
+/* Danger is a mark and a word, never a full red panel (DESIGN colour use). */
+.lanpad-error h2::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: var(--space-3);
+  border-radius: 50%;
+  background: var(--negative);
+  vertical-align: 0.15em;
+}
+
+.lanpad-error button {
+  margin-top: var(--space-3);
+  min-height: var(--host-target);
+  padding: 0 var(--space-6);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--text);
+  color: var(--ground);
+  font-size: var(--host-action);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+@keyframes lanpad-notice-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* -------------------------------------------------------------------------
+ * Stage canvas
+ * ---------------------------------------------------------------------- */
+
+.lanpad-canvas {
+  display: block;
+  width: 100%;
+  max-height: calc(100vh - 64px - 96px);
+  aspect-ratio: 16 / 9;
+  background: #000000;
+}
+
+/* -------------------------------------------------------------------------
+ * D0 debug input table — `?debug=1` only (HP-02: never in player mode)
+ * ---------------------------------------------------------------------- */
+
 .input-table {
+  display: none;
   width: 100%;
   border-collapse: collapse;
   background: var(--surface);
+  border-radius: var(--radius-card);
+  overflow: hidden;
   font-size: 16px;
   font-variant-numeric: tabular-nums;
 }
 
+.input-table.show-tick {
+  display: table;
+}
+
 .input-table th,
 .input-table td {
-  padding: 8px 10px;
+  padding: var(--space-2) var(--space-3);
   text-align: left;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--rule);
   white-space: nowrap;
 }
 
 .input-table th {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--muted);
 }
 
@@ -269,130 +1207,23 @@ h2 {
   display: table-cell;
 }
 
-/* --- D3 runtime: start screen, stage, notices (D3-RT-04/05) --- */
+/* -------------------------------------------------------------------------
+ * Reduced motion: keep colour/opacity feedback, remove movement
+ * ---------------------------------------------------------------------- */
 
-#game-root {
-  display: grid;
-  gap: 16px;
-}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 
-.lanpad-canvas {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: #000;
-  border-radius: 8px;
-}
-
-.lanpad-canvas[hidden],
-.lanpad-start [hidden] {
-  display: none;
-}
-
-.lanpad-start {
-  display: grid;
-  justify-items: center;
-  gap: 16px;
-  padding: 32px 24px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  text-align: center;
-}
-
-.lanpad-start__title {
-  margin: 0;
-  font-size: 40px;
-  letter-spacing: 0.06em;
-  text-transform: none;
-  color: var(--text);
-}
-
-.lanpad-start__room {
-  display: flex;
-  gap: 24px;
-  font-size: 28px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.12em;
-}
-
-.lanpad-start__button {
-  font: inherit;
-  font-size: 28px;
-  font-weight: 700;
-  padding: 16px 40px;
-  color: var(--bg);
-  background: var(--text);
-  border: 0;
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-.lanpad-start__button:focus-visible,
-.lanpad-start__button:focus {
-  outline: 4px solid #6ee7ff;
-  outline-offset: 4px;
-}
-
-.lanpad-start__audio,
-.lanpad-start__hint {
-  margin: 0;
-  font-size: 18px;
-  color: var(--muted);
-}
-
-.lanpad-start__audio[data-state="unavailable"] {
-  color: var(--bad-text);
-}
-
-.lanpad-progress {
-  width: min(480px, 100%);
-  display: grid;
-  gap: 6px;
-}
-
-.lanpad-progress-track {
-  height: 10px;
-  background: var(--line);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.lanpad-progress-fill {
-  width: 0;
-  height: 100%;
-  background: #6ee7ff;
-}
-
-.lanpad-progress[data-mode="indeterminate"] .lanpad-progress-fill {
-  opacity: 0.5;
-}
-
-.lanpad-progress-label {
-  font-size: 14px;
-  color: var(--muted);
-}
-
-.lanpad-notice,
-.lanpad-error {
-  padding: 16px 20px;
-  border-radius: 12px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-}
-
-.lanpad-error {
-  background: var(--bad-bg);
-  color: var(--bad-text);
-}
-
-.lanpad-notice p,
-.lanpad-error p {
-  margin: 4px 0;
-}
-
-.lanpad-error button {
-  font: inherit;
-  margin-top: 8px;
-  padding: 8px 20px;
+  .action:active,
+  .lanpad-start__button:active,
+  .room-panel__new-room:active,
+  .lanpad-notice__action:active {
+    transform: none;
+  }
 }

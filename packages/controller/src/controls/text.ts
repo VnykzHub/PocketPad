@@ -12,6 +12,13 @@
  * coordinates instead of relying on a native `click`. The `click` listener is
  * still present for keyboard/assistive activation.
  *
+ * CP-16 design language (DESIGN.md `true-black-flat`): the field, placeholder,
+ * radius, inverted send fill and blocked warning come from `.control-text`
+ * rules in `styles.css`. This file only adds the state the stylesheet keys off:
+ * `data-filled` (inverted send while composing), `.is-blocked` plus the
+ * `Slow down a moment.` line when the queue refuses a send, the `maxLen`
+ * counter above long fields, and the shared `.is-pressed` class on press.
+ *
  * `font-size: 16px` avoids Android's focus-zoom (D5-CTRL-01 risk note).
  * Keyboard-facing behavior — maxLen on input/paste, IME composition, Enter,
  * submit/clear/blur, and keeping the input visible while the on-screen
@@ -22,6 +29,7 @@
 import type { TextControl } from "@lanpad/sdk";
 import type { InputState } from "@lanpad/protocol";
 import {
+  applyControlClasses,
   applyControlElementStyle,
   createPart,
   measureControl,
@@ -38,72 +46,89 @@ import type { TouchBinding } from "../touch/touchEngine.js";
 /** Minimum send-button edge (AR-5). */
 export const TEXT_SEND_BUTTON_WIDTH_PX = 44;
 
+/** Field hint shown while the input is empty (CP-16). */
+const PLACEHOLDER_TEXT = "Type here…";
+
+/** A counter only helps when the field accepts more than this many chars. */
+const COUNTER_MIN_MAX_LEN = 40;
+
+/** Line shown when the event queue refuses a submission (CP-16). */
+const BLOCKED_TEXT = "Slow down a moment.";
+
 /** Movement past this many pixels turns a press into a cancelled press. */
 const SEND_CANCEL_SLOP_PX = 8;
 
 const IDLE_TRANSFORM = "scale(1)";
 const PRESSED_TRANSFORM = "scale(0.96)";
-const IDLE_OPACITY = "1";
-const PRESSED_OPACITY = "0.8";
 
 export function createTextControl(control: TextControl, ctx: ControlContext): ControlRenderer {
   const box = measureControl(control, ctx.surfaceSize);
   const sendLeft = box.left + Math.max(0, box.width - TEXT_SEND_BUTTON_WIDTH_PX);
+  const showCounter = control.maxLen > COUNTER_MIN_MAX_LEN;
 
   const element = document.createElement("div");
   applyControlElementStyle(element, control, box, ctx);
-  element.classList.add("control", "control-text");
+  applyControlClasses(element, "text");
   element.setAttribute("role", "group");
   element.setAttribute("aria-label", "answer");
-  element.style.display = "flex";
-  element.style.alignItems = "stretch";
-  element.style.gap = "8px";
 
   const input = document.createElement("input");
   input.type = "text";
   input.maxLength = control.maxLen;
+  input.placeholder = PLACEHOLDER_TEXT;
   input.setAttribute("enterkeyhint", "send");
   input.setAttribute("autocapitalize", "sentences");
   input.setAttribute("autocorrect", "off");
   input.setAttribute("spellcheck", "false");
   input.setAttribute("aria-label", "answer text");
-  input.style.flex = "1 1 auto";
-  input.style.minWidth = "0";
-  input.style.width = "100%";
-  input.style.height = "100%";
-  input.style.boxSizing = "border-box";
-  input.style.padding = "0 12px";
-  // 16 px minimum: smaller text makes Android zoom the page on focus.
-  input.style.font = "16px/1.2 system-ui, sans-serif";
-  input.style.color = "#f4f4f5";
-  input.style.background = "rgba(255, 255, 255, 0.10)";
-  input.style.border = "1px solid rgba(255, 255, 255, 0.35)";
-  input.style.borderRadius = "10px";
-  input.style.outline = "none";
-  input.style.touchAction = "none";
   element.append(input);
 
   const send = createPart("button", "send");
   send.type = "button";
   setSafeText(send, "Send", 16);
   send.setAttribute("aria-label", "send answer");
-  send.style.flex = `0 0 ${TEXT_SEND_BUTTON_WIDTH_PX}px`;
   send.style.width = `${TEXT_SEND_BUTTON_WIDTH_PX}px`;
-  send.style.minWidth = `${TEXT_SEND_BUTTON_WIDTH_PX}px`;
-  send.style.height = "100%";
-  send.style.border = "1px solid rgba(255, 255, 255, 0.45)";
-  send.style.borderRadius = "10px";
-  send.style.background = "rgba(255, 255, 255, 0.20)";
-  send.style.color = "#f4f4f5";
-  send.style.font = "600 15px/1 system-ui, sans-serif";
-  send.style.touchAction = "none";
   element.append(send);
+
+  // Counter sits just above the field, right-aligned, and only for long
+  // limits. It is absolute so it never changes the layout or the hit box.
+  const counter = createPart("div", "counter");
+  counter.hidden = !showCounter;
+  element.append(counter);
+
+  // Blocked line sits below the field; the field keeps its draft (CP-16).
+  const blockedLine = createPart("div", "blocked");
+  blockedLine.textContent = BLOCKED_TEXT;
+  blockedLine.hidden = true;
+  element.append(blockedLine);
 
   let activeIdentifier: number | null = null;
   let startX = 0;
   let startY = 0;
   let sendCandidate = false;
   let pressed = false;
+  const valueListeners = new AbortController();
+
+  /** Mirrors the draft into the stylesheet's filled/blocked affordances. */
+  const syncValueState = (): void => {
+    const length = input.value.length;
+    element.dataset["filled"] = length > 0 ? "true" : "false";
+    if (showCounter) {
+      counter.textContent = `${length}/${control.maxLen}`;
+    }
+  };
+
+  const applyBlocked = (blocked: boolean): void => {
+    if (blocked) {
+      element.dataset["eventBlocked"] = "true";
+      element.classList.add("is-blocked");
+      blockedLine.hidden = false;
+    } else {
+      delete element.dataset["eventBlocked"];
+      element.classList.remove("is-blocked");
+      blockedLine.hidden = true;
+    }
+  };
 
   const applyVisual = (active: boolean): void => {
     if (active === pressed) {
@@ -111,8 +136,8 @@ export function createTextControl(control: TextControl, ctx: ControlContext): Co
     }
     pressed = active;
     setPressedClass(element, active);
+    send.classList.toggle("is-pressed", active);
     send.style.transform = active ? PRESSED_TRANSFORM : IDLE_TRANSFORM;
-    send.style.opacity = active ? PRESSED_OPACITY : IDLE_OPACITY;
     notifyDebugState(ctx, control.id, active);
   };
 
@@ -123,16 +148,20 @@ export function createTextControl(control: TextControl, ctx: ControlContext): Co
     ...(ctx.viewport !== undefined ? { viewport: ctx.viewport } : {}),
     onSubmit: (value) => {
       const accepted = emitControlEvent(ctx.events, control.event, { value }, "high");
-      if (accepted) {
-        delete element.dataset["eventBlocked"];
-      } else {
-        // Keep the text so nothing is silently lost without a queue.
-        element.dataset["eventBlocked"] = "true";
-      }
+      applyBlocked(!accepted);
       return accepted;
     },
   });
-  const submit = (): boolean => textEntry.submit();
+
+  const submit = (): boolean => {
+    const accepted = textEntry.submit();
+    // A successful submit clears the field without dispatching an input event.
+    syncValueState();
+    return accepted;
+  };
+
+  input.addEventListener("input", syncValueState, { signal: valueListeners.signal });
+  syncValueState();
 
   const isSendPoint = (clientX: number): boolean => clientX >= sendLeft;
 
@@ -221,6 +250,7 @@ export function createTextControl(control: TextControl, ctx: ControlContext): Co
       activeIdentifier = null;
       sendCandidate = false;
       applyVisual(false);
+      valueListeners.abort();
       textEntry.dispose();
       element.remove();
     },

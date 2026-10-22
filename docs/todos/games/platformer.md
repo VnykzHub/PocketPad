@@ -12,7 +12,12 @@
 | Slice route | `/games/platformer/` (temporary manifest selector, see `GAME-PF-01`) |
 | Execution map | [`../ACCELERATED-PLATFORMER.md`](../ACCELERATED-PLATFORMER.md) |
 
-> **Status:** plan only. Every step in this file is unchecked. No measurements exist for this game yet; the tuning values below are design targets, not measured results.
+> **Status (2026-10-22):** `GAME-PF-01` .. `GAME-PF-05` code and scoped tests
+> are in the working tree (Coin Run: 6 files / 86 tests green). `GAME-PF-06`
+> is **PENDING**: no device, browser, LAN, budget or replay acceptance run
+> exists. No measurements exist for this game; the tuning values below are
+> design targets, not measured results. See §0.1 for the implementation map,
+> the connected-flag prerequisite and the deviations from this plan.
 
 ---
 
@@ -29,6 +34,59 @@
 5. **Data-driven.** Level, layouts, tuning and coin count are JSON/config, never hard-coded arrays that later need extraction.
 6. **Additive slice path.** The first playable uses the existing D0 room create/join flow and a direct `/games/platformer/` route. The full hub, D4 sessions and D5 layout hot-swap arrive later and mount the same `GameHost`; they must not force a game rewrite.
 7. **No analytics, uploads, cookies or PII.** Same rule as every other game (SR-7).
+
+---
+
+## 0.1 Implementation status (2026-10-22)
+
+**Connected-flag prerequisite (host/runtime, not game code).** A freshly
+joined phone sends its first `Input` with `tick = 0` and an all-zero state
+before clock sync. The old presence heuristic (`tick > 0` or any nonzero
+button/axis) treated that packet as "not joined", so no `setLayout` was sent
+and the phone stayed on the D0 Test button. The runtime now publishes
+`ControllerState.connected`; the SDK exposes
+`GameControllerState.connected`; `InputMapper` latches the flag on every
+accepted packet (including tick 0), publishes it in `pollAll` and clears it in
+`reset`. Reaction Duel and Coin Run both decide presence from this flag only.
+
+**Code-complete in this wave (scoped tests green; no device evidence):**
+
+| Item | Implementation | Scoped evidence |
+|---|---|---|
+| `GAME-PF-01` | `game.manifest.json`, `layouts/pf-dpad-v1.json`, `layouts/pf-stick-v1.json`, `src/game.ts` (the D7 `src/game.ts` entry convention replaces the planned `src/index.ts`), `src/config.ts`, `README.md`; generic `/games/<slug>/` route plus registry discovery | `manifest.test.ts` 4, `layout.test.ts` 5; `gameRegistry.test.ts` 11 includes Coin Run discovery; `gamesRoute.test.ts` 16 includes `/games/platformer/` |
+| `GAME-PF-02` | `src/level.ts`, `src/level-01.json`, `src/world.ts`; runtime physics `Aabb`/`collide`/`Vec2` | `level.test.ts` 27 |
+| `GAME-PF-03` | `src/input.ts`, `src/player.ts` | `player.test.ts` 20 |
+| `GAME-PF-04` | rules live in `src/world.ts` (coins/checkpoints/goal) and `src/game.ts` (score, phases, rematch); no `src/rules.ts` | `game.test.ts` 19 |
+| `GAME-PF-05` | `src/camera.ts`, `src/render.ts`, `src/hud.ts` | `camera.test.ts` 11; draw-count and results assertions in `game.test.ts` |
+
+**Scoped run (2026-10-22, this docs task):** Coin Run 6 files / 86 tests
+green; runtime connected/registry/physics 4 files / 61 tests green; dev-server
+route 1 file / 16 tests green; Reaction Duel 4 files / 73 tests green. The
+full `npm run check` is the integration agent's gate and is **not claimed** by
+this document.
+
+**Deviations from this plan that remain open:**
+
+1. No `packages/controller/src/dev/devLayoutSource.ts` and no
+   `?layout=pf-dpad-v1` fetch. D5 `setLayout` plus
+   `registerManifestLayouts` deliver the manifest layouts, so the temporary
+   bridge is not needed; the plan's step is superseded, not silently done.
+2. No `packages/games/dist/platformer/` and no `?game=` selector. Vite bundles
+   every `packages/games/<slug>/src/game.ts` as a lazy host chunk; the direct
+   route is `/games/<slug>/` only.
+3. The phase machine is local (`CoinRunPhase` in `src/game.ts`), not
+   `RoundManager`. It implements lobby -> 3 s countdown -> playing -> results
+   -> rematch and starts at `manifest.minPlayers`.
+4. Results content is painted by the game through the flat 2D surface; it does
+   not use `ResultsScreen`. Rematch works from any A/B/X/Y phone edge or a
+   `rematch` event; there is no Back-to-start callback (the text line only).
+5. No off-screen edge arrows and no draw-call counter on `ctx.debug` (the
+   frame test counts through a fake renderer instead), no audio, and no
+   dedicated `hud.test.ts`. GAME-PF-05 is code-complete for the shipped frame,
+   not for every line item in the plan.
+6. `README.md` still says `?game=platformer` works and that game logic is
+   "added by GAME-PF-02..06"; both lines are stale. The README is outside this
+   docs task's ownership.
 
 ---
 
@@ -182,22 +240,22 @@ The skeleton must implement `init`, `simulate`, `render`, `dispose`; until `GAME
 
 **Steps**
 
-- [ ] Create the folder, manifest and both layouts.
-- [ ] Add manifest fixtures to `test/manifest.test.ts`; assert `validateManifest` accepts the real file and rejects a 5-player manifest and a missing layout.
-- [ ] Add layout tests using the shared validator fixtures; assert 44 px sizing data is exposed.
-- [ ] Implement the `Game` skeleton and confirm `getGames()` lists `platformer` without editing registry code.
-- [ ] Add the exact-path dev-server alias and the runtime manifest selector; verify `/` still works unchanged.
-- [ ] Add the controller dev layout source behind `?layout=`; verify a d-pad tap and a jump edge reach the host.
-- [ ] Build the game folder to `packages/games/dist/platformer/`; if the shared games build is absent, add the temporary `vite.config.ts` and record it as slice-only.
-- [ ] Write `README.md`: how to play directly, layout query, known D0 join limitations.
+- [x] Create the folder, manifest and both layouts.
+- [x] Add manifest fixtures to `test/manifest.test.ts`; assert `validateManifest` accepts the real file and rejects a 5-player manifest and a missing layout.
+- [x] Add layout tests using the shared validator fixtures; assert 44 px sizing data is exposed.
+- [x] Implement the `Game` adapter and confirm `getGames()` lists `platformer` without editing registry code. (The shipped adapter is `src/game.ts`, not a skeleton; registry discovery is tested.)
+- [x] Add the exact-path dev-server alias and the runtime manifest selector; verify `/` still works unchanged. (The route is the generic one-slug `/games/<slug>/`; there is no `?game=` selector.)
+- [ ] Add the controller dev layout source behind `?layout=`; verify a d-pad tap and a jump edge reach the host. **Superseded:** no `devLayoutSource.ts` exists; D5 `setLayout` + manifest layout registration deliver the layout.
+- [ ] Build the game folder to `packages/games/dist/platformer/`; if the shared games build is absent, add the temporary `vite.config.ts` and record it as slice-only. **Superseded:** Vite bundles `src/game.ts` into the host's lazy chunk map; no separate games dist is produced.
+- [x] Write `README.md`: how to play directly, layout query, known D0 join limitations. (Two stale lines remain; see §0.1 deviation 6.)
 
 **Acceptance**
 
-- [ ] `getGames()` returns `platformer` from the manifest alone; no switch statement was added.
-- [ ] `/games/platformer/` boots the host, creates a D0 room, accepts a phone join and shows the phone layout.
-- [ ] A jump press produces an edge at the host; left/right render from both layouts.
-- [ ] The game module has no socket, fetch, broker or controller import.
-- [ ] `npm run check` stays green.
+- [x] `getGames()` returns `platformer` from the manifest alone; no switch statement was added.
+- [ ] `/games/platformer/` boots the host, creates a D0 room, accepts a phone join and shows the phone layout. **PENDING:** no browser or phone run.
+- [ ] A jump press produces an edge at the host; left/right render from both layouts. **PENDING on device:** the layout and bit mapping are tested; no phone run exists.
+- [x] The game module has no socket, fetch, broker or controller import.
+- [ ] `npm run check` stays green. **PENDING:** this docs task ran only scoped suites; the integration gate is authoritative.
 
 **Tests (tagged)**
 
@@ -207,6 +265,9 @@ The skeleton must implement `init`, `simulate`, `render`, `dispose`; until `GAME
 - `[AR-5] platformer controls meet the 44 px touch-target minimum`
 - `[G8] the platformer is added by folder plus manifest only`
 - `[FR-7.17] the platformer module receives only GameContext`
+
+**Coverage (2026-10-22):** all six tags above are present in
+`manifest.test.ts`, `layout.test.ts` or `game.test.ts`; none is device-proven.
 
 **Anti-rework**
 
@@ -259,19 +320,19 @@ The skeleton must implement `init`, `simulate`, `render`, `dispose`; until `GAME
 
 **Steps**
 
-- [ ] Define `LevelData`, `PlatformAabb`, `Coin`, `Checkpoint`, `Goal` types and the validator.
-- [ ] Author `level-01.json`; verify all five floating platforms are jump-reachable with the configured jump height (manual and a test helper that checks vertical gaps).
-- [ ] Implement `World` with preallocated arrays, `reset()` and a platform query window.
-- [ ] Implement checkpoint activation and the kill-plane predicate.
-- [ ] Add tests for invalid levels, spawn safety, coin count, reset idempotence and zero allocations after setup.
+- [x] Define `LevelData`, `PlatformAabb`, `Coin`, `Checkpoint`, `Goal` types and the validator.
+- [x] Author `level-01.json`; verify all five floating platforms are jump-reachable with the configured jump height. (Test-helper verification only; no manual device check.)
+- [x] Implement `World` with preallocated arrays, `reset()` and a platform query window.
+- [x] Implement checkpoint activation and the kill-plane predicate.
+- [x] Add tests for invalid levels, spawn safety, coin count, reset idempotence and pooled-object reuse. (Reuse is asserted by object identity; there is no allocation counter.)
 
 **Acceptance**
 
-- [ ] The level validates at load; an invalid level fails with a readable path and field.
-- [ ] Four spawns are on ground and not inside any platform.
-- [ ] 20 coins, 2 checkpoints and 1 goal load from JSON; `reset()` restores all of them.
-- [ ] A second `reset()` allocates no new coin/platform/player objects.
-- [ ] All platform gaps are clearable with jump height from `config.ts`.
+- [x] The level validates at load; an invalid level fails with a readable path and field.
+- [x] Four spawns are on ground and not inside any platform.
+- [x] 20 coins, 2 checkpoints and 1 goal load from JSON; `reset()` restores all of them.
+- [x] A second `reset()` creates no new coin/platform/player objects. (Identity assertions; no heap-allocation measurement.)
+- [x] All platform gaps are clearable with jump height from `config.ts`. (Reachability plus a d-pad-only full-level playthrough test.)
 
 **Tests (tagged)**
 
@@ -280,6 +341,10 @@ The skeleton must implement `init`, `simulate`, `render`, `dispose`; until `GAME
 - `[PR-9.3] world update and reset allocate nothing after setup`
 - `[PR-9.4] coin and player entities are pooled and reused on rematch`
 - `[PR-9.5] platform lookup uses a precomputed index, not map/filter`
+
+**Coverage (2026-10-22):** all five tags are present in `level.test.ts`. The
+`PR-9.3` cases assert pooled object identity and a `map`/`filter` guard, not a
+heap-allocation count.
 
 **Anti-rework**
 
@@ -335,20 +400,20 @@ export function readCommand(state: ControllerState, out: PlayerCommand): void;
 
 **Steps**
 
-- [ ] Implement `readCommand` with d-pad priority and stick fallback; test both layouts.
-- [ ] Implement gravity, horizontal acceleration, jump, coyote and buffer in `player.ts`.
-- [ ] Implement platform collision with contact classification and the skin.
-- [ ] Implement death-plane detection, respawn timer and checkpoint selection.
-- [ ] Add tests: one jump per edge, held button no re-jump, sub-tick edge across two packets, coyote window, jump buffer, landing on a platform, corner snag, respawn at the correct checkpoint, deterministic replay.
+- [x] Implement `readCommand` with d-pad priority and stick fallback; test both layouts.
+- [x] Implement gravity, horizontal acceleration, jump, coyote and buffer in `player.ts`.
+- [x] Implement platform collision with contact classification and the skin.
+- [x] Implement death-plane detection, respawn timer and checkpoint selection.
+- [x] Add tests: one jump per edge, held button no re-jump, sub-tick edge across two packets, coyote window, jump buffer, landing on a platform, corner snag, respawn at the correct checkpoint, deterministic replay. (The two-packet merge is modelled at the player boundary; `InputMapper`-level edge accumulation is covered in the runtime suite.)
 
 **Acceptance**
 
-- [ ] A single edge produces exactly one jump, even when two packets arrive in one tick.
-- [ ] Holding jump does not repeat jumps.
-- [ ] The player lands and remains grounded without jitter or sinking.
-- [ ] A fall respawns at the last checkpoint and keeps the team score.
-- [ ] The same fixed input sequence produces the same final position on every run.
-- [ ] No allocation occurs in `simulate` after `init`.
+- [x] A single edge produces exactly one jump, even when two packets arrive in one tick. (The merged-edge case is tested directly; packet coalescing itself is broker/runtime behaviour.)
+- [x] Holding jump does not repeat jumps.
+- [x] The player lands and remains grounded without jitter or sinking.
+- [x] A fall respawns at the last checkpoint and keeps the team score. (Respawn is player-local; the shared score lives in `World` and is untouched by the respawn path, as the round-flow test shows.)
+- [x] The same fixed input sequence produces the same final position on every run.
+- [x] No allocation occurs in `simulate` after `init`. (Identity and `map`/`filter` guards; not a heap counter.)
 
 **Tests (tagged)**
 
@@ -361,6 +426,10 @@ export function readCommand(state: ControllerState, out: PlayerCommand): void;
 - `[G2] a jump edge changes the player state on the next fixed tick`
 - `[C9] circle–AABB platform collision marks grounded and resolves penetration`
 - `[PR-9.3] player and input update allocate nothing per tick`
+
+**Coverage (2026-10-22):** all nine tags above are present in
+`player.test.ts`. The sub-tick case is `[FR-7.3] a sub-tick edge merged into
+one tick is consumed exactly once`; there is no two-phone packet test.
 
 **Anti-rework**
 
@@ -403,22 +472,22 @@ export function readCommand(state: ControllerState, out: PlayerCommand): void;
 
 **Steps**
 
-- [ ] Implement coin pickup, checkpoint activation and goal detection as read-only trigger predicates.
-- [ ] Implement the shared score and per-slot contribution arrays; reset on rematch.
-- [ ] Wire `RoundManager` phases and the 3 s countdown; start at ≥ 1 controller.
-- [ ] Build the results content and rematch/back callbacks with `ResultsScreen`.
-- [ ] Add fake-clock tests for countdown → playing → results → rematch.
-- [ ] Add tests for one coin counted once even with two overlapping players on the same tick.
-- [ ] Document the D0 reconnect gap in the game README and on the start screen.
+- [x] Implement coin pickup, checkpoint activation and goal detection as read-only trigger predicates.
+- [x] Implement the shared score and per-slot contribution arrays; reset on rematch.
+- [ ] Wire `RoundManager` phases and the 3 s countdown; start at ≥ 1 controller. **Not used:** `game.ts` runs a local `lobby → countdown(3000 ms) → playing → results` machine.
+- [ ] Build the results content and rematch/back callbacks with `ResultsScreen`. **Not used:** `render.ts` paints the results text and `onEvent` accepts a rematch; there is no Back callback.
+- [x] Add fake-clock tests for countdown → playing → results → rematch.
+- [ ] Add tests for one coin counted once even with two overlapping players on the same tick. **Not isolated:** the two-player flow proves one coin scores once across a round, but no test places both players on the coin in one tick.
+- [ ] Document the D0 reconnect gap in the game README and on the start screen. README covers reload/new-slot and state loss; the lobby screen has no such notice.
 
 **Acceptance**
 
-- [ ] Two players collecting the same coin in one tick increment the score by exactly one.
-- [ ] A coin cannot be collected twice; rematch restores all 20.
-- [ ] The first goal touch ends the level for all players and shows one results screen.
-- [ ] Rematch resets coins, checkpoints, positions, score and time with no new allocations.
-- [ ] Results and rematch are operable with arrow keys and Enter.
-- [ ] The game never reads a socket or event to run a rule.
+- [ ] Two players collecting the same coin in one tick increment the score by exactly one. **PENDING:** `collectCoins` skips a collected coin and the round flow shows one score, but no test co-locates both players on one coin in a tick.
+- [x] A coin cannot be collected twice; rematch restores all 20. (`reset()` writes every flag; the tests sample the first coin and the pooled arrays.)
+- [x] The first goal touch ends the level for all players and shows one results screen.
+- [x] Rematch resets coins, checkpoints, positions, score and time with no new allocations. (Pooled-object identity is asserted; time resets through `elapsedMs`.)
+- [ ] Results and rematch are operable with arrow keys and Enter. **Not implemented:** any A/B/X/Y edge triggers rematch; arrow keys and Enter are not bound, and there is no Back action.
+- [x] The game never reads a socket or event to run a rule. (No socket/protocol import; the only `GameContext` event consumed is the rematch input event, the documented `ResultsScreen` substitute.)
 
 **Tests (tagged)**
 
@@ -429,6 +498,11 @@ export function readCommand(state: ControllerState, out: PlayerCommand): void;
 - `[FR-7.17] rules read InputSnapshot and GameContext only`
 - `[AR-4] results and rematch are fully remote-operable`
 - `[PR-9.4] rematch reuses pooled coins, players and level data`
+
+**Coverage (2026-10-22):** `G4`, `FR-9.1`, `AR-4` (partial) and `PR-9.4` are
+tested in `game.test.ts`; `G5` is 2-player only; `G8` is **not** satisfied
+because phases use a local machine, not `RoundManager`; `FR-7.17` is tested in
+`game.test.ts` as a source-import check.
 
 **Anti-rework**
 
@@ -479,22 +553,22 @@ export function readCommand(state: ControllerState, out: PlayerCommand): void;
 
 **Steps**
 
-- [ ] Implement `camera.ts` with clamp, deadzone, smoothing and edge indicators.
-- [ ] Implement `render.ts` with the fixed draw order, culling and a draw-call count exposed to debug.
-- [ ] Implement `hud.ts` with cached strings and invalidation on change.
-- [ ] Hook optional SFX behind `AudioBus.unlocked`; ensure no audio call before unlock.
-- [ ] Add camera tests: clamp at both ends, deadzone, four-player midpoint, resize.
-- [ ] Add a fake-`Renderer2D` render test that counts calls for a full frame.
-- [ ] Add a visual 1/2/4-player check on the TV at couch distance; labels readable.
+- [ ] Implement `camera.ts` with clamp, deadzone, smoothing and edge indicators. Clamp, deadzone and smoothing are implemented; **no edge indicators exist** in `camera.ts` or `render.ts`.
+- [ ] Implement `render.ts` with the fixed draw order, culling and a draw-call count exposed to debug. Draw order and culling exist; **no draw-call counter is exposed** on `ctx.debug` (only players/coins/phase/layoutErrors).
+- [x] Implement `hud.ts` with cached strings and invalidation on change.
+- [ ] Hook optional SFX behind `AudioBus.unlocked`; ensure no audio call before unlock. **None:** no `AudioBus` use exists; audio was optional.
+- [ ] Add camera tests: clamp at both ends, deadzone, four-player midpoint, resize. Clamp, deadzone and resize are tested; the mean test uses two active players, not four.
+- [x] Add a fake-`Renderer2D` render test that counts calls for a full frame. (Lives in `game.test.ts` under `rendering`; there is no `test/render.test.ts`.)
+- [ ] Add a visual 1/2/4-player check on the TV at couch distance; labels readable. **PENDING:** no device run.
 
 **Acceptance**
 
-- [ ] Camera never shows outside the level; no jitter while walking.
-- [ ] A full frame stays at or below 120 draw calls and allocates nothing per frame.
-- [ ] HUD text is redrawn only when coins/time/labels change.
-- [ ] Four players remain identifiable at TV distance without colour alone.
-- [ ] Off-screen players have a visible edge indicator.
-- [ ] Audio can be muted/unlocked without affecting the simulation.
+- [x] Camera never shows outside the level; no jitter while walking.
+- [ ] A full frame stays at or below 120 draw calls and allocates nothing per frame. The draw count is asserted; there is no per-frame allocation assertion for `render`.
+- [ ] HUD text is redrawn only when coins/time/labels change. `HudCache` is implemented; no test covers invalidation transitions.
+- [ ] Four players remain identifiable at TV distance without colour alone. **PENDING:** no four-player or device evidence.
+- [ ] Off-screen players have a visible edge indicator. **Not implemented.**
+- [x] Audio can be muted/unlocked without affecting the simulation. (Trivially: no audio call exists.)
 
 **Tests (tagged)**
 
@@ -504,6 +578,11 @@ export function readCommand(state: ControllerState, out: PlayerCommand): void;
 - `[PR-9.8] HUD text is cached and invalidated only on change`
 - `[FR-9.4] the game renders in world units and respects the TV profile`
 - `[G5] four players are distinguishable by label and pattern, not colour alone`
+
+**Coverage (2026-10-22):** `PR-9.1` is tested in `game.test.ts`; `PR-9.5` in
+`camera.test.ts`; `FR-9.4` across `camera.test.ts`; `PR-9.3` covers
+`updateCamera`, not the render path; `PR-9.8` has no test; `G5` is 2-player
+only. There is no `render.test.ts` or `hud.test.ts`.
 
 **Anti-rework**
 
@@ -531,6 +610,13 @@ export function readCommand(state: ControllerState, out: PlayerCommand): void;
 | Unblocks | Slice sign-off |
 | Deliverables | `test/replay.test.ts`, `README.md`, `docs/RESULTS.md` Coin Run rows |
 
+> **Status (2026-10-22): PENDING.** No `test/replay.test.ts` exists, no trace
+> was captured, and no run A/B/C, 10-minute session, size-gate, trace-checker
+> or device measurement was executed. Every device, measurement and gate
+> checkbox stays unchecked until a real run records its numbers. Step 7's
+> README section exists but is stale on layout delivery; step 8 is done by the
+> 2026-10-22 docs task and `docs/RESULTS.md` rows are PENDING only.
+
 **Replay test**
 
 - Record one 60 s, 2-player trace at 60 Hz: left/right, jump, a sub-tick tap, a fall, a checkpoint, a coin overlap and the goal.
@@ -557,8 +643,8 @@ export function readCommand(state: ControllerState, out: PlayerCommand): void;
 - [ ] Run the 10-minute session and record memory samples.
 - [ ] Verify the size gate reports the game under the manifest budget.
 - [ ] Verify the trace checker covers every ID this game claims.
-- [ ] Write the README known-limitations section: D0 join, no sessions/QR, reload = new slot, host refresh loses state, no hub.
-- [ ] Update this plan's checkboxes and `docs/RESULTS.md`; do not change any requirement ID.
+- [ ] Write the README known-limitations section: D0 join, no sessions/QR, reload = new slot, host refresh loses state, no hub. **Partial:** §"Known D0 join and reload limits" exists, but it still says layout delivery may show the D0 Test button (the connected fix addresses that) and omits host-refresh state loss and the hub.
+- [x] Update this plan's checkboxes and `docs/RESULTS.md`; do not change any requirement ID. (Done 2026-10-22; RESULTS rows are PENDING only.)
 - [ ] Confirm the four D7 proof-game files and plans were not modified by this work.
 
 **Acceptance**
@@ -627,6 +713,14 @@ export function readCommand(state: ControllerState, out: PlayerCommand): void;
 | G5 | `GAME-PF-01/05` | multi-touch layouts + four-player readability |
 | G8 | `GAME-PF-01/04/06` | folder + manifest + `GameHost` path |
 
+**Status (2026-10-22):** this table is the plan's coverage map, not a claim
+that every row is verified. Tested now: `FR-7.2/7.3/7.4/7.11/7.12`,
+`FR-8.1/8.4/8.10`, `FR-9.1`, `FR-9.4`, `FR-10.3`, `AR-5`, `PR-9.1`,
+`PR-9.3/9.4/9.5`, parts of `G2`/`G4`/`G5`, and the no-socket half of
+`FR-7.17`. **No test exists for** `PR-9.8`, `PR-11.1`, `FR-9.6`, `NR-6.1`,
+`G1`; `AR-4` is partial (no Back action) and `G8` is not satisfied (no
+`RoundManager`). Device measurements for `G2`/`G5` remain PENDING.
+
 ---
 
 ## 7. Anti-rework rules (game-wide)
@@ -676,13 +770,17 @@ export function readCommand(state: ControllerState, out: PlayerCommand): void;
 
 ## 10. Minimal checklist
 
-- [ ] `GAME-PF-01` … `GAME-PF-06` complete.
-- [ ] One level playable with 1, 2 and 4 players on the TV + phones.
-- [ ] D-pad and stick layouts both render; jump works multi-touch.
-- [ ] Gravity, ground/platform collision, coins, goal flag, fall respawn, shared score, results and rematch work.
-- [ ] Direct `/games/platformer/` route uses the D0 room flow; the hub is not required.
-- [ ] No game code imports sockets, protocol, broker or controller internals.
-- [ ] Replay test is deterministic; no per-frame allocations in simulate/render.
-- [ ] Size, draw-call, frame-time and input-to-canvas numbers are recorded in `docs/RESULTS.md` with device/browser/version.
-- [ ] The four D7 proof games and their plans are unchanged; the platformer is additional scope.
-- [ ] No new runtime dependency; `npm run check` is green.
+> **Status (2026-10-22): partial.** Code-level items below are true in the
+> working tree; the device, measurement and gate items are PENDING.
+> `GAME-PF-06` is not done, so this checklist is not signed off.
+
+- [ ] `GAME-PF-01` … `GAME-PF-06` complete. (`01`–`05` code-complete; `06` PENDING.)
+- [ ] One level playable with 1, 2 and 4 players on the TV + phones. **PENDING:** code supports 1–4; no device run.
+- [ ] D-pad and stick layouts both render; jump works multi-touch. **PENDING:** layout data and bit mapping tested; no phone run.
+- [x] Gravity, ground/platform collision, coins, goal flag, fall respawn, shared score, results and rematch work in scoped tests.
+- [ ] Direct `/games/platformer/` route uses the D0 room flow; the hub is not required. **PENDING:** route and bundling tested; no browser/socket run.
+- [x] No game code imports sockets, protocol, broker or controller internals.
+- [ ] Replay test is deterministic; no per-frame allocations in simulate/render. **PENDING:** determinism is tested at player level; there is no 60 s replay test, and render allocation is unmeasured.
+- [ ] Size, draw-call, frame-time and input-to-canvas numbers are recorded in `docs/RESULTS.md` with device/browser/version. **PENDING:** only the draw-call ceiling is test-asserted.
+- [x] The four D7 proof games and their plans are unchanged; the platformer is additional scope.
+- [ ] No new runtime dependency; `npm run check` is green. **PENDING:** no new dependency was added; the full gate was not run by this docs task.

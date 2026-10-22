@@ -12,14 +12,22 @@
  * Rows are exactly 44 px tall, satisfying AR-5 even when the layout asks for a
  * shorter box (the box itself is raised to 44 px by the shared measure step).
  * Labels are assigned with `textContent`; no markup path exists (SR-13).
+ *
+ * Visual grammar (CP-14, DESIGN.md): `.control` + `.control-choice` on the
+ * card, `.is-pressed` on the container and on the candidate row, `.is-selected`
+ * plus `aria-selected` on the chosen row. styles.css owns the inversion,
+ * colours, fades and scrollbar; this file sets the scrollbar's geometry and
+ * the list/scrollbar transforms only.
  */
 import type { ChoiceControl } from "@lanpad/sdk";
 import type { InputState } from "@lanpad/protocol";
 import {
+  applyControlClasses,
   applyControlElementStyle,
   createPart,
   measureControl,
   notifyDebugState,
+  PRESSED_CLASS,
   setPressedClass,
   type ControlContext,
   type ControlRenderer,
@@ -37,8 +45,11 @@ const MAX_OPTION_LABEL_CHARS = 120;
 /** Movement past this many pixels turns a tap into a scroll drag. */
 const TAP_SLOP_PX = 8;
 
-const IDLE_OPACITY = "1";
-const PRESSED_OPACITY = "0.92";
+/** Smallest scrollbar thumb, so the affordance stays visible. */
+const MIN_SCROLLBAR_THUMB_PX = 24;
+
+/** styles.css insets the bar by 2 px at the top and right (CP-14). */
+const SCROLLBAR_INSET_PX = 2;
 
 function clamp(value: number, min: number, max: number): number {
   if (!Number.isFinite(value)) {
@@ -55,13 +66,9 @@ export function createChoiceControl(control: ChoiceControl, ctx: ControlContext)
 
   const element = document.createElement("div");
   applyControlElementStyle(element, control, box, ctx);
-  element.classList.add("control", "control-choice");
+  applyControlClasses(element, "choice");
   element.setAttribute("role", "listbox");
   element.setAttribute("aria-label", "choices");
-  element.style.overflow = "hidden";
-  element.style.borderRadius = "12px";
-  element.style.background = "rgba(255, 255, 255, 0.06)";
-  element.style.border = "1px solid rgba(255, 255, 255, 0.30)";
 
   const list = createPart("div", "list");
   list.style.position = "absolute";
@@ -74,41 +81,35 @@ export function createChoiceControl(control: ChoiceControl, ctx: ControlContext)
 
   const rows: HTMLElement[] = [];
   for (const option of options) {
-    const row = document.createElement("div");
+    const row = createPart("div", "option");
     row.setAttribute("role", "option");
     row.setAttribute("aria-selected", "false");
     row.style.position = "relative";
     row.style.height = `${CHOICE_ROW_HEIGHT_PX}px`;
-    row.style.display = "flex";
-    row.style.alignItems = "center";
-    row.style.padding = "0 12px";
-    row.style.boxSizing = "border-box";
-    row.style.borderBottom = "1px solid rgba(255, 255, 255, 0.10)";
-    row.style.color = "#f4f4f5";
-    row.style.font = "500 16px/1.2 system-ui, sans-serif";
-    row.style.overflow = "hidden";
-    row.style.textOverflow = "ellipsis";
-    row.style.whiteSpace = "nowrap";
-    row.dataset["part"] = "option";
     setSafeText(row, option.label, MAX_OPTION_LABEL_CHARS);
     rows.push(row);
     list.append(row);
   }
 
-  const selection = createPart("div", "selection");
-  selection.style.position = "absolute";
-  selection.style.left = "0";
-  selection.style.top = "0";
-  selection.style.width = "100%";
-  selection.style.height = `${CHOICE_ROW_HEIGHT_PX}px`;
-  selection.style.background = "rgba(255, 255, 255, 0.24)";
-  selection.style.opacity = "0";
-  selection.style.transform = "translate3d(0, 0, 0)";
-  selection.style.pointerEvents = "none";
-  list.append(selection);
-
   const contentHeight = options.length * CHOICE_ROW_HEIGHT_PX;
   const minOffset = Math.min(0, box.height - contentHeight);
+  const scrollable = contentHeight > box.height;
+  const scrollbarTrack = Math.max(0, box.height - SCROLLBAR_INSET_PX * 2);
+  const scrollbarThumbHeight = scrollable
+    ? Math.max(MIN_SCROLLBAR_THUMB_PX, (scrollbarTrack * scrollbarTrack) / contentHeight)
+    : 0;
+  const scrollbarRange = scrollbarTrack - scrollbarThumbHeight;
+
+  // CP-14 scroll affordance: a 2 px bar whose length tracks the visible
+  // fraction. styles.css hides the bar when the card is not scrollable.
+  const scrollbar = createPart("div", "scrollbar");
+  scrollbar.hidden = !scrollable;
+  if (scrollable) {
+    element.dataset["scrollable"] = "true";
+    scrollbar.style.height = `${scrollbarThumbHeight.toFixed(2)}px`;
+    scrollbar.style.transform = "translate3d(0, 0, 0)";
+  }
+  element.append(scrollbar);
 
   let activeIdentifier: number | null = null;
   let startY = 0;
@@ -116,8 +117,22 @@ export function createChoiceControl(control: ChoiceControl, ctx: ControlContext)
   let offset = 0;
   let dragging = false;
   let candidateIndex = -1;
+  let pressedRowIndex = -1;
   let selectedValue: string | null = null;
   let pressed = false;
+
+  const setRowPressed = (index: number): void => {
+    if (pressedRowIndex === index) {
+      return;
+    }
+    if (pressedRowIndex >= 0) {
+      rows[pressedRowIndex]?.classList.remove(PRESSED_CLASS);
+    }
+    pressedRowIndex = index;
+    if (index >= 0) {
+      rows[index]?.classList.add(PRESSED_CLASS);
+    }
+  };
 
   const applyVisual = (active: boolean): void => {
     if (active === pressed) {
@@ -125,13 +140,16 @@ export function createChoiceControl(control: ChoiceControl, ctx: ControlContext)
     }
     pressed = active;
     setPressedClass(element, active);
-    element.style.opacity = active ? PRESSED_OPACITY : IDLE_OPACITY;
     notifyDebugState(ctx, control.id, active);
   };
 
   const applyOffset = (next: number): void => {
     offset = clamp(next, minOffset, 0);
     list.style.transform = `translate3d(0, ${offset.toFixed(2)}px, 0)`;
+    if (scrollable) {
+      const progress = minOffset === 0 ? 0 : offset / minOffset;
+      scrollbar.style.transform = `translate3d(0, ${(progress * scrollbarRange).toFixed(2)}px, 0)`;
+    }
   };
 
   const indexAt = (clientY: number): number => {
@@ -145,10 +163,11 @@ export function createChoiceControl(control: ChoiceControl, ctx: ControlContext)
     if (option === undefined) {
       return;
     }
-    selection.style.transform = `translate3d(0, ${index * CHOICE_ROW_HEIGHT_PX}px, 0)`;
-    selection.style.opacity = "1";
     for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
-      rows[rowIndex]?.setAttribute("aria-selected", String(rowIndex === index));
+      const selected = rowIndex === index;
+      const row = rows[rowIndex];
+      row?.setAttribute("aria-selected", String(selected));
+      row?.classList.toggle("is-selected", selected);
     }
     if (option.value === selectedValue) {
       return;
@@ -164,6 +183,7 @@ export function createChoiceControl(control: ChoiceControl, ctx: ControlContext)
     }
     activeIdentifier = null;
     applyVisual(false);
+    setRowPressed(-1);
     const wasDragging = dragging;
     dragging = false;
     if (allowSelect && !wasDragging) {
@@ -190,6 +210,7 @@ export function createChoiceControl(control: ChoiceControl, ctx: ControlContext)
       startOffset = offset;
       dragging = false;
       candidateIndex = indexAt(binding.startY);
+      setRowPressed(candidateIndex);
       applyVisual(true);
     },
 
@@ -200,6 +221,8 @@ export function createChoiceControl(control: ChoiceControl, ctx: ControlContext)
       const delta = binding.lastY - startY;
       if (!dragging && Math.abs(delta) > TAP_SLOP_PX) {
         dragging = true;
+        // A scroll gesture is not a pick: drop the pressed row immediately.
+        setRowPressed(-1);
       }
       if (dragging) {
         applyOffset(startOffset + delta);
@@ -221,6 +244,7 @@ export function createChoiceControl(control: ChoiceControl, ctx: ControlContext)
     dispose(): void {
       activeIdentifier = null;
       dragging = false;
+      setRowPressed(-1);
       applyVisual(false);
       element.remove();
     },

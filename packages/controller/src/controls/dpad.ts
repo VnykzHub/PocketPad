@@ -4,8 +4,13 @@
  * Four directional zones inside one square box. A touch is classified into one
  * of eight 45-degree sectors: cardinal sectors press one bit, diagonal sectors
  * press the nearest two bits, and a small center dead zone presses none. Each
- * zone highlights in the same call that sets its bit (FR-8.7); highlight is an
- * opacity change, so no layout property moves (FR-8.3).
+ * zone highlights in the same call that sets its bit (FR-8.7); the highlight
+ * is the shared `is-pressed` class, so no layout property moves (FR-8.3).
+ *
+ * PAGE-PLANS CP-08: every wedge carries a CSS-drawn arrow glyph, the hub is a
+ * drawn disc, and two adjacent wedges lighting together is the diagonal cue.
+ * `styles.css` owns every fill and colour; the renderer owns geometry, the
+ * glyph shapes and the state classes.
  *
  * Multiple fingers on one d-pad are tracked independently and their direction
  * masks are ORed, so releasing one finger cannot clear a direction another
@@ -14,12 +19,12 @@
 import type { DpadControl } from "@lanpad/sdk";
 import type { InputState } from "@lanpad/protocol";
 import {
+  applyControlClasses,
   applyControlElementStyle,
   createPart,
   measureControl,
   notifyDebugState,
-  PRESSED_CLASS,
-  setPressedClass,
+  setPressed,
   type ControlContext,
   type ControlRenderer,
 } from "./control.js";
@@ -54,10 +59,27 @@ const ZONE_CLIP: Record<DirectionName, string> = {
   left: "polygon(50% 50%, 0% 100%, 0% 0%)",
 };
 
-const IDLE_ZONE_OPACITY = "0.35";
-const PRESSED_ZONE_OPACITY = "1";
-const IDLE_TRANSFORM = "scale(1)";
-const PRESSED_TRANSFORM = "scale(0.98)";
+/** Solid arrow drawn inside each wedge; colour inherits from the zone. */
+const ARROW_CLIP: Record<DirectionName, string> = {
+  up: "polygon(50% 0%, 100% 50%, 65% 50%, 65% 100%, 35% 100%, 35% 50%, 0% 50%)",
+  right: "polygon(100% 50%, 50% 0%, 50% 35%, 0% 35%, 0% 65%, 50% 65%, 50% 100%)",
+  down: "polygon(50% 100%, 100% 50%, 65% 50%, 65% 0%, 35% 0%, 35% 50%, 0% 50%)",
+  left: "polygon(0% 50%, 50% 0%, 50% 35%, 100% 35%, 100% 65%, 50% 65%, 50% 100%)",
+};
+
+/**
+ * Each arrow sits on its wedge, clear of the 24% hub at the centre. The
+ * stylesheet supplies the translate(-50%, -50%) centring transform.
+ */
+const ARROW_POSITION: Record<DirectionName, { readonly left: string; readonly top: string }> = {
+  up: { left: "50%", top: "30%" },
+  right: { left: "70%", top: "50%" },
+  down: { left: "50%", top: "70%" },
+  left: { left: "30%", top: "50%" },
+};
+
+const ARROW_GLYPH_PX = 14;
+
 /** Fraction of the radius around the center that presses no direction. */
 const CENTER_DEAD_ZONE_RATIO = 0.12;
 const CENTER_DEAD_ZONE_MIN_PX = 6;
@@ -72,30 +94,41 @@ export function createDpadControl(control: DpadControl, ctx: ControlContext): Co
   const box = measureControl(control, ctx.surfaceSize);
   const element = document.createElement("div");
   applyControlElementStyle(element, control, box, ctx);
-  element.classList.add("control", "control-dpad");
+  applyControlClasses(element, "dpad");
   element.setAttribute("role", "group");
   element.setAttribute("aria-label", `d-pad ${control.id}`);
-  element.style.borderRadius = "18%";
-  element.style.background = "rgba(255, 255, 255, 0.06)";
-  element.style.border = "1px solid rgba(255, 255, 255, 0.35)";
-  element.style.overflow = "hidden";
 
   const directions = {} as Record<DirectionName, DirectionState>;
   for (const name of DIRECTION_NAMES) {
     const zone = createPart("div", `zone-${name}`);
     zone.dataset["direction"] = name;
+    zone.setAttribute("aria-hidden", "true");
     zone.style.position = "absolute";
     zone.style.left = "0";
     zone.style.top = "0";
     zone.style.width = "100%";
     zone.style.height = "100%";
     zone.style.clipPath = ZONE_CLIP[name];
-    zone.style.background = "rgba(255, 255, 255, 0.32)";
-    zone.style.opacity = IDLE_ZONE_OPACITY;
     zone.style.pointerEvents = "none";
+
+    const glyph = createPart("span", "glyph");
+    glyph.setAttribute("aria-hidden", "true");
+    glyph.style.display = "block";
+    glyph.style.width = `${ARROW_GLYPH_PX}px`;
+    glyph.style.height = `${ARROW_GLYPH_PX}px`;
+    glyph.style.left = ARROW_POSITION[name].left;
+    glyph.style.top = ARROW_POSITION[name].top;
+    glyph.style.backgroundColor = "currentColor";
+    glyph.style.clipPath = ARROW_CLIP[name];
+    zone.append(glyph);
+
     element.append(zone);
     directions[name] = { bit: control.bits[name], zone, active: false };
   }
+
+  const hub = createPart("div", "hub");
+  hub.setAttribute("aria-hidden", "true");
+  element.append(hub);
 
   /** Direction mask per active touch identifier. */
   const directionTouches = new Map<number, number>();
@@ -133,8 +166,7 @@ export function createDpadControl(control: DpadControl, ctx: ControlContext): Co
       return;
     }
     pressed = active;
-    setPressedClass(element, active);
-    element.style.transform = active ? PRESSED_TRANSFORM : IDLE_TRANSFORM;
+    setPressed(element, active);
     notifyDebugState(ctx, control.id, active);
   };
 
@@ -154,8 +186,7 @@ export function createDpadControl(control: DpadControl, ctx: ControlContext): Co
       }
 
       direction.active = after;
-      direction.zone.classList.toggle(PRESSED_CLASS, after);
-      direction.zone.style.opacity = after ? PRESSED_ZONE_OPACITY : IDLE_ZONE_OPACITY;
+      setPressed(direction.zone, after);
       ctx.input.setButton(direction.bit, after);
     }
 
@@ -217,7 +248,7 @@ export function createDpadControl(control: DpadControl, ctx: ControlContext): Co
         const direction = directions[name];
         if (direction.active) {
           direction.active = false;
-          direction.zone.style.opacity = IDLE_ZONE_OPACITY;
+          setPressed(direction.zone, false);
           ctx.input.setButton(direction.bit, false);
         }
       }

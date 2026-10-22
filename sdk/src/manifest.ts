@@ -14,6 +14,8 @@
 export interface GameManifest {
   schemaVersion?: 1;
   name: string;
+  /** Optional one-line launcher copy. Display only; the runtime never reads it. */
+  description?: string;
   entry: string;
   layouts: string[];
   assetBudget: {

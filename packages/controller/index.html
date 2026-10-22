@@ -4,61 +4,110 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="dark" />
-    <title>lanpad controller</title>
+    <meta name="theme-color" content="#000000" />
+    <title>PocketPad controller</title>
   </head>
   <body>
     <div id="app">
+      <!--
+        Controller frame (PAGE-PLANS §4): 44 px top bar, status pill left,
+        haptics pill right. The bar is display-only except the haptics button;
+        the play surface reserves --play-inset-top underneath it.
+      -->
       <header class="topbar">
         <span id="connection" class="pill" data-state="disconnected" role="status" aria-live="polite">
           Disconnected
         </span>
-        <button id="haptics-toggle" class="pill haptics-toggle" type="button" aria-pressed="true">
+        <button id="haptics-toggle" class="haptics-toggle" type="button" aria-pressed="true" data-haptics="on">
           Haptics on
         </button>
+        <button id="fullscreen-toggle" class="haptics-toggle fullscreen-toggle" type="button">
+          Full
+        </button>
       </header>
+
       <main class="shell">
+        <!-- CP-01/02/03: join form. Ids are the page-shell contract (main.ts). -->
         <form id="join-form" class="panel" autocomplete="off" novalidate>
           <h1>Join a room</h1>
-          <label for="code">Room code</label>
-          <input
-            id="code"
-            name="code"
-            class="code-input"
-            inputmode="text"
-            maxlength="4"
-            autocapitalize="characters"
-            autocomplete="off"
-            spellcheck="false"
-            placeholder="ABCD"
-          />
-          <label for="pin">PIN</label>
-          <input
-            id="pin"
-            name="pin"
-            class="pin-input"
-            type="text"
-            inputmode="numeric"
-            maxlength="4"
-            pattern="[0-9]{4}"
-            autocomplete="one-time-code"
-            placeholder="1234"
-          />
+          <div class="field">
+            <label for="code">Room code</label>
+            <input
+              id="code"
+              name="code"
+              class="code-input"
+              inputmode="text"
+              maxlength="4"
+              autocapitalize="characters"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="ABCD"
+            />
+          </div>
+          <div class="field">
+            <label for="pin">PIN</label>
+            <input
+              id="pin"
+              name="pin"
+              class="pin-input"
+              type="text"
+              inputmode="numeric"
+              maxlength="4"
+              pattern="[0-9]{4}"
+              autocomplete="one-time-code"
+              placeholder="1234"
+            />
+          </div>
           <p id="join-error" class="error" role="alert" hidden></p>
           <button id="join-button" class="join-button" type="submit">Join</button>
         </form>
-        <section id="controller" class="controller" hidden>
+
+        <!-- CP-04: connected, no layout yet. -->
+        <section id="controller" class="controller" hidden aria-live="polite">
           <p id="slot-label" class="slot-label">Player</p>
+          <p class="waiting-state">Waiting for the game to start.</p>
           <button id="test-button" class="test-button" type="button" disabled>Test</button>
         </section>
       </main>
+
+      <!-- CP-05: full-viewport control surface; controls are positioned by the layout host. -->
       <div id="play-surface" class="play-surface" hidden></div>
+
+      <!-- CP-19: landscape layout on a portrait phone. Shown by the layout host. -->
+      <div id="orientation" class="orientation" hidden>
+        <svg
+          class="orientation-icon"
+          viewBox="0 0 64 64"
+          width="64"
+          height="64"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <rect x="25" y="5" width="20" height="36" rx="5" fill="none" stroke="currentColor" stroke-width="3" />
+          <path
+            d="M15 43a17 17 0 1 0 9-15"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <path
+            d="M20 29l5 9-10 1"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <h2>Turn your phone sideways</h2>
+        <p>This game uses the whole screen.</p>
+      </div>
+
+      <!-- CP-18: ?debug=1 only. The overlay module fills this element. -->
       <aside id="debug-overlay" class="debug-overlay" aria-hidden="true" hidden>
         <dl>
-          <div><dt>RTT</dt><dd id="debug-rtt">—</dd></div>
-          <div><dt>Packets/s</dt><dd id="debug-pps">0</dd></div>
-          <div><dt>Last send</dt><dd id="debug-age">—</dd></div>
-          <div><dt>Script</dt><dd id="debug-script">0.00 ms</dd></div>
-          <div><dt>Layout</dt><dd id="debug-layout">none</dd></div>
+          <div><dt>RTT</dt><dd>—</dd></div>
         </dl>
       </aside>
     </div>

@@ -31,6 +31,7 @@ import type {
   Renderer3D,
   RendererCapabilities,
   RendererOptions,
+  RendererSize,
 } from "./Renderer.js";
 
 const FLOATS_PER_VERTEX = 6;
@@ -348,9 +349,19 @@ export class WebGL2Renderer implements Renderer3D {
   private drawCallCount = 0;
   private culledCount = 0;
   private disposed = false;
+  /** Stable object updated by `resize`; read the fields, never retain them. */
+  private readonly surfaceSize: { width: number; height: number } = {
+    width: 0,
+    height: 0,
+  };
 
   constructor(options: RendererOptions = {}) {
     this.maxRenderHeight = options.maxRenderHeight ?? 0;
+  }
+
+  /** Actual CSS size; zero before the host's first `resize` (HP-04). */
+  get size(): RendererSize {
+    return this.surfaceSize;
   }
 
   get drawCalls(): number {
@@ -485,6 +496,8 @@ export class WebGL2Renderer implements Renderer3D {
 
     this.cssWidth = width;
     this.cssHeight = height;
+    this.surfaceSize.width = width;
+    this.surfaceSize.height = height;
     this.backingWidth = backingWidth;
     this.backingHeight = backingHeight;
     gl.viewport(0, 0, backingWidth, backingHeight);

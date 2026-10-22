@@ -15,6 +15,11 @@
  * axes -1..1, triggers 0..1, gyro degrees/second. Games never decode a packet
  * and never see a socket (FR-7.17).
  *
+ * **Connectivity is packet-driven** (FR-8.2, FR-5.4): every accepted packet
+ * for an in-range slot marks it connected, including a tick-0 all-zero packet
+ * sent before clock sync. `reset(slot)` clears it when the host sees a leave.
+ * Tick and input values are never used as a presence heuristic.
+ *
  * `apply` and `pollAll` are deterministic and allocation-free (PR-9.3). The
  * only clock read is in `getStats`, which is diagnostics, not input policy.
  *
@@ -29,6 +34,14 @@ import type {
   InputSnapshot,
   SlotStats,
 } from "./types.js";
+
+/**
+ * Internal mutable view of the pooled state. `connected` is readonly to game
+ * code but changes through `apply`/`reset`, and the mapper owns the object.
+ */
+type MutableControllerState = {
+  -readonly [K in keyof ControllerState]: ControllerState[K];
+};
 
 const AXIS_MAX = 32767;
 const TRIGGER_MAX = 255;
@@ -46,7 +59,9 @@ const RATE_CAPACITY = 512;
 
 interface SlotRecord {
   /** Pooled game-facing object; also the object in `InputSnapshot.players`. */
-  readonly state: ControllerState;
+  readonly state: MutableControllerState;
+  /** Latched by every accepted packet; published by `pollAll` (FR-8.2). */
+  connected: boolean;
   /** Edges received since the last `pollAll`; separate from `state.edges`. */
   pendingEdges: number;
   hasTick: boolean;
@@ -85,8 +100,9 @@ export class InputMapper {
     this.deadzone = deadzone;
 
     for (let slot = 1; slot <= slotCount; slot += 1) {
-      const state: ControllerState = {
+      const state: MutableControllerState = {
         slot,
+        connected: false,
         buttons: 0,
         edges: 0,
         lx: 0,
@@ -104,6 +120,7 @@ export class InputMapper {
       this.players.push(state);
       this.records.push({
         state,
+        connected: false,
         pendingEdges: 0,
         hasTick: false,
         lastTick: 0,
@@ -121,9 +138,11 @@ export class InputMapper {
   /**
    * Ingest one decoded Input packet for a slot.
    *
-   * Out-of-range slots are ignored and counted as drops. Level fields update
-   * only when the packet tick is newer than or equal to the accepted tick;
-   * edges update on every packet (FR-7.11, FR-7.12).
+   * Out-of-range slots are ignored and counted as drops. Every accepted
+   * packet marks the slot connected, including tick 0 and an all-zero state,
+   * so a fresh phone is present before clock sync (FR-8.2, FR-5.4). Level
+   * fields update only when the packet tick is newer than or equal to the
+   * accepted tick; edges update on every packet (FR-7.11, FR-7.12).
    */
   apply(slot: number, packet: InputState, receivedAtMs: number): void {
     const record = this.recordFor(slot);
@@ -133,6 +152,8 @@ export class InputMapper {
     }
 
     record.lastReceivedAtMs = receivedAtMs;
+    // Presence is the packet itself, never the tick or the decoded values.
+    record.connected = true;
     this.recordPacketRate(record, receivedAtMs);
 
     record.pendingEdges = (record.pendingEdges | packet.edges) & BITMASK_16;
@@ -174,6 +195,7 @@ export class InputMapper {
         continue;
       }
       const state = record.state;
+      state.connected = record.connected;
       state.edges = record.pendingEdges;
       record.pendingEdges = 0;
       if (this.deadzone > 0) {
@@ -212,7 +234,10 @@ export class InputMapper {
     };
   }
 
-  /** Clear a slot (player left) or every slot. Pooled objects are reused. */
+  /**
+   * Clear a slot (player left) or every slot, including connectivity. Pooled
+   * objects are reused, so a later packet reconnects the same state object.
+   */
   reset(slot?: number): void {
     if (slot === undefined) {
       for (let index = 0; index < this.records.length; index += 1) {
@@ -248,6 +273,7 @@ export class InputMapper {
 
 function clearRecord(record: SlotRecord): void {
   const state = record.state;
+  state.connected = false;
   state.buttons = 0;
   state.edges = 0;
   state.lx = 0;
@@ -268,6 +294,7 @@ function clearRecord(record: SlotRecord): void {
   state.triggers.rt = 0;
   state.tick = 0;
 
+  record.connected = false;
   record.pendingEdges = 0;
   record.hasTick = false;
   record.lastTick = 0;

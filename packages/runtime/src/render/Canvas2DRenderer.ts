@@ -16,6 +16,7 @@ import type {
   Renderer3D,
   RendererCapabilities,
   RendererOptions,
+  RendererSize,
 } from "./Renderer.js";
 
 const BACKGROUND = "#0b0f14";
@@ -40,9 +41,19 @@ export class Canvas2DRenderer implements Renderer2D, Renderer3D {
   private cameraX = 0;
   private cameraY = 0;
   private cameraZ = DEFAULT_CAMERA_Z;
+  /** Stable object updated by `resize`; read the fields, never retain them. */
+  private readonly surfaceSize: { width: number; height: number } = {
+    width: 0,
+    height: 0,
+  };
 
   constructor(options: RendererOptions = {}) {
     this.maxRenderHeight = options.maxRenderHeight ?? 0;
+  }
+
+  /** Actual CSS size; zero before the host's first `resize` (HP-04). */
+  get size(): RendererSize {
+    return this.surfaceSize;
   }
 
   get drawCalls(): number {
@@ -85,6 +96,8 @@ export class Canvas2DRenderer implements Renderer2D, Renderer3D {
 
     this.cssWidth = width;
     this.cssHeight = height;
+    this.surfaceSize.width = width;
+    this.surfaceSize.height = height;
     this.scaleX = backingWidth / width;
     this.scaleY = backingHeight / height;
     ctx.setTransform(this.scaleX, 0, 0, this.scaleY, 0, 0);

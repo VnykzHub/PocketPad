@@ -432,6 +432,48 @@ describe("analog units and deadzone (FR-7.4)", () => {
   });
 });
 
+describe("controller connectivity (FR-8.2, FR-7.12, FR-5.4)", () => {
+  test("[FR-8.2] a tick-0 all-zero packet marks the slot connected", () => {
+    const mapper = new InputMapper();
+    expect(pollPlayer(mapper, 1, 1).connected).toBe(false);
+    expect(pollPlayer(mapper, 2, 1).connected).toBe(false);
+
+    // A phone's first Input arrives before clock sync: tick 0, all zeros.
+    // Presence must come from the packet, not from its decoded values.
+    mapper.apply(1, packet({ tick: 0 }), 0);
+
+    const player = pollPlayer(mapper, 1, 2);
+    expect(player.connected).toBe(true);
+    expect(player.tick).toBe(0);
+    expect(player.buttons).toBe(0);
+    expect(player.edges).toBe(0);
+    expect(pollPlayer(mapper, 2, 2).connected).toBe(false);
+  });
+
+  test("[FR-7.12] an all-zero packet marks connected without inventing edges", () => {
+    const mapper = new InputMapper();
+    mapper.apply(1, packet({ tick: 0, edges: 0 }), 0);
+    const player = pollPlayer(mapper);
+    expect(player.connected).toBe(true);
+    expect(player.edges).toBe(0);
+  });
+
+  test("[FR-5.4][FR-8.2] reset clears connectivity for one slot or all slots", () => {
+    const mapper = new InputMapper();
+    mapper.apply(1, packet({ tick: 0 }), 0);
+    mapper.apply(2, packet({ tick: 0 }), 0);
+    expect(pollPlayer(mapper, 1, 1).connected).toBe(true);
+
+    mapper.reset(1);
+    mapper.pollAll(2);
+    expect(mapper.getSlot(1)?.connected).toBe(false);
+    expect(mapper.getSlot(2)?.connected).toBe(true);
+
+    mapper.reset();
+    expect(mapper.getSlot(2)?.connected).toBe(false);
+  });
+});
+
 describe("game-facing contract (FR-7.17, PR-9.3)", () => {
   test("[FR-7.17] game-facing state exposes ControllerState fields only", () => {
     const mapper = new InputMapper();
@@ -446,6 +488,7 @@ describe("game-facing contract (FR-7.17, PR-9.3)", () => {
     }
     expect(Object.keys(player).sort()).toEqual([
       "buttons",
+      "connected",
       "edges",
       "gyro",
       "gyroActive",

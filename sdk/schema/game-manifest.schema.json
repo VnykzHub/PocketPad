@@ -23,6 +23,11 @@
       "minLength": 1,
       "maxLength": 64
     },
+    "description": {
+      "type": "string",
+      "maxLength": 140,
+      "description": "Optional one-line launcher copy. Display only."
+    },
     "entry": {
       "type": "string",
       "minLength": 1,

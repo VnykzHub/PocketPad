@@ -116,7 +116,7 @@ describe("protocol constants (D0-PROTO-01)", () => {
     }
   });
 
-  test("[FR-4.4] only WebSocket transport constants are exported", () => {
+  test("[FR-4.4][FR-4.5] only WebSocket transport constants are exported", () => {
     expect(Object.keys(MSG)).toEqual([
       "Input",
       "Ping",
@@ -125,7 +125,9 @@ describe("protocol constants (D0-PROTO-01)", () => {
       "HapticCmd",
       "InputFwd",
     ]);
-    // No socket / WebRTC / fetch implementation leaks out of the wire contract.
+    // FR-4.4/FR-4.5: WebSocket is the only v1 transport; WebRTC stays an
+    // experiment, so no WebRTC/socket/fetch implementation leaks out of the
+    // wire contract.
     expect(Object.keys(protocol).filter((name) => /socket|webrtc|fetch/i.test(name))).toEqual([]);
     for (const file of sourceFiles) {
       expect(readSource(file), `${file} must not hard-code a WebSocket URL`).not.toMatch(

@@ -1,16 +1,94 @@
+/*
+ * PocketPad controller stylesheet (W3 controller shell; DESIGN.md
+ * `true-black-flat`).
+ *
+ * Owns: design tokens, the controller frame (PAGE-PLANS §4), CP-01…CP-06,
+ * CP-19 and the visual language for all eleven control types (CP-07…CP-17).
+ * Renderers own geometry, hit testing and pressed-state classes; this file
+ * owns every colour, radius, type size and state expression. No rule here
+ * depends on a renderer's inline style, and no rule sets a control's
+ * left/top/width/height — those are layout coordinates.
+ *
+ * The top bar is 44 px plus the safe-area top. The play surface reserves
+ * --play-inset-top underneath it; that inset is applied by the layout host to
+ * the control coordinate space, because controls are positioned from measured
+ * surface percentages and their hit rects use client coordinates.
+ */
+
+/* ------------------------------------------------------------------------- */
+/* Tokens (DESIGN.md)                                                        */
+/* ------------------------------------------------------------------------- */
+
 :root {
   color-scheme: dark;
-  --bg: #0f1117;
-  --panel: #171a23;
-  --text: #f4f6fb;
-  --muted: #aab1c2;
-  --line: #2a3040;
-  --accent: #4f8cff;
-  --accent-pressed: #2f6fe0;
-  --error: #ff9c9c;
+
+  /* ground and elevation */
+  --ground: #000000;
+  --surface: #111111;
+  --raised: #2a2a2a;
+  --border: #1a1a1a;
+  --rule: #161616;
+  --control: #444444;
+
+  /* text */
+  --text: #ffffff;
+  --muted: #b4b4b4;
+  --faint: #949494;
+
+  /* signal */
+  --accent: #c6f24e;
+  --positive: #c6f24e;
+  --negative: #e5484d;
+  --warning: #e5a93b;
+
+  /* shape */
+  --radius-card: 20px;
+  --radius-control: 999px;
+  --radius-field: 14px;
+
+  /* spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* motion */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-press: 120ms;
+  --dur-state: 160ms;
+  --dur-enter: 220ms;
+  --dur-panel: 280ms;
+
+  /* phone scale (thumb-first, 390px baseline) */
+  --phone-title: 24px;
+  --phone-body: 16px;
+  --phone-meta: 13px;
+  --phone-control-label: 16px;
+  --phone-gap: 12px;
+  --phone-pad: 16px;
+  --phone-target: 48px;
+
+  /* controller frame */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --topbar-height: 44px;
+  --play-inset-top: 52px;
 }
 
-* {
+/* ------------------------------------------------------------------------- */
+/* Reset and type                                                            */
+/* ------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -21,10 +99,14 @@ body {
 }
 
 body {
-  background: var(--bg);
+  background: var(--ground);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: Inter, "Inter var", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: var(--phone-body);
+  font-weight: 400;
+  line-height: 1.45;
   -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
 }
 
@@ -43,52 +125,440 @@ body.playing .shell {
   flex-direction: column;
 }
 
+/* ------------------------------------------------------------------------- */
+/* Controller frame: 44px top bar (PAGE-PLANS §4)                            */
+/* ------------------------------------------------------------------------- */
+
 .topbar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 16px 0;
-  /* Keep the pill readable above the fixed play surface. */
   position: relative;
-  z-index: 2;
+  z-index: 20;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  height: calc(var(--topbar-height) + var(--safe-top));
+  padding-top: var(--safe-top);
+  padding-right: max(var(--phone-pad), var(--safe-right));
+  padding-left: max(var(--phone-pad), var(--safe-left));
+  background: var(--ground);
   /* Statuses are display-only; the haptics button opts back in below. */
   pointer-events: none;
 }
 
-/* D6-CTRL-04: the only interactive topbar element (FR-8.12). */
-.haptics-toggle {
-  pointer-events: auto;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  color: var(--text);
-  cursor: pointer;
+/* Status pill: word + dot, never colour alone (CP-04, CP-06, A9). */
+.pill,
+#connection {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+  min-width: 0;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--muted);
   font-family: inherit;
+  font-size: var(--phone-meta);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition:
+    color var(--dur-state) var(--ease-out),
+    background-color var(--dur-state) var(--ease-out);
 }
 
-/* Full-screen host for layout controls (D2-CTRL-04). */
-.play-surface {
+#connection::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--negative);
+  transition: background-color var(--dur-state) var(--ease-out);
+}
+
+#connection[data-state="connected"] {
+  color: var(--text);
+}
+
+#connection[data-state="connected"]::before {
+  background: var(--accent);
+}
+
+#connection[data-state="connecting"]::before,
+#connection[data-state="reconnecting"]::before,
+#connection[data-state="waiting-for-tv"]::before,
+#connection[data-state="tv-paused"]::before {
+  background: var(--warning);
+}
+
+#connection[data-state="disconnected"]::before {
+  background: var(--negative);
+}
+
+/* Haptics toggle: 44px, label on/off, lime dot when on (CP-04, FR-8.12). */
+.haptics-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--topbar-height);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: var(--phone-meta);
+  font-weight: 500;
+  cursor: pointer;
+  touch-action: manipulation;
+  pointer-events: auto;
+  transition:
+    background-color var(--dur-state) var(--ease-out),
+    color var(--dur-state) var(--ease-out);
+}
+
+.haptics-toggle::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  transition: background-color var(--dur-state) var(--ease-out);
+}
+
+.haptics-toggle[data-haptics="off"]::before {
+  background: var(--control);
+}
+
+.haptics-toggle:active {
+  background: var(--raised);
+}
+
+.haptics-toggle:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Join form (CP-01, CP-02, CP-03)                                           */
+/* ------------------------------------------------------------------------- */
+
+.shell {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding-top: var(--space-5);
+  padding-right: max(var(--phone-pad), var(--safe-right));
+  padding-bottom: calc(var(--space-6) + var(--safe-bottom));
+  padding-left: max(var(--phone-pad), var(--safe-left));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-5);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.panel h1 {
+  margin: 0;
+  font-size: var(--phone-title);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field label {
+  font-size: var(--phone-meta);
+  font-weight: 400;
+  color: var(--muted);
+}
+
+#join-form input {
+  width: 100%;
+  min-height: 56px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--control);
+  border-radius: var(--radius-field);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+#join-form input::placeholder {
+  color: var(--faint);
+}
+
+#join-form input:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-color: var(--accent);
+}
+
+.code-input {
+  font-size: 32px;
+  font-weight: 600;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.pin-input {
+  font-size: 24px;
+  font-weight: 500;
+  text-align: center;
+  letter-spacing: 0.5em;
+}
+
+/* Error line, not a red panel (CP-03). */
+.error {
+  margin: 0;
+  color: var(--negative);
+  font-size: var(--phone-body);
+  line-height: 1.45;
+}
+
+.join-button {
+  width: 100%;
+  min-height: 56px;
+  margin-top: var(--space-2);
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--text);
+  color: var(--ground);
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color var(--dur-press) var(--ease-out),
+    color var(--dur-press) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
+}
+
+.join-button:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+/* Disabled stays legible and says why in its label (CP-01). */
+.join-button:disabled {
+  background: var(--surface);
+  color: var(--faint);
+  cursor: default;
+}
+
+.join-button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Waiting page (CP-04)                                                      */
+/* ------------------------------------------------------------------------- */
+
+.controller {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 60dvh;
+  padding: var(--space-6) var(--space-5);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  text-align: center;
+}
+
+.slot-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text);
+  font-size: var(--phone-title);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.waiting-state {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--phone-body);
+}
+
+/* CP-04 room line; the PIN only exists when this phone typed it. */
+.room-line {
+  margin: 0;
+  color: var(--faint);
+  font-size: var(--phone-body);
+  font-variant-numeric: tabular-nums;
+}
+
+/* CP-06 reconnect banner. The pill owns the live announcement; this is the
+   visual reinforcement, so it is fixed under the top bar and inert. */
+.reconnect-banner {
   position: fixed;
-  inset: 0;
-  z-index: 1;
-  background: var(--bg);
-  overflow: hidden;
+  top: calc(var(--topbar-height) + var(--safe-top));
+  left: 0;
+  right: 0;
+  z-index: 19;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 44px;
+  padding: 0 var(--space-4);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: var(--phone-meta);
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.reconnect-banner > span[aria-hidden="true"] {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--warning);
+}
+
+/* Debug affordance kept for main.ts; removed from the normal waiting page by
+   D3 once the shell owns the state line (CP-04 behaviour change). */
+.fullscreen-toggle {
+  pointer-events: auto;
+}
+
+.test-button {
+  width: 100%;
+  min-height: var(--phone-target);
+  margin-top: var(--space-2);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--phone-body);
+  font-weight: 500;
+  cursor: pointer;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
 
+.test-button:active:not(:disabled) {
+  background: var(--raised);
+}
+
+.test-button:disabled {
+  color: var(--control);
+  cursor: default;
+}
+
+.test-button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Play surface (CP-05, CP-06)                                               */
+/* ------------------------------------------------------------------------- */
+
+/*
+ * Geometrically full-bleed on purpose: the layout host measures this element
+ * and hit-tests with client coordinates, so padding/inset here would desync
+ * every control's visual box from its hit rect. The 52 px top inset and the
+ * safe-area insets are applied to the control coordinate space by that host;
+ * the top bar paints its own ground over the top 44 px + safe area.
+ */
+.play-surface {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: var(--ground);
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Orientation (CP-19)                                                       */
+/* ------------------------------------------------------------------------- */
+
+.orientation {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding-top: calc(var(--topbar-height) + var(--safe-top) + var(--space-5));
+  padding-right: max(var(--phone-pad), var(--safe-right));
+  padding-bottom: max(var(--phone-pad), var(--safe-bottom));
+  padding-left: max(var(--phone-pad), var(--safe-left));
+  background: var(--ground);
+  text-align: center;
+}
+
+.orientation-icon {
+  color: var(--muted);
+}
+
+.orientation h2 {
+  margin: 0;
+  font-size: var(--phone-title);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.orientation p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--phone-body);
+}
+
+/* ------------------------------------------------------------------------- */
+/* Debug overlay (CP-18)                                                     */
+/* ------------------------------------------------------------------------- */
+
 .debug-overlay {
   position: fixed;
-  top: 8px;
-  left: 8px;
+  top: calc(var(--topbar-height) + var(--safe-top) + var(--space-2));
+  left: max(var(--space-2), var(--safe-left));
   z-index: 30;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.72);
-  color: #d7ffd7;
-  font: 12px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  max-width: calc(100vw - var(--space-4));
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--space-3);
+  background: rgb(17 17 17 / 0.92);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: var(--phone-meta);
+  font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
 
@@ -101,164 +571,1032 @@ body.playing .shell {
 .debug-overlay dl > div {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .debug-overlay dt {
-  color: var(--muted);
+  color: var(--faint);
 }
 
 .debug-overlay dd {
   margin: 0;
+  color: var(--text);
   text-align: right;
 }
 
-.pill {
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 600;
-  background: #3d1616;
-  color: var(--error);
+/* ------------------------------------------------------------------------- */
+/* Control language (all 11 types)                                           */
+/* ------------------------------------------------------------------------- */
+
+/*
+ * Contract shared by every renderer: `.control` + `.control-<type>`, pressed
+ * toggles `.is-pressed`, and the additive states `.is-selected`, `.is-disabled`,
+ * `.is-unavailable`, `.is-blocked`, `.is-empty`. Rest is --surface with a
+ * --muted label; pressed is a lime fill with a --ground label and a 0.97
+ * scale; state is always fill + shape + word, never colour alone.
+ */
+.control {
+  /* AR-5 floor: measureControl already clamps the hit box to 44px, so the
+     visual box must never be smaller than its target. */
+  min-width: 44px;
+  min-height: 44px;
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: var(--radius-control);
+  font-family: inherit;
+  font-size: var(--phone-control-label);
+  font-weight: 500;
+  line-height: 1.1;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 80ms var(--ease-out),
+    color 80ms var(--ease-out),
+    border-color 80ms var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
 }
 
-.pill[data-state="connecting"] {
-  background: #4a3b12;
-  color: #ffd479;
+.control [data-part="label"],
+.control [data-part="symbol"],
+.control [data-part="glyph"] {
+  color: inherit;
+  pointer-events: none;
 }
 
-.pill[data-state="connected"] {
-  background: #123d24;
-  color: #7ff0a8;
+.control.is-pressed {
+  background-color: var(--accent);
+  color: var(--ground);
+  transform: scale(0.97);
 }
 
-/* D4 (A9): slot held, waiting on the network or the TV. */
-.pill[data-state="reconnecting"],
-.pill[data-state="waiting-for-tv"],
-.pill[data-state="tv-paused"] {
-  background: #4a3b12;
-  color: #ffd479;
+.control.is-selected {
+  background-color: var(--text);
+  color: var(--ground);
 }
 
-.shell {
-  flex: 1;
-  width: 100%;
-  max-width: 560px;
-  margin: 0 auto;
-  padding: 16px;
+.control.is-disabled {
+  background-color: var(--surface);
+  color: var(--control);
+  transform: none;
+}
+
+.control.is-unavailable {
+  background-color: var(--surface);
+  color: var(--faint);
+  transform: none;
+}
+
+.control.is-blocked {
+  outline: 2px solid var(--warning);
+  outline-offset: -2px;
+}
+
+.control.is-empty {
+  background-color: var(--surface);
+  color: var(--faint);
+}
+
+.control:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------------- */
+/* CP-07 button                                                              */
+/* ------------------------------------------------------------------------- */
+
+.control-button {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 16px;
-}
-
-.panel {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-h1 {
-  margin: 0 0 8px;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-label {
-  font-size: 14px;
-  color: var(--muted);
-}
-
-input {
-  width: 100%;
-  min-height: 48px;
-  padding: 12px 16px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--panel);
-  color: var(--text);
-  font: inherit;
-  font-size: 24px;
-}
-
-input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.code-input {
-  text-transform: uppercase;
-  letter-spacing: 0.3em;
-}
-
-.pin-input {
-  letter-spacing: 0.5em;
-}
-
-.error {
-  margin: 0;
-  color: var(--error);
-  font-size: 15px;
-}
-
-button {
-  border: 0;
+  overflow: hidden;
+  padding: var(--space-2);
   border-radius: 16px;
-  background: var(--accent);
-  color: #fff;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-button:focus-visible {
-  outline: 2px solid var(--text);
-  outline-offset: 2px;
-}
-
-button:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.join-button {
-  min-height: 52px;
-  margin-top: 8px;
-  font-size: 18px;
-}
-
-.controller {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.slot-label {
-  margin: 0;
+  background-color: var(--surface);
+  color: var(--muted);
   text-align: center;
-  font-size: 18px;
-  font-weight: 600;
+}
+
+/* The renderer may expose shape as data-shape or a class; both are cheap to
+   support while the control agents finish stripping inline styles. */
+.control-button[data-shape="pill"],
+.control-button.shape-pill {
+  border-radius: var(--radius-control);
+}
+
+.control-button[data-shape="circle"],
+.control-button.shape-circle {
+  border-radius: 50%;
+}
+
+.control-button[data-shape="rounded"],
+.control-button.shape-rounded {
+  border-radius: 16px;
+}
+
+.control-button[data-shape="square"],
+.control-button.shape-square {
+  border-radius: 4px;
+}
+
+.control-button.is-pressed {
+  background-color: var(--accent);
+  color: var(--ground);
+  transform: scale(0.97);
+}
+
+.control-button.is-disabled {
+  background-color: var(--surface);
+  color: var(--control);
+}
+
+.control-button [data-part="symbol"] {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* ------------------------------------------------------------------------- */
+/* CP-08 dpad                                                                */
+/* ------------------------------------------------------------------------- */
+
+.control-dpad {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background-color: transparent;
+}
+
+.control-dpad.is-pressed {
+  background-color: transparent;
+  color: var(--muted);
+  transform: none;
+}
+
+.control-dpad [data-part^="zone-"] {
+  position: absolute;
+  inset: 0;
+  background-color: var(--surface);
+  color: var(--muted);
+  transition:
+    background-color 80ms var(--ease-out),
+    color 80ms var(--ease-out);
+}
+
+.control-dpad [data-part="zone-up"] {
+  clip-path: polygon(50% 50%, 0 0, 100% 0);
+}
+
+.control-dpad [data-part="zone-right"] {
+  clip-path: polygon(50% 50%, 100% 0, 100% 100%);
+}
+
+.control-dpad [data-part="zone-down"] {
+  clip-path: polygon(50% 50%, 100% 100%, 0 100%);
+}
+
+.control-dpad [data-part="zone-left"] {
+  clip-path: polygon(50% 50%, 0 100%, 0 0);
+}
+
+.control-dpad [data-part^="zone-"].is-pressed {
+  background-color: var(--accent);
+  color: var(--ground);
+}
+
+.control-dpad [data-part^="zone-"] [data-part="glyph"],
+.control-dpad [data-part^="zone-"] [data-part="symbol"] {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.control-dpad [data-part="hub"] {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 24%;
+  height: 24%;
+  border-radius: 50%;
+  background-color: var(--ground);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------------- */
+/* CP-09 stick                                                               */
+/* ------------------------------------------------------------------------- */
+
+.control-stick {
+  border-radius: 50%;
+  background-color: transparent;
+}
+
+.control-stick.is-pressed {
+  background-color: transparent;
+  color: var(--muted);
+  transform: none;
+}
+
+.control-stick [data-part="base"] {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--control);
+  border-radius: 50%;
+  background-color: var(--surface);
+  transition: border-color 80ms var(--ease-out);
+}
+
+.control-stick.is-pressed [data-part="base"] {
+  border-color: var(--accent);
+}
+
+.control-stick [data-part="knob"] {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--raised);
+  pointer-events: none;
+}
+
+.control-stick [data-part="tick"] {
+  position: absolute;
+  width: 2px;
+  height: 8px;
+  border-radius: 1px;
+  background-color: var(--control);
+  pointer-events: none;
+}
+
+.control-stick [data-part="tick"][data-tick="0"] {
+  left: 50%;
+  top: 6px;
+  transform: translate(-50%, 0);
+}
+
+.control-stick [data-part="tick"][data-tick="1"] {
+  right: 6px;
+  top: 50%;
+  transform: translate(0, -50%) rotate(90deg);
+}
+
+.control-stick [data-part="tick"][data-tick="2"] {
+  left: 50%;
+  bottom: 6px;
+  transform: translate(-50%, 0);
+}
+
+.control-stick [data-part="tick"][data-tick="3"] {
+  left: 6px;
+  top: 50%;
+  transform: translate(0, -50%) rotate(90deg);
+}
+
+.control-stick [data-part="deadzone"] {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--control);
+  border-radius: 50%;
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.control-stick [data-part="label"] {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: var(--phone-meta);
+  color: var(--faint);
+  text-align: center;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------------- */
+/* CP-10 trigger                                                             */
+/* ------------------------------------------------------------------------- */
+
+.control-trigger {
+  overflow: hidden;
+  border: 2px solid var(--control);
+  border-radius: 12px;
+  background-color: var(--surface);
   color: var(--muted);
 }
 
-/* Full-width, large target: the D0 stand-in for a real control. */
-.test-button {
+.control-trigger.is-pressed {
+  background-color: var(--surface);
+  color: var(--muted);
+  transform: none;
+}
+
+.control-trigger [data-part="fill"] {
+  position: absolute;
+  left: 0;
+  top: 0;
   width: 100%;
-  height: 55vh;
-  min-height: 160px;
-  font-size: clamp(28px, 8vw, 44px);
-  letter-spacing: 0.04em;
-  background: var(--accent);
+  height: 100%;
+  transform-origin: bottom;
+  pointer-events: none;
+  background-color: var(--accent);
+}
+
+.control-trigger[aria-orientation="horizontal"] [data-part="fill"] {
+  transform-origin: left;
+}
+
+.control-trigger [data-part="label"] {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-2);
+  transform: translateX(-50%);
+  font-size: var(--phone-meta);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.control-trigger [data-part="value"] {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  font-size: var(--phone-meta);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------------- */
+/* CP-11 slider                                                              */
+/* ------------------------------------------------------------------------- */
+
+.control-slider {
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background-color: var(--surface);
+  color: var(--muted);
+}
+
+.control-slider.is-pressed {
+  background-color: var(--surface);
+  color: var(--muted);
+  transform: none;
+}
+
+.control-slider [data-part="fill"] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: bottom;
+  transform: scaleY(0);
+  pointer-events: none;
+  background-color: var(--accent);
+}
+
+.control-slider[aria-orientation="horizontal"] [data-part="fill"] {
+  transform-origin: left;
+  transform: scaleX(0);
+}
+
+.control-slider [data-part="thumb"] {
+  position: absolute;
+  pointer-events: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--text);
+}
+
+.control-slider[aria-orientation="vertical"] [data-part="thumb"] {
+  left: 50%;
+  top: 0;
+  transform: translate3d(-50%, 0, 0);
+}
+
+.control-slider[aria-orientation="horizontal"] [data-part="thumb"] {
+  left: 0;
+  top: 50%;
+  transform: translate3d(0, -50%, 0);
+}
+
+.control-slider [data-part="label"] {
+  position: absolute;
+  left: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--phone-meta);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------------- */
+/* CP-12 touchpad                                                            */
+/* ------------------------------------------------------------------------- */
+
+.control-touchpad {
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background-color: var(--surface);
+  color: var(--muted);
+}
+
+.control-touchpad.is-pressed {
+  background-color: var(--surface);
+  color: var(--muted);
+  transform: none;
+}
+
+.control-touchpad [data-part="crosshair"],
+.control-touchpad [data-part="crosshair-x"],
+.control-touchpad [data-part="crosshair-y"] {
+  position: absolute;
+  background-color: var(--control);
+  pointer-events: none;
+}
+
+.control-touchpad [data-part="crosshair-x"] {
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+.control-touchpad [data-part="crosshair-y"] {
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+.control-touchpad [data-part="trail"] {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 1px;
+  transform-origin: 0 50%;
+  transform: translate(0, -50%) scaleX(0);
+  pointer-events: none;
+}
+
+.control-touchpad [data-part="knob"] {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--control);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition:
+    background-color 80ms var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
+}
+
+.control-touchpad.is-pressed [data-part="knob"] {
+  background-color: var(--accent);
+}
+
+.control-touchpad [data-part="trail"] {
+  background-color: var(--accent);
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.control-touchpad [data-part="label"] {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  font-size: var(--phone-meta);
+  color: var(--faint);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------------- */
+/* CP-13 gyro                                                                */
+/* ------------------------------------------------------------------------- */
+
+.control-gyro {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-control);
+  background-color: var(--surface);
+  color: var(--muted);
+  text-align: center;
+}
+
+.control-gyro.is-pressed {
+  background-color: var(--accent);
+  color: var(--ground);
+  transform: scale(0.97);
+}
+
+/* Denied, insecure, unsupported, no-data: dashed card + faint label + the
+   layout's mandatory non-gyro fallback stays usable (FR-8.10). */
+.control-gyro.is-unavailable,
+.control-gyro.is-disabled {
+  border: 1px dashed var(--control);
+  background-color: var(--surface);
+  color: var(--faint);
+  transform: none;
+}
+
+.control-gyro [data-part="level"] {
+  position: relative;
+  flex: 0 0 auto;
+  width: 64px;
+  height: 24px;
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
+}
+
+.control-gyro [data-part="bubble"] {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--accent);
+  transform: translate(-50%, -50%);
+}
+
+.control-gyro [data-part="recenter"] {
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-control);
+  background-color: var(--raised);
+  color: var(--text);
+  font-size: var(--phone-meta);
+  font-weight: 500;
+}
+
+.control-gyro [data-part="reason"],
+.control-gyro [data-part="motion-status"] {
+  font-size: var(--phone-meta);
+  color: var(--muted);
+}
+
+.control-gyro.is-unavailable [data-part="reason"],
+.control-gyro.is-unavailable [data-part="motion-status"] {
+  color: var(--faint);
+}
+
+/* ------------------------------------------------------------------------- */
+/* CP-14 choice                                                              */
+/* ------------------------------------------------------------------------- */
+
+.control-choice {
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: var(--surface);
+  color: var(--muted);
+}
+
+.control-choice.is-pressed {
+  background-color: var(--surface);
+  color: var(--muted);
+  transform: none;
+}
+
+.control-choice [data-part="list"] {
+  position: absolute;
+  inset: 0 0 auto 0;
+  will-change: transform;
+}
+
+.control-choice [data-part="option"] {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--rule);
+  background-color: transparent;
+  color: var(--muted);
+  font-size: var(--phone-body);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The selection element is appended after the rows, so target the row that
+   precedes it instead of assuming a tag-based last-of-type. */
+.control-choice [data-part="option"]:has(+ [data-part="selection"]) {
+  border-bottom: 0;
+}
+
+/* Selection is an inversion, not an accent (CP-14). */
+.control-choice [data-part="option"][aria-selected="true"] {
+  background-color: var(--text);
+  color: var(--ground);
+}
+
+.control-choice [data-part="option"].is-pressed {
+  background-color: var(--accent);
+  color: var(--ground);
+}
+
+.control-choice [data-part="selection"] {
+  z-index: 0;
+  background-color: var(--text);
+  pointer-events: none;
+}
+
+/* Scroll affordance: the visible 2px scrollbar only. DESIGN.md bans gradients,
+   so there is no mask fade. */
+.control-choice[data-scrollable="true"] [data-part="scrollbar"],
+.control-choice.is-scrollable [data-part="scrollbar"] {
+  background-color: var(--text);
+}
+
+.control-choice [data-part="scrollbar"] {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  z-index: 2;
+  width: 2px;
+  border-radius: 1px;
+  background-color: var(--control);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------------- */
+/* CP-15 panel                                                               */
+/* ------------------------------------------------------------------------- */
+
+.control-panel {
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+.control-panel.is-pressed {
+  background-color: var(--surface);
+  color: var(--text);
+  transform: none;
+}
+
+.control-panel [data-part="header"],
+.control-panel [data-part="panel-title"] {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 24px;
+  padding: 0 var(--space-3);
+  color: var(--muted);
+  font-size: var(--phone-meta);
+  font-weight: 500;
+}
+
+.control-panel [data-part="content"],
+.control-panel [data-part="panel-text"] {
+  color: var(--text);
+  font-size: var(--phone-body);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.control-panel [data-part="viewport"] {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Scroll affordance: the renderer toggles `.is-scrollable`, which brightens
+   the 2px scrollbar. No mask fade (DESIGN.md bans gradients). */
+.control-panel.is-scrollable [data-part="scrollbar"] {
+  background-color: var(--text);
+}
+
+.control-panel [data-part="content"] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 12px 12px;
+  pointer-events: none;
+}
+
+.control-panel [data-part="placeholder"] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--faint);
+  font-size: var(--phone-body);
+  pointer-events: none;
+}
+
+.control-panel [data-part="scrollbar"] {
+  position: absolute;
+  right: 2px;
+  top: 0;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--control);
+  pointer-events: none;
+}
+
+.control-panel [data-part="block-heading"] {
+  font-weight: 600;
+  font-size: 17px;
+  line-height: 1.3;
+  margin: 4px 0 6px;
+}
+
+.control-panel [data-part="block-paragraph"],
+.control-panel [data-part="block-list"],
+.control-panel [data-part="block-image"] {
+  margin: 0 0 8px;
+}
+
+.control-panel [data-part="block-paragraph"],
+.control-panel [data-part="panel-text"] {
+  white-space: pre-wrap;
+}
+
+.control-panel [data-part="block-list"] {
+  padding-left: 20px;
+}
+
+.control-panel [data-invalid-panel="true"] [data-part="placeholder"] {
+  color: var(--faint);
+}
+
+.control-panel img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--space-2);
+}
+
+/* ------------------------------------------------------------------------- */
+/* CP-16 text                                                                */
+/* ------------------------------------------------------------------------- */
+
+.control-text {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+  background-color: transparent;
+  color: var(--muted);
+}
+
+.control-text.is-pressed {
+  background-color: transparent;
+  color: var(--muted);
+  transform: none;
+}
+
+.control-text input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--phone-target);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--control);
+  border-radius: var(--radius-field);
+  background-color: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  /* 16px minimum: smaller text makes Android zoom the page on focus. */
+  font-size: 16px;
+  outline: none;
+  touch-action: none;
+}
+
+.control-text input::placeholder {
+  color: var(--faint);
+}
+
+.control-text input:focus,
+.control-text input:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-color: var(--accent);
+}
+
+.control-text [data-part="send"] {
+  flex: 0 0 44px;
+  height: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--control);
+  border-radius: var(--radius-field);
+  background-color: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  touch-action: none;
+  transition:
+    background-color 80ms var(--ease-out),
+    color 80ms var(--ease-out),
+    border-color 80ms var(--ease-out);
+}
+
+/* Inverted while the player is composing (CP-16). The renderer does not set a
+   placeholder, so focus-within is the reliable content-affordance signal; the
+   data attribute is supported for a future renderer that sets it. */
+.control-text:focus-within [data-part="send"],
+.control-text[data-filled="true"] [data-part="send"] {
+  border-color: var(--text);
+  background-color: var(--text);
+  color: var(--ground);
+}
+
+.control-text.is-blocked input,
+.control-text[data-event-blocked="true"] input {
+  border-color: var(--warning);
+  outline-color: var(--warning);
+}
+
+.control-text [data-part="blocked"] {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 2px;
+  color: var(--warning);
+  font-size: var(--phone-meta);
+  pointer-events: none;
+}
+
+.control-text [data-part="counter"] {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  margin-bottom: 2px;
+  color: var(--faint);
+  font-size: var(--phone-meta);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------------- */
+/* CP-17 canvas                                                              */
+/* ------------------------------------------------------------------------- */
+
+.control-canvas {
+  overflow: hidden;
+  border: 1px solid var(--control);
+  border-radius: 12px;
+  background-color: var(--ground);
+  color: var(--faint);
+}
+
+.control-canvas.is-pressed {
+  background-color: var(--ground);
+  color: var(--faint);
+  transform: none;
+}
+
+.control-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.control-canvas [data-part="empty"] {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--faint);
+  font-size: 15px;
+  pointer-events: none;
+}
+
+.control-canvas:not(.is-empty) [data-part="empty"] {
+  display: none;
+}
+
+/* Fallback empty state for a renderer that only sets the state class and a
+   label; the text comes from the layout, never from this stylesheet. */
+.control-canvas.is-empty::after {
+  content: attr(data-empty-label);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--faint);
+  font-size: 15px;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Sensors-only motion strip (D6-CTRL-03)                                    */
+/* ------------------------------------------------------------------------- */
+
+.motion-strip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-field);
+  background-color: var(--surface);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: var(--phone-meta);
+  line-height: 1.25;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
 
-.test-button:active:not(:disabled) {
-  background: var(--accent-pressed);
-  transform: scale(0.98);
+.motion-strip [data-part="motion-status"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--muted);
+  font-size: var(--phone-meta);
+  font-weight: 500;
+  line-height: 14px;
+  pointer-events: none;
+}
+
+.motion-strip [data-part="motion-action"] {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: var(--radius-control);
+  background-color: var(--raised);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--phone-meta);
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  pointer-events: none;
+}
+
+.motion-strip[data-pressed="true"] [data-part="motion-action"],
+.motion-strip.is-pressed [data-part="motion-action"] {
+  background-color: var(--accent);
+  color: var(--ground);
+}
+
+.motion-strip [data-part="motion-action"][aria-disabled="true"] {
+  background-color: var(--surface);
+  color: var(--faint);
+}
+
+/* ------------------------------------------------------------------------- */
+/* Motion and visibility                                                     */
+/* ------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Keep colour/opacity feedback, remove travel (DESIGN.md). */
+  .control.is-pressed,
+  .control-button.is-pressed,
+  .control-gyro.is-pressed,
+  .join-button:active:not(:disabled) {
+    transform: none;
+  }
 }
 
 [hidden] {

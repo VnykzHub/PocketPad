@@ -195,6 +195,10 @@ function findByClass(root: FakeElement, className: string): FakeElement | null {
   return null;
 }
 
+function treeText(root: FakeElement): string {
+  return `${root.textContent} ${root.children.map(treeText).join(" ")}`;
+}
+
 function partOf(screen: StartScreen, className: string): FakeElement {
   const found = findByClass(fake(screen.element), className);
   if (found === null) throw new Error(`missing .${className}`);
@@ -450,20 +454,28 @@ describe("remote operability", () => {
 // ---------------------------------------------------------------------------
 
 describe("start screen content", () => {
-  test("[FR-9.11] the screen shows the title, room code and PIN", () => {
+  test("[FR-9.11] the screen shows the title and leaves the credentials to the lobby", () => {
     const { screen } = setup();
 
     expect(partOf(screen, "lanpad-start__title").textContent).toBe(
       "Reaction Duel",
     );
 
+    // PAGE-PLANS HP-02: the RoomPanel hero is the only place the lobby shows
+    // the room code and PIN, so this screen renders neither.
+    expect(findByClass(fake(screen.element), "lanpad-start__code")).toBeNull();
+    expect(findByClass(fake(screen.element), "lanpad-start__pin")).toBeNull();
+
+    // The W1→W2 handoff seam still accepts the old arguments and renders
+    // nothing: no duplicated credential text anywhere in the tree.
     screen.setRoom("ABCD", "1234");
-    expect(partOf(screen, "lanpad-start__code").textContent).toBe("ABCD");
-    expect(partOf(screen, "lanpad-start__pin").textContent).toBe("PIN 1234");
+    expect(findByClass(fake(screen.element), "lanpad-start__code")).toBeNull();
+    expect(findByClass(fake(screen.element), "lanpad-start__pin")).toBeNull();
+    expect(treeText(fake(screen.element))).not.toContain("ABCD");
+    expect(treeText(fake(screen.element))).not.toContain("1234");
 
     screen.setRoom(null, null);
-    expect(partOf(screen, "lanpad-start__code").textContent).toBe("----");
-    expect(partOf(screen, "lanpad-start__pin").textContent).toBe("PIN ----");
+    expect(treeText(fake(screen.element))).not.toContain("----");
   });
 
   test("[FR-9.11] loader progress is shown and completion enables readiness", () => {

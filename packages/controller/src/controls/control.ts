@@ -96,8 +96,20 @@ export interface ControlRenderer {
 /** Control types D2 renders; D5 extends the registry with the rest. */
 export type RenderedControl = ButtonControl | DpadControl | StickControl;
 
+/** Base class every rendered control carries, alongside one type class. */
+export const CONTROL_CLASS = "control";
+
+/** Prefix of the per-type grammar class; `button` becomes `control-button`. */
+export const CONTROL_TYPE_CLASS_PREFIX = "control-";
+
 /** Class toggled on a control (and dpad zones) while pressed. */
 export const PRESSED_CLASS = "is-pressed";
+
+/** Class toggled by `setDisabled` (DESIGN: Disabled). */
+export const DISABLED_CLASS = "is-disabled";
+
+/** Class toggled by `setUnavailable` (DESIGN: Unavailable, e.g. gyro denied). */
+export const UNAVAILABLE_CLASS = "is-unavailable";
 
 /**
  * Fixed size of the gyro "Enable motion" prompt. The layout schema gives a
@@ -263,9 +275,77 @@ export function applyControlElementStyle(
   element.dataset["controlType"] = control.type;
 }
 
+/** The per-type grammar class for `type`, e.g. `control-trigger`. */
+export function controlTypeClass(type: Control["type"]): string {
+  return `${CONTROL_TYPE_CLASS_PREFIX}${type}`;
+}
+
+/**
+ * Applies the shared grammar classes — `control` plus `control-<type>` — used
+ * by every renderer and by `styles.css`. Idempotent, so a hot-swap rebuild or a
+ * second call cannot accumulate classes; one template string per call.
+ */
+export function applyControlClasses(element: HTMLElement, type: Control["type"]): void {
+  element.classList.add(CONTROL_CLASS, controlTypeClass(type));
+}
+
 /** Toggles the shared pressed class without allocating a selector each time. */
-export function setPressedClass(element: HTMLElement, pressed: boolean): void {
+export function setPressed(element: HTMLElement, pressed: boolean): void {
   element.classList.toggle(PRESSED_CLASS, pressed);
+}
+
+/** Existing name for `setPressed`, kept for the renderers that import it. */
+export function setPressedClass(element: HTMLElement, pressed: boolean): void {
+  setPressed(element, pressed);
+}
+
+/** Keeps `aria-disabled` true while either blocking state class is present. */
+function syncAriaDisabled(element: HTMLElement): void {
+  const blocked =
+    element.classList.contains(DISABLED_CLASS) || element.classList.contains(UNAVAILABLE_CLASS);
+  if (blocked) {
+    element.setAttribute("aria-disabled", "true");
+  } else {
+    element.removeAttribute("aria-disabled");
+  }
+}
+
+/**
+ * Marks a control disabled (DESIGN: Disabled): neutral fill, label kept. This
+ * is visual/assistive state only — gating touch handlers and clearing the
+ * control's input contribution stays with the renderer.
+ */
+export function setDisabled(element: HTMLElement, disabled: boolean): void {
+  element.classList.toggle(DISABLED_CLASS, disabled);
+  if (disabled) {
+    // A disabled control must not keep a stale press visual.
+    setPressed(element, false);
+  }
+  syncAriaDisabled(element);
+}
+
+/**
+ * Marks a control unavailable rather than disabled (DESIGN: Unavailable, e.g.
+ * a denied gyro permission). The label stays; the one-line reason and fallback
+ * control are the renderer's responsibility.
+ */
+export function setUnavailable(element: HTMLElement, unavailable: boolean): void {
+  element.classList.toggle(UNAVAILABLE_CLASS, unavailable);
+  syncAriaDisabled(element);
+}
+
+/**
+ * Gives a control element a tab stop so an external keyboard or switch access
+ * can reach it, which is what makes the native `:focus-visible` ring appear
+ * (DESIGN: Focus and input; no JS focus class or listener is needed). Native
+ * controls and elements with an explicit tabindex are left untouched, so
+ * programmatic-only focus (`tabindex="-1"`) is preserved. Touch-only controls
+ * simply never call this.
+ */
+export function makeControlFocusable(element: HTMLElement): void {
+  if (element.tabIndex < 0 && !element.hasAttribute("tabindex")) {
+    element.tabIndex = 0;
+  }
 }
 
 /** Reports a state change to the optional debug overlay. */

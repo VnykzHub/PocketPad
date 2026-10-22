@@ -128,9 +128,10 @@
 
 ## 6. Current execution
 
-> Last reconciled: 2026-10-22 (Wave 5). No stage exit is claimed. Full gate
-> evidence and open items live in
-> `docs/todos/CHECKPOINT-2026-10-22-wave3.md`.
+> Last reconciled: 2026-10-22 (Wave 7: full UI page pass — host HP-01..HP-09
+> plus HP-04b, controller CP-01..CP-19, layouts LP-01..LP-03). No stage exit is
+> claimed. Full gate evidence, page-level gaps and open items live in
+> `docs/todos/CHECKPOINT-2026-10-22-ui.md`. Device/LAN rows stay PENDING.
 
 - [x] Plan set complete (`docs/todos/`).
 - [x] D0 automated gates — protocol, SDK, server, runtime, controller and tools done; `npm ci`, typecheck, lint, 232 tests, build, size and stage-D0 trace pass.
@@ -146,7 +147,9 @@
 - [x] Wave 1 code integration — `npm run check` green: 59 test files, 661 tests, build, size and stage-D0 trace.
 - [x] Wave 2 + Wave 3 integration gate — `npm run check` green: 105 test files, 1,225 tests, build, size (controller 36,712 B gz; host 54,199 B gz) and stage-D0 trace (20/138 required IDs, 0 missing, 28 deferred, 0 unknown, 188 test files).
 - [x] Wave 4 integration gate — `npm run check` green: 109 test files, 1,285 tests, build, size (controller 37,911 B gz of 40,960; host 55,754 B gz) and stage-D0 trace (0 missing, 0 unknown). **Wave 5 final gate green:** 113 test files, 1,354 tests, build, size (controller 37,911 B gz of 40,960; host 55,754 B gz) and stage-D0 trace (20/139 required IDs, 0 missing, 24 deferred, 0 unknown, 192 test files); see checkpoint §11.
-- [ ] Acceptance close-out — D1 TV/E2-full/E14, D2 manual checks, D3-QA-01/E6/E11 (E12 ADR written), D4 8-bot/G1/device experiments, D5 E10/E16, D6 E7/E8, D7 LAN play.
+- [x] Wave 6 code (uncommitted) — connected-layout fix (`ControllerState.connected` / `GameControllerState.connected`, packet-driven `InputMapper` presence) and the Coin Run platformer slice (`GAME-PF-01`..`05` code plus scoped tests; `GAME-PF-06` PENDING). Direct route is the generic `/games/<slug>/`. **No device, LAN or browser acceptance run; scoped tests only.** See §9.
+- [x] Wave 7 UI page pass (uncommitted) — host HP-01..HP-09 + HP-04b, controller CP-01..CP-19 and layouts LP-01..LP-03, with new page/module tests. `npm run check` green: 132 test files, 1,569 tests, build, size (controller 140,948 B raw / 40,723 B gz of 40,960; host 236,606 B raw / 74,424 B gz of 3,145,728) and stage-D0 trace (20/139 required IDs, 0 missing, 22 deferred, 0 unknown, 211 test files). Stage-D7 trace was red (FR-4.5 missing); the existing wire-contract test now carries `[FR-4.5]` and the re-run is green (11/139 required, 0 missing, 21 deferred). **Open:** HP-01 boot/retry, HP-04 stage-mount and HP-06 `setResumedRoom` page tests; HP-05 has no production results producer; the DESIGN.md gradient/emoji conflict; no TV/Android/LAN run. See `CHECKPOINT-2026-10-22-ui.md`.
+- [ ] Acceptance close-out — D1 TV/E2-full/E14, D2 manual checks, D3-QA-01/E6/E11 (E12 ADR written), D4 8-bot/G1/device experiments, D5 E10/E16, D6 E7/E8, D7 LAN play, Coin Run device runs (GAME-PF-06 runs A/B/C), UI page-level gaps (HP-01 boot/retry, HP-04 stage mount, HP-06 `setResumedRoom`, HP-05 producer).
 - [ ] D2–D7 stage exits — none of the stage exit checklists is fully met.
 - [ ] Dev Exit Gate.
 - [ ] Phase 2.
@@ -168,7 +171,7 @@
 
 **TV assumption:** actual-TV probing is deferred by user decision. Desktop Chrome 155 (WebGL2 yes, binary WS yes, RTX 3050 Ti) is the provisional v1 target. Agents must mark TV rows PENDING and must not claim TV measurements. **E2 full ceiling and E14 also stay PENDING.** Revisit the TV matrix before the Dev Exit Gate.
 
-**Next action:** close the evidence gaps before any stage exit. Order: (1) run Reaction Duel on the LAN with two phones and a host — the Wave 3 gate is not yet verified; (2) run D5-EXP-01 (E10/E16) and D5-QA-01 — D5-SEC-01 is implemented; (3) run E7/E8 on Android and D6-QA-01 — the motion strip and `docs/SENSOR-TESTING.md` are done; (4) re-run D3-QA-01/E6/E11 on hardware — the E12 ADR is written; (5) run the D4 8-bot 10-minute and G1 device trials; (6) build D7-RT-01/HUB-01/PERF-01/EXP-01/QA-01 and the remaining proof games. Do not convert any PENDING row to PASS without device evidence.
+**Next action:** close the evidence gaps before any stage exit. Order: (1) run Reaction Duel on the LAN with two phones and a host — the Wave 3 gate is not yet verified; (2) run D5-EXP-01 (E10/E16) and D5-QA-01 — D5-SEC-01 is implemented; (3) run E7/E8 on Android and D6-QA-01 — the motion strip and `docs/SENSOR-TESTING.md` are done; (4) re-run D3-QA-01/E6/E11 on hardware — the E12 ADR is written; (5) run the D4 8-bot 10-minute and G1 device trials; (6) build D7-RT-01/HUB-01/PERF-01/EXP-01/QA-01 and the remaining proof games; (7) close the UI page-level gaps in `CHECKPOINT-2026-10-22-ui.md` — HP-01 boot/retry, HP-04 stage mount, HP-06 `setResumedRoom`, a real HP-05 results producer, and a recorded DESIGN.md decision on the gradient mask fades and emoji audio icons. Do not convert any PENDING row to PASS without device evidence.
 
 ## 7. Accelerated first-game track — Reaction Duel four-button (2026-10-21)
 
@@ -183,7 +186,7 @@
 | 1 | D1 probes ∥ D2 controller v0 ∥ D4 session foundation; platformer plan (deferred) | Completed 9/9 each; reviews pass; close-out open (D1 TV/E2/E14, D2 manual, D4 wiring) |
 | 2 | D3 runtime v0 + D7-SDK-01 | E1 WebGL2 and binary WebSocket recorded; D2 exit |
 | 3 | Reaction Duel four-button `GAME-RD-*` + direct `/games/reaction-duel/` route | Playable on LAN with 2–8 phones, four buttons each |
-| Later | Platformer after D7-RT-01; D5 layouts/events, D6 sensors, remaining proof games, hub | Additive; no rewrite of Reaction Duel |
+| Later | Platformer after D7-RT-01; D5 layouts/events, D6 sensors, remaining proof games, hub | Additive; no rewrite of Reaction Duel. Coin Run slice code-complete 2026-10-22 (`GAME-PF-01`..`05`; `06` PENDING). |
 
 ## 8. Parallel execution map (2026-10-21)
 
@@ -197,14 +200,20 @@ playable game (Reaction Duel); **completeness** finishes the planned product.
 D7-RT-01 (2D renderer/physics) is **not** on the Reaction Duel path; it is only
 needed for the platformer and physics proof games.
 
+Wave 7 completed the page layer in `docs/PAGE-PLANS.md`: host HP-01..HP-09 plus
+HP-04b, controller CP-01..CP-19 and layouts LP-01..LP-03 are code-complete and
+the full repository gate is green. Page-level test gaps and device evidence
+remain open; see `CHECKPOINT-2026-10-22-ui.md`.
+
 | Wave | Runs in parallel | Depends on | Integration gate / status |
 |---|---|---|---|
 | 1 (complete; close-out open) | D1 probes and docs; D2 controller; D4 protocol/server/join/reconnect; platformer plan (deferred) | D0 | Full `npm run check` green (59 files / 661 tests). Close-out still open: D1 TV/E2-full/E14, D2 manual checks, D4 acceptance experiments. |
 | 2 (complete) | D3-RT-01/03 → RT-02/05/06/07 → RT-04/SDK/TOOL/EXP/QA; D4 close-out wiring/QA; D5-SDK-01 + PROTO-01 → CTRL-01/03/04/05; Reaction Duel layout + pure rules | Wave 1 | Full check green (105 files / 1,225 tests). D3 desktop cube and overlay recorded; D5 contract/control tests and RD rules tests pass. E6/E11 and every TV row PENDING. |
 | 3 (complete; evidence gaps) | D3-SDK/TOOL; D7-SDK-01; GAME-RD four-button; D4-HOST-02; D5-CTRL-01..05; D5-SRV-01; D6-CTRL/SRV/RT | E1 + D2 + D4 proto/server | Full check green. Reaction Duel loads through `/games/reaction-duel/` on Canvas2D; **playable-on-LAN with phones is not yet verified**. D3-EXP-01/QA-01, D5-EXP-01/QA-01 and D6-EXP-01/QA-01 remain open (D5-SEC-01 and the D6 motion strip landed in Wave 4). |
-| 4 (not done) | GAME-PF platformer after D7-RT-01; D5-EXP-01/QA-01; D6-EXP-01/QA-01 | Wave 3 | D5-RT-01, D5-SEC-01 and D6-CTRL/SRV/RT plus the motion strip landed in Waves 3–4; the remaining D5/D6 exit evidence and the platformer are open. |
+| 4 (platformer slice code-complete; evidence open) | GAME-PF platformer after D7-RT-01; D5-EXP-01/QA-01; D6-EXP-01/QA-01 | Wave 3 | Coin Run landed in Wave 6: `GAME-PF-01`..`05` code plus 6 files / 86 scoped tests; `GAME-PF-06` (device A/B/C, replay, budgets, 10-minute run) is PENDING. D5-RT-01, D5-SEC-01 and D6-CTRL/SRV/RT plus the motion strip landed in Waves 3–4; the remaining D5/D6 exit evidence is open. |
 | 5 (not done) | D7 proof games, D7-RT-01/02, D7-HUB-01, D7-PERF-01/EXP-01/QA-01 | D6 + D4/D5 | D7-SDK-01 and the Reaction Duel adapter landed early; the other three proof games, hub, physics/HUD, perf and soak remain. |
-| 6 | P0–P6 production | Gate GO | Production gates |
+| 7 (UI page pass; gate green, gaps open) | Host HP-01..HP-09 + HP-04b; controller CP-01..CP-19; layouts LP-01..LP-03 | Wave 6 | Full check green (132 files / 1,569 tests). Page-level gaps: HP-01 boot/retry, HP-04 stage mount, HP-06 `setResumedRoom`; HP-05 has no production producer. No TV/Android/LAN run; every device row PENDING. |
+| P0–P6 (after Gate GO) | P0–P6 production | Gate GO | Production gates |
 
 **File-ownership rules for parallel work:**
 
@@ -221,3 +230,30 @@ needed for the platformer and physics proof games.
 - D3 owns `packages/runtime/**` except `src/input/**` and `src/ui/RoomPanel.ts`
   until Wave 3 integration.
 - One integration agent per wave; no two agents edit the same file.
+
+## 9. Wave 6 — connected layout fix and Coin Run slice (2026-10-22)
+
+> **Status:** working-tree code, uncommitted. `GAME-PF-01`..`05` are
+> code-complete with scoped tests; `GAME-PF-06` is PENDING. No device, LAN,
+> browser or full-gate run happened in this wave. **No stage exit and no Dev
+> Exit Gate claim.** Every device row stays PENDING.
+
+| Work | What landed | Files | Scoped evidence |
+|---|---|---|---|
+| Connected-layout fix | A fresh phone's first packet is `tick=0` with all-zero input. Reaction Duel's old `isPresent` required `tick > 0` or a non-zero value, so the slot was never "present", `applyLayout` never ran, the broker never sent `setLayout`, and the phone stayed on the D0 Test button. Presence is now packet-driven: `InputMapper.apply()` marks a slot connected before the tick-staleness check, `pollAll()` publishes `connected`, `reset()` clears it. Reconnect preserves the score. | `packages/runtime/src/input/types.ts`, `packages/runtime/src/input/InputMapper.ts`, `sdk/src/game-api.ts`, `packages/games/reaction-duel/src/game.ts`, `packages/games/platformer/src/game.ts` | `inputMapper.test.ts` 25; Reaction Duel 4 files / 73 |
+| Coin Run slice | 120×18 y-down level, 4 spawns, 3 pits, 5 floating platforms, 20 coins, 2 checkpoints, 1 goal. Pooled world, runtime physics, d-pad/stick input, camera, 2D render, cached HUD, shared team score, local `lobby → countdown(3 s) → playing → results` flow and rematch. `GAME-PF-01`..`05`; `GAME-PF-06` PENDING. | `packages/games/platformer/{game.manifest.json,layouts/*.json,src/*,test/*,README.md}` | Platformer 6 files / 86 tests (game 19, player 20, level 27, camera 11, layout 5, manifest 4) |
+| Direct route | Generic one-slug route `/games/<slug>/` (no trailing slash optional) serves the host SPA when the manifest exists; runtime selects the slug and loads the Vite lazy chunk from `import.meta.glob("../../../games/*/src/game.ts")`. `/games/platformer/` therefore works without a per-game alias, `?game=` selector, `packages/games/dist/platformer/` build or `devLayoutSource.ts`. | `packages/dev-server/src/main.ts`, `packages/runtime/src/game/gameRoute.ts`, `packages/runtime/src/main.ts`, `packages/runtime/src/demo/bundledGames.ts` | Dev-server route 1 file / 16; runtime `gameRegistry.test.ts` 11 and `bundledGames.test.ts` 3 |
+| 2-player support | Manifest `minPlayers 1`, `maxPlayers 4`; slots alternate `pf-dpad-v1` / `pf-stick-v1`; one shared score; per-slot state independent; two-player coin → goal → results → rematch flow tested. Four-player is code-supported but untested on hardware. | `packages/games/platformer/src/game.ts`, `src/hud.ts`, `test/game.test.ts` | `[G4][FR-9.1]` two-player round flow; `[G5]` slot independence; `[FR-8.2]` tick-0 layout and reconnect |
+
+**Still open (PENDING, no evidence):**
+
+- `GAME-PF-06` runs A (1 player, d-pad), B (2 players, d-pad + stick), C (4 players, mixed) on a TV + Android Chrome.
+- LAN play: TV host + phones on the same network; the controller layout must appear on a fresh phone join (the fixed behaviour above is unit-tested, not device-tested).
+- Reaction Duel two-phone LAN re-check after the connected fix.
+- Numbers: initial/total gzip bytes, max draw calls, frame p50/p95, input-to-canvas p95, join-to-first-input, 10-minute memory.
+- 60 s recorded-trace replay; size gate and trace-checker coverage for the platformer.
+- 4-player readability and off-screen edge indicators (not implemented).
+- Deviations recorded in `games/platformer.md` §0.1 (no `RoundManager`, no `ResultsScreen`, no audio, no back callback, no `render.test.ts`/`hud.test.ts`).
+
+**Rules unchanged:** stage exits remain serial after their evidence; no PENDING
+row may be marked PASS without a device run; Results rows are append-only.

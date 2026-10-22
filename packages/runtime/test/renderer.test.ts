@@ -275,6 +275,7 @@ function snapshotWith(lx: number, ly: number, edges = 0): InputSnapshot {
     players: [
       {
         slot: 1,
+        connected: true,
         buttons: edges,
         edges,
         lx,
@@ -504,6 +505,27 @@ describe("TV render profile", () => {
 
     expect(canvas.width).toBe(1920);
     expect(canvas.style.width).toBe("3840px");
+  });
+
+  test("[FR-9.4] both backends report the CSS size games scale their design space to", async () => {
+    const context = new Fake2DContext();
+    const canvas2d = canvasWith({ "2d": context });
+    const canvasRenderer = new Canvas2DRenderer();
+    await canvasRenderer.init(canvas2d);
+    expect(canvasRenderer.size).toEqual({ width: 0, height: 0 });
+
+    canvasRenderer.resize(1052, 592, 2);
+    expect(canvasRenderer.size).toEqual({ width: 1052, height: 592 });
+    // The backing store is DPR-scaled, the reported size stays CSS pixels.
+    expect(canvas2d.width).toBe(2104);
+
+    const gl = new FakeWebGL2();
+    const webglCanvas = canvasWith({ webgl2: gl });
+    const webglRenderer = new WebGL2Renderer();
+    await webglRenderer.init(webglCanvas);
+
+    webglRenderer.resize(1052, 592, 1);
+    expect(webglRenderer.size).toEqual({ width: 1052, height: 592 });
   });
 });
 

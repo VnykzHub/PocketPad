@@ -1,6 +1,7 @@
 /**
- * D7 route selection: `/games/<slug>/` launches a bundled game; `/` keeps the
- * cube demo. The dev server serves the same host page at both paths.
+ * D7 route selection: `/games/<slug>/` launches a bundled game; `/` is the
+ * HP-03 launcher, never a silent cube demo. The dev server serves the same host
+ * page at both paths.
  */
 import { describe, expect, test } from "vitest";
 import { gameSlugFromPath } from "../src/game/gameRoute.js";

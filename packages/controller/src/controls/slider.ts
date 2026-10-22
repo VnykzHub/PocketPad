@@ -7,11 +7,19 @@
  * the same synchronous call as the `InputStore` trigger value (FR-8.7), and
  * the control box itself never moves (FR-8.3). The validator guarantees a
  * slider and a trigger never share a channel (FR-7.7).
+ *
+ * Visual grammar (CP-11, DESIGN.md): the renderer emits `.control` +
+ * `.control-slider` and the shared `.is-pressed` state; styles.css owns every
+ * colour, radius and type size. This file owns only construction geometry and
+ * the per-value transforms of the fill and the 32 px thumb. The channel label
+ * (`LT`/`RT`) doubles as the value readout while the slider is held, because
+ * styles.css defines no separate value part for this control.
  */
 import type { SliderControl } from "@lanpad/sdk";
 import type { InputState } from "@lanpad/protocol";
 import { MAX_TRIGGER_VALUE } from "../input/InputStore.js";
 import {
+  applyControlClasses,
   applyControlElementStyle,
   createPart,
   measureControl,
@@ -22,8 +30,8 @@ import {
 } from "./control.js";
 import type { TouchBinding } from "../touch/touchEngine.js";
 
-const IDLE_OPACITY = "1";
-const PRESSED_OPACITY = "0.9";
+/** CP-11 thumb diameter in CSS px; styles.css paints it, the renderer moves it. */
+export const SLIDER_THUMB_SIZE_PX = 32;
 
 function clamp01(value: number): number {
   if (!Number.isFinite(value)) {
@@ -41,41 +49,42 @@ export function createSliderControl(
 ): ControlRenderer {
   const box = measureControl(control, ctx.surfaceSize);
   const direction = control.direction ?? "horizontal";
+  const horizontal = direction === "horizontal";
+  const channelLabel = control.channel.toUpperCase();
+  const thumbTravel = Math.max(
+    0,
+    horizontal ? box.width - SLIDER_THUMB_SIZE_PX : box.height - SLIDER_THUMB_SIZE_PX,
+  );
 
   const element = document.createElement("div");
   applyControlElementStyle(element, control, box, ctx);
-  element.classList.add("control", "control-slider");
+  applyControlClasses(element, "slider");
   element.setAttribute("role", "slider");
   element.setAttribute("aria-label", `slider ${control.channel}`);
   element.setAttribute("aria-orientation", direction);
   element.setAttribute("aria-valuemin", "0");
   element.setAttribute("aria-valuemax", String(MAX_TRIGGER_VALUE));
   element.setAttribute("aria-valuenow", "0");
-  element.style.overflow = "hidden";
-  element.style.borderRadius = "999px";
-  element.style.background = "rgba(255, 255, 255, 0.08)";
-  element.style.border = "1px solid rgba(255, 255, 255, 0.35)";
+  element.setAttribute("aria-valuetext", "0%");
 
+  // The fill is the coloured travelled portion; transform only (FR-8.3).
   const fill = createPart("div", "fill");
-  fill.style.position = "absolute";
-  fill.style.left = "0";
-  fill.style.top = "0";
-  fill.style.width = "100%";
-  fill.style.height = "100%";
-  fill.style.background = "rgba(255, 255, 255, 0.42)";
-  fill.style.pointerEvents = "none";
-  if (direction === "horizontal") {
-    fill.style.transformOrigin = "left";
-    fill.style.transform = "scaleX(0)";
-  } else {
-    fill.style.transformOrigin = "bottom";
-    fill.style.transform = "scaleY(0)";
-  }
-  element.append(fill);
+
+  const thumb = createPart("div", "thumb");
+
+  const label = createPart("span", "label");
+  label.textContent = channelLabel;
+
+  element.append(fill, thumb, label);
 
   let activeIdentifier: number | null = null;
   let value = 0;
+  let shownPercent = 0;
   let pressed = false;
+
+  const syncLabel = (): void => {
+    label.textContent = pressed ? `${channelLabel} ${shownPercent}%` : channelLabel;
+  };
 
   const applyVisual = (active: boolean): void => {
     if (active === pressed) {
@@ -83,7 +92,7 @@ export function createSliderControl(
     }
     pressed = active;
     setPressedClass(element, active);
-    element.style.opacity = active ? PRESSED_OPACITY : IDLE_OPACITY;
+    syncLabel();
     notifyDebugState(ctx, control.id, active);
   };
 
@@ -93,15 +102,27 @@ export function createSliderControl(
       return;
     }
     value = clamped;
-    fill.style.transform = direction === "horizontal" ? `scaleX(${clamped})` : `scaleY(${clamped})`;
+    if (horizontal) {
+      fill.style.transform = `scaleX(${clamped})`;
+      thumb.style.transform = `translate3d(${clamped * thumbTravel}px, -50%, 0)`;
+    } else {
+      fill.style.transform = `scaleY(${clamped})`;
+      thumb.style.transform = `translate3d(-50%, ${(1 - clamped) * thumbTravel}px, 0)`;
+    }
     element.setAttribute("aria-valuenow", String(Math.round(clamped * MAX_TRIGGER_VALUE)));
+    const percent = Math.round(clamped * 100);
+    if (percent !== shownPercent) {
+      shownPercent = percent;
+      element.setAttribute("aria-valuetext", `${percent}%`);
+      syncLabel();
+    }
     ctx.input.setTrigger(control.channel, clamped);
   };
 
   const valueAt = (x: number, y: number): number => {
     const withinX = Math.min(box.left + box.width, Math.max(box.left, x));
     const withinY = Math.min(box.top + box.height, Math.max(box.top, y));
-    if (direction === "horizontal") {
+    if (horizontal) {
       return (withinX - box.left) / box.width;
     }
     return (box.top + box.height - withinY) / box.height;

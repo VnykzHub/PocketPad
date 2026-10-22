@@ -57,6 +57,13 @@ export interface GameTiltState {
 export interface GameControllerState {
   /** Slot number, 1..8. */
   readonly slot: number;
+  /**
+   * A controller is connected on this slot (FR-8.2, FR-5.4). True from the
+   * first accepted packet, including a tick-0 all-zero packet, until the host
+   * resets the slot. Games use this, never `tick` or input heuristics, to
+   * decide whether a player is present.
+   */
+  readonly connected: boolean;
   /** u16 button levels; bit numbers come from the layout (FR-7.2). */
   readonly buttons: number;
   /** u16 press edges since the previous tick; each press is seen once (FR-7.12). */

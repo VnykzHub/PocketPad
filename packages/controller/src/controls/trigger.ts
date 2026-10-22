@@ -1,5 +1,6 @@
 /**
- * Trigger control renderer (D5-CTRL-01; FR-8.1, FR-8.3, FR-8.7, FR-7.7, AR-5).
+ * Trigger control renderer (D5-CTRL-01; CP-10; FR-8.1, FR-8.3, FR-8.7,
+ * FR-7.7, AR-5).
  *
  * A vertical (default) or horizontal bar bound to `lt` or `rt`. The value is
  * the touch's absolute position along the bar: vertical bars read 0 at the
@@ -12,25 +13,33 @@
  * the same synchronous call (FR-8.3, FR-8.7). The control's own box never
  * moves after construction. One finger owns the trigger; a second is ignored
  * until the first ends.
+ *
+ * Visual contract (CP-10): the element carries `.control` +
+ * `.control-trigger` and `.is-pressed`; `styles.css` owns the track, fill,
+ * border and press expression. The renderer adds the `LT`/`RT` label and a
+ * value readout that tracks the thumb for 600 ms after a pull starts. The
+ * track clips its children, so the readout is kept just inside the top edge
+ * instead of floating outside the bar.
  */
 import type { TriggerControl } from "@lanpad/sdk";
 import type { InputState } from "@lanpad/protocol";
 import { MAX_TRIGGER_VALUE } from "../input/InputStore.js";
 import {
+  applyControlClasses,
   applyControlElementStyle,
   createPart,
   measureControl,
   notifyDebugState,
-  setPressedClass,
+  setPressed,
   type ControlContext,
   type ControlRenderer,
 } from "./control.js";
 import type { TouchBinding } from "../touch/touchEngine.js";
 
-const IDLE_TRANSFORM = "scale(1)";
-const PRESSED_TRANSFORM = "scale(0.98)";
-const IDLE_OPACITY = "1";
-const PRESSED_OPACITY = "0.9";
+const READOUT_VISIBLE_MS = 600;
+const READOUT_GAP_PX = 8;
+/** Clamp so `translate(-100%)` keeps the readout inside the clipped track. */
+const READOUT_MIN_BOTTOM_PX = 18;
 
 function clamp01(value: number): number {
   if (!Number.isFinite(value)) {
@@ -51,47 +60,87 @@ export function createTriggerControl(
 
   const element = document.createElement("div");
   applyControlElementStyle(element, control, box, ctx);
-  element.classList.add("control", "control-trigger");
+  applyControlClasses(element, "trigger");
   element.setAttribute("role", "slider");
   element.setAttribute("aria-label", `trigger ${control.channel}`);
   element.setAttribute("aria-orientation", orientation);
   element.setAttribute("aria-valuemin", "0");
   element.setAttribute("aria-valuemax", String(MAX_TRIGGER_VALUE));
   element.setAttribute("aria-valuenow", "0");
-  element.style.overflow = "hidden";
-  element.style.borderRadius = "10px";
-  element.style.background = "rgba(255, 255, 255, 0.08)";
-  element.style.border = "1px solid rgba(255, 255, 255, 0.35)";
 
   const fill = createPart("div", "fill");
-  fill.style.position = "absolute";
-  fill.style.left = "0";
-  fill.style.top = "0";
-  fill.style.width = "100%";
-  fill.style.height = "100%";
-  fill.style.background = "rgba(255, 255, 255, 0.42)";
-  fill.style.pointerEvents = "none";
-  if (orientation === "vertical") {
-    fill.style.transformOrigin = "bottom";
-    fill.style.transform = "scaleY(0)";
-  } else {
-    fill.style.transformOrigin = "left";
-    fill.style.transform = "scaleX(0)";
-  }
+  fill.style.transform = orientation === "vertical" ? "scaleY(0)" : "scaleX(0)";
   element.append(fill);
+
+  const label = createPart("span", "label");
+  label.textContent = control.channel === "lt" ? "LT" : "RT";
+  element.append(label);
+
+  const readout = createPart("span", "value");
+  readout.hidden = true;
+  element.append(readout);
 
   let activeIdentifier: number | null = null;
   let value = 0;
   let pressed = false;
+  let readoutPercent = -1;
+  let readoutShownForGesture = false;
+  let readoutTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const updateReadout = (next: number): void => {
+    if (readout.hidden) {
+      return;
+    }
+    const percent = Math.round(next * 100);
+    if (percent !== readoutPercent) {
+      readoutPercent = percent;
+      readout.textContent = `${percent}%`;
+    }
+
+    if (orientation === "vertical") {
+      const thumbY = (1 - next) * box.height;
+      const bottom = Math.max(READOUT_MIN_BOTTOM_PX, thumbY - READOUT_GAP_PX);
+      readout.style.transform =
+        `translate(-50%, -100%) translate3d(0, ${bottom.toFixed(2)}px, 0)`;
+    } else {
+      const thumbX = next * box.width;
+      const offsetX = thumbX - box.width / 2;
+      readout.style.transform =
+        `translate(-50%, -100%) translate3d(${offsetX.toFixed(2)}px, ` +
+        `${READOUT_MIN_BOTTOM_PX}px, 0)`;
+    }
+  };
+
+  const hideReadout = (): void => {
+    if (readoutTimer !== null) {
+      clearTimeout(readoutTimer);
+      readoutTimer = null;
+    }
+    readout.hidden = true;
+    readoutPercent = -1;
+  };
+
+  const showReadout = (): void => {
+    hideReadout();
+    readout.hidden = false;
+    readoutPercent = -1;
+    updateReadout(value);
+    readoutTimer = setTimeout(() => {
+      readout.hidden = true;
+      readoutTimer = null;
+    }, READOUT_VISIBLE_MS);
+  };
 
   const applyVisual = (active: boolean): void => {
     if (active === pressed) {
       return;
     }
     pressed = active;
-    setPressedClass(element, active);
-    element.style.transform = active ? PRESSED_TRANSFORM : IDLE_TRANSFORM;
-    element.style.opacity = active ? PRESSED_OPACITY : IDLE_OPACITY;
+    setPressed(element, active);
+    if (!active) {
+      hideReadout();
+      readoutShownForGesture = false;
+    }
     notifyDebugState(ctx, control.id, active);
   };
 
@@ -106,6 +155,13 @@ export function createTriggerControl(
     element.setAttribute("aria-valuenow", String(Math.round(clamped * MAX_TRIGGER_VALUE)));
     // Store and fill change in the same call (FR-8.7).
     ctx.input.setTrigger(control.channel, clamped);
+
+    if (pressed && clamped > 0 && !readoutShownForGesture) {
+      readoutShownForGesture = true;
+      showReadout();
+    } else {
+      updateReadout(clamped);
+    }
   };
 
   const valueAt = (x: number, y: number): number => {
@@ -140,6 +196,7 @@ export function createTriggerControl(
         return;
       }
       activeIdentifier = binding.identifier;
+      readoutShownForGesture = false;
       applyVisual(true);
       applyValue(valueAt(binding.startX, binding.startY));
     },
@@ -168,6 +225,7 @@ export function createTriggerControl(
       activeIdentifier = null;
       applyValue(0);
       applyVisual(false);
+      hideReadout();
       element.remove();
     },
   };

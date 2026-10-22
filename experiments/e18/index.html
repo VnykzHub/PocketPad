@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>PocketPad controller sensors</title>
+<link rel="stylesheet" href="./page.css?v=3">
+</head>
+<body>
+<main>
+<h1>Controller sensors</h1>
+<p class="lede">Checks motion, haptics and touch on this phone. Nothing is uploaded, stored or logged.</p>
+<p class="meta" id="probe-version">Probe v3 loading…</p>
+<p class="meta">If this stays at “Checking support”, the probe script did not load. Hard-refresh or add <code>?v=3</code> to the URL.</p>
+<noscript><p class="status" data-tone="bad">JavaScript is disabled in this browser; the probe cannot run.</p></noscript>
+
+<section class="card">
+  <h2>Motion</h2>
+  <p class="status" id="motion-status">Checking support…</p>
+  <button id="motion-enable" type="button" hidden>Enable motion</button>
+  <div class="level" aria-hidden="true"><span id="level-dot"></span></div>
+  <dl>
+    <div><dt>alpha</dt><dd id="alpha">—</dd></div>
+    <div><dt>beta</dt><dd id="beta">—</dd></div>
+    <div><dt>gamma</dt><dd id="gamma">—</dd></div>
+    <div><dt>accel x / y / z</dt><dd id="accel">—</dd></div>
+    <div><dt>Rate</dt><dd id="motion-rate">0 Hz</dd></div>
+  </dl>
+</section>
+
+<section class="card">
+  <h2>Haptics</h2>
+  <p class="status" id="haptics-status">Checking support…</p>
+  <div class="row">
+    <button type="button" data-pattern="60">Short</button>
+    <button type="button" data-pattern="60,40,60">Double</button>
+    <button type="button" data-pattern="400">Long</button>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Touch</h2>
+  <p class="status" id="touch-status">0 touches</p>
+  <div class="pad" id="pad"><span id="pad-dot" hidden></span></div>
+</section>
+
+<p class="meta" id="context">—</p>
+</main>
+<script src="./page.js?v=3"></script>
+</body>
+</html>
+

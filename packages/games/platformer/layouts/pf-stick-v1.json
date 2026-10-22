@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "pf-stick-v1",
+  "orientation": "landscape",
+  "background": "#101014",
+  "controls": [
+    {
+      "type": "stick",
+      "id": "move",
+      "x": "18%",
+      "y": "66%",
+      "label": "Move",
+      "size": "40%",
+      "axis": "left",
+      "mode": "floating"
+    },
+    {
+      "type": "button",
+      "id": "jump",
+      "x": "84%",
+      "y": "68%",
+      "label": "Jump",
+      "symbol": "↑",
+      "shape": "circle",
+      "r": "16%",
+      "bit": 0
+    }
+  ]
+}

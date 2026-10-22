@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "name": "Coin Run",
+  "description": "Race across a shared level and collect 20 coins.",
+  "entry": "index.js",
+  "layouts": ["layouts/pf-dpad-v1.json", "layouts/pf-stick-v1.json"],
+  "assetBudget": {
+    "initialBytes": 262144,
+    "totalBytes": 1048576
+  },
+  "minPlayers": 1,
+  "maxPlayers": 4,
+  "needsGyro": false
+}

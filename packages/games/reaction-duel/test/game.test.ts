@@ -41,14 +41,28 @@ if (!manifestResult.ok) {
 }
 const manifest: GameManifest = manifestResult.manifest;
 
+/** One recorded `text` call, in design-space or surface pixels. */
+interface FakeTextCall {
+  readonly text: string;
+  readonly x: number;
+  readonly y: number;
+  readonly size: number;
+  readonly align: string | undefined;
+}
+
 interface FakeRenderer {
   readonly renderer: GameRenderer3D;
   readonly texts: string[];
+  readonly textCalls: FakeTextCall[];
   readonly counters: { beginFrames: number; endFrames: number };
 }
 
-function createRenderer(options: { flat: boolean }): FakeRenderer {
+function createRenderer(options: {
+  flat: boolean;
+  size?: { width: number; height: number };
+}): FakeRenderer {
   const texts: string[] = [];
+  const textCalls: FakeTextCall[] = [];
   const counters = { beginFrames: 0, endFrames: 0 };
   const base = {
     backend: "canvas2d" as const,
@@ -66,15 +80,23 @@ function createRenderer(options: { flat: boolean }): FakeRenderer {
   const renderer = options.flat
     ? {
         ...base,
+        ...(options.size === undefined ? {} : { size: options.size }),
         clear: () => undefined,
         rect: () => undefined,
         circle: () => undefined,
-        text: (value: string) => {
+        text: (
+          value: string,
+          x: number,
+          y: number,
+          size: number,
+          align: "left" | "center" | "right" | undefined,
+        ) => {
           texts.push(value);
+          textCalls.push({ text: value, x, y, size, align });
         },
       }
     : base;
-  return { renderer, texts, counters };
+  return { renderer, texts, textCalls, counters };
 }
 
 interface FakeContext {
@@ -90,8 +112,12 @@ function createContext(options: {
   serverNow: () => number;
   flatRenderer?: boolean;
   layoutThrows?: boolean;
+  size?: { width: number; height: number };
 }): FakeContext {
-  const renderer = createRenderer({ flat: options.flatRenderer ?? true });
+  const renderer = createRenderer({
+    flat: options.flatRenderer ?? true,
+    ...(options.size === undefined ? {} : { size: options.size }),
+  });
   const layouts: Array<{ slot: number; layoutId: string }> = [];
   const clearedLayouts: number[] = [];
   const counters = new Map<string, number>();
@@ -170,12 +196,15 @@ function createHarness(options: {
   seed?: number;
   flatRenderer?: boolean;
   layoutThrows?: boolean;
+  /** Reported CSS surface size; absent keeps the 1:1 design space. */
+  size?: { width: number; height: number };
 } = {}): Harness {
   const clock = { now: 1000 };
   const fake = createContext({
     serverNow: () => clock.now,
     ...(options.flatRenderer === undefined ? {} : { flatRenderer: options.flatRenderer }),
     ...(options.layoutThrows === undefined ? {} : { layoutThrows: options.layoutThrows }),
+    ...(options.size === undefined ? {} : { size: options.size }),
   });
   const game = createReactionDuelGame(manifest, {
     ...(options.config === undefined ? {} : { config: options.config }),
@@ -203,6 +232,7 @@ function player(
 ): GameControllerState {
   return {
     slot,
+    connected: true,
     buttons: 0,
     edges: 0,
     lx: 0,
@@ -303,7 +333,7 @@ describe("layout application", () => {
     expect(harness.game.laidOutSlots).toEqual([1, 2]);
   });
 
-  test("[FR-8.2][FR-5.4] a reused slot re-applies the layout and starts at score 0", () => {
+  test("[FR-8.2][FR-5.4] a reconnecting slot re-applies the layout and keeps its score", () => {
     const harness = createHarness({
       config: {
         countdownMs: 0,
@@ -336,7 +366,7 @@ describe("layout application", () => {
     expect(harness.fake.clearedLayouts).toEqual([2]);
     expect(harness.fake.layouts).toHaveLength(2);
 
-    // A new player takes the freed slot: layout again, fresh score.
+    // The same slot reconnects: layout again, score preserved (FR-5.4).
     harness.step([player(1), player(2)]);
     expect(harness.fake.clearedLayouts).toEqual([2]);
     expect(harness.fake.layouts).toEqual([
@@ -346,7 +376,55 @@ describe("layout application", () => {
     ]);
     expect(harness.game.laidOutSlots).toEqual([1, 2, 2]);
     expect(model.getPlayer(2)?.connected).toBe(true);
-    expect(model.getPlayer(2)?.score).toBe(0);
+    expect(model.getPlayer(2)?.score).toBe(1);
+  });
+
+  test("[FR-8.2] a tick-0, zero-input connected slot gets the layout exactly once", () => {
+    const harness = createHarness();
+    const idle = player(1, { tick: 0 });
+    harness.step([idle]);
+    harness.step([idle]);
+
+    expect(harness.fake.layouts).toEqual([
+      { slot: 1, layoutId: REACTION_DUEL_LAYOUT_ID },
+    ]);
+    expect(harness.game.laidOutSlots).toEqual([1]);
+    expect(modelOf(harness).getPlayer(1)?.connected).toBe(true);
+  });
+
+  test("[FR-8.2] two idle connected slots start the match without input", () => {
+    const harness = createHarness();
+    harness.step([player(1, { tick: 0 }), player(2, { tick: 0 })]);
+    const model = modelOf(harness);
+    expect(model.phase).toBe("countdown");
+    expect(model.playerCount).toBe(2);
+  });
+
+  test("[FR-5.4] a disconnected slot is removed and reconnects once", () => {
+    const harness = createHarness();
+    harness.step([player(1, { tick: 0 }), player(2, { tick: 0 })]);
+    const model = modelOf(harness);
+
+    harness.step([
+      player(1, { tick: 0 }),
+      player(2, { tick: 0, connected: false }),
+    ]);
+    expect(model.getPlayer(2)?.connected).toBe(false);
+    expect(harness.fake.clearedLayouts).toEqual([2]);
+    expect(harness.game.laidOutSlots).toEqual([1, 2]);
+
+    harness.step([player(1, { tick: 0 }), player(2, { tick: 0 })]);
+    expect(model.getPlayer(2)?.connected).toBe(true);
+    expect(harness.game.laidOutSlots).toEqual([1, 2, 2]);
+  });
+
+  test("[FR-5.4] a disconnected slot is not present even with input values", () => {
+    const harness = createHarness();
+    harness.step([
+      player(1, { connected: false, tick: 1234, buttons: 1, edges: 1 }),
+    ]);
+    expect(harness.fake.layouts).toEqual([]);
+    expect(modelOf(harness).playerCount).toBe(0);
   });
 
   test("[FR-8.2] a throwing layouts API never stops the match", () => {
@@ -543,6 +621,48 @@ describe("rendering", () => {
     const texts = harness.fake.renderer.texts;
     expect(texts).toContain(TARGET_SYMBOLS[target]);
     expect(texts).toContain(TARGET_LABELS[target]);
+  });
+
+  test("[FR-9.4] fixed coordinates and text scale into the real canvas", () => {
+    const design = createHarness({ seed: 19 });
+    reachSignal(design);
+    design.game.render(0.5);
+    const designCalls = design.fake.renderer.textCalls.slice();
+    expect(designCalls.length).toBeGreaterThan(0);
+
+    // 640x360 is exactly half of 1280x720: every coordinate and font size
+    // must halve, with no offset.
+    const scaled = createHarness({ seed: 19, size: { width: 640, height: 360 } });
+    reachSignal(scaled);
+    scaled.game.render(0.5);
+    const scaledCalls = scaled.fake.renderer.textCalls;
+    expect(scaledCalls).toHaveLength(designCalls.length);
+    for (let index = 0; index < designCalls.length; index += 1) {
+      const base = designCalls[index];
+      const actual = scaledCalls[index];
+      if (base === undefined || actual === undefined) throw new Error("text call missing");
+      expect(actual.text).toBe(base.text);
+      expect(actual.x).toBeCloseTo(base.x * 0.5, 8);
+      expect(actual.y).toBeCloseTo(base.y * 0.5, 8);
+      expect(actual.size).toBeCloseTo(base.size * 0.5, 8);
+    }
+
+    // 1280x900 is narrower than 16:9: scale stays 1 and the design space is
+    // centred vertically with a 90px letterbox bar above and below.
+    const letterboxed = createHarness({ seed: 19, size: { width: 1280, height: 900 } });
+    reachSignal(letterboxed);
+    letterboxed.game.render(0.5);
+    const letterboxedCalls = letterboxed.fake.renderer.textCalls;
+    expect(letterboxedCalls).toHaveLength(designCalls.length);
+    for (let index = 0; index < designCalls.length; index += 1) {
+      const base = designCalls[index];
+      const actual = letterboxedCalls[index];
+      if (base === undefined || actual === undefined) throw new Error("text call missing");
+      expect(actual.text).toBe(base.text);
+      expect(actual.x).toBeCloseTo(base.x, 8);
+      expect(actual.y).toBeCloseTo(base.y + 90, 8);
+      expect(actual.size).toBeCloseTo(base.size, 8);
+    }
   });
 
   test("[E12] a 3D-only renderer degrades to no drawing instead of throwing", () => {

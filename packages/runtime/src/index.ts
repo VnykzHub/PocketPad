@@ -27,6 +27,7 @@ export * from "./render/Renderer.js";
 export { Canvas2DRenderer } from "./render/Canvas2DRenderer.js";
 export { WebGL2Renderer } from "./render/WebGL2Renderer.js";
 export * from "./render/CubeDemo.js";
+export * from "./physics/index.js";
 export {
   AssetLoader,
   AssetLoadError,

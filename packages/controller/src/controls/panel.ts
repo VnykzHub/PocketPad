@@ -8,10 +8,16 @@
  * routing (only the addressed phone receives them); the renderer never emits
  * an event and never echoes its content anywhere.
  *
+ * CP-15 design language (DESIGN.md `true-black-flat`): a `--surface` card with
+ * a 24 px header row — a drawn lock glyph plus `Private` — and the content
+ * below it. All colour, radius and type come from `.control-panel` rules in
+ * `styles.css`; this file owns geometry, the scroll container and state
+ * classes only. Long content scrolls by translating the content layer (the
+ * play surface consumes native scroll gestures, D2-CTRL-01) and shows a 2 px
+ * scrollbar and a 24 px edge fade while it overflows.
+ *
  * Content updates in place (`setContent`), preserving the same element so
  * hot-swap can re-render onto a panel control with the same id (D5-CTRL-02).
- * Long text and block lists scroll by translating the content wrapper, because
- * the play surface consumes native scroll gestures (D2-CTRL-01).
  *
  * The extra `setContent`/`getContent` methods are additive: `ControlRenderer`
  * is unchanged, and `isPanelRenderer` is the type guard callers use.
@@ -24,6 +30,7 @@ import {
 } from "@lanpad/sdk";
 import type { InputState } from "@lanpad/protocol";
 import {
+  applyControlClasses,
   applyControlElementStyle,
   createPart,
   measureControl,
@@ -35,11 +42,17 @@ import { appendSafeImage, setSafeText } from "../render/safeRender.js";
 
 const PLACEHOLDER_TEXT = "Private panel";
 const INVALID_TEXT = "Panel content unavailable";
+const HEADER_LABEL = "Private";
+
+/** Header row height; matches `.control-panel [data-part="header"]`. */
+const HEADER_HEIGHT_PX = 24;
 
 /** Per-field caps mirror the SDK panel contract; defence in depth. */
 const MAX_TITLE_CHARS = 80;
 const MAX_BODY_CHARS = 1_000;
 const MAX_LIST_ITEM_CHARS = 120;
+
+const SVG_NS = "http://www.w3.org/2000/svg";
 
 /** Panel renderer with the in-place content update used by hot-swap. */
 export interface PanelRenderer extends ControlRenderer {
@@ -74,72 +87,127 @@ function textBlock(
   return block;
 }
 
+/**
+ * Draws the header lock with SVG primitives (no emoji, no icon font). The
+ * glyph inherits `--muted` from the header row through `currentColor`.
+ */
+function createLockGlyph(): SVGSVGElement {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("data-part", "lock");
+  svg.setAttribute("viewBox", "0 0 16 16");
+  svg.setAttribute("width", "14");
+  svg.setAttribute("height", "14");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "1.5");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+
+  const shackle = document.createElementNS(SVG_NS, "path");
+  shackle.setAttribute("d", "M5.25 7V5.5a2.75 2.75 0 0 1 5.5 0V7");
+  svg.append(shackle);
+
+  const body = document.createElementNS(SVG_NS, "rect");
+  body.setAttribute("x", "3.5");
+  body.setAttribute("y", "7");
+  body.setAttribute("width", "9");
+  body.setAttribute("height", "6");
+  body.setAttribute("rx", "1.5");
+  svg.append(body);
+
+  return svg;
+}
+
 export function createPanelControl(control: PanelControl, ctx: ControlContext): PanelRenderer {
   const box = measureControl(control, ctx.surfaceSize);
 
   const element = document.createElement("div");
   applyControlElementStyle(element, control, box, ctx);
-  element.classList.add("control", "control-panel");
+  applyControlClasses(element, "panel");
   element.setAttribute("role", "region");
   element.setAttribute("aria-label", "private panel");
-  element.style.overflow = "hidden";
-  element.style.borderRadius = "12px";
-  element.style.background = "rgba(255, 255, 255, 0.06)";
-  element.style.border = "1px solid rgba(255, 255, 255, 0.28)";
 
+  const header = createPart("div", "header");
+  const headerLabel = createPart("span", "header-label");
+  headerLabel.textContent = HEADER_LABEL;
+  header.append(createLockGlyph(), headerLabel);
+  element.append(header);
+
+  // The viewport is the scroll clip below the header; the content layer is
+  // translated inside it so the card itself never scrolls.
   const viewport = createPart("div", "viewport");
-  viewport.style.position = "absolute";
-  viewport.style.left = "0";
-  viewport.style.top = "0";
-  viewport.style.width = "100%";
-  viewport.style.height = "100%";
-  viewport.style.overflow = "hidden";
-  viewport.style.pointerEvents = "none";
+  viewport.style.top = `${HEADER_HEIGHT_PX}px`;
+  viewport.style.height = `calc(100% - ${HEADER_HEIGHT_PX}px)`;
   element.append(viewport);
 
   const content = createPart("div", "content");
-  content.style.position = "absolute";
-  content.style.left = "0";
-  content.style.top = "0";
-  content.style.width = "100%";
-  content.style.boxSizing = "border-box";
-  content.style.padding = "10px 12px";
-  content.style.color = "#f4f4f5";
-  content.style.font = "400 15px/1.35 system-ui, sans-serif";
-  content.style.overflowWrap = "anywhere";
-  content.style.transform = "translate3d(0, 0, 0)";
-  content.style.pointerEvents = "none";
   viewport.append(content);
 
   const placeholder = createPart("div", "placeholder");
   placeholder.textContent = PLACEHOLDER_TEXT;
-  placeholder.style.position = "absolute";
-  placeholder.style.left = "0";
-  placeholder.style.top = "0";
-  placeholder.style.width = "100%";
-  placeholder.style.height = "100%";
-  placeholder.style.display = "flex";
-  placeholder.style.alignItems = "center";
-  placeholder.style.justifyContent = "center";
-  placeholder.style.color = "rgba(244, 244, 245, 0.55)";
-  placeholder.style.font = "500 14px/1 system-ui, sans-serif";
-  placeholder.style.pointerEvents = "none";
   viewport.append(placeholder);
+
+  const scrollbar = createPart("div", "scrollbar");
+  scrollbar.hidden = true;
+  viewport.append(scrollbar);
 
   let lastContent: PanelContent | null = null;
   let activeIdentifier: number | null = null;
   let startY = 0;
   let startOffset = 0;
   let offset = 0;
+  let scrollable = false;
+  let scrollSpan = 0;
+  let thumbTravel = 0;
 
   const maxScroll = (): number => {
     const overflow = content.scrollHeight - viewport.clientHeight;
     return overflow > 0 ? overflow : 0;
   };
 
+  /** Moves the content layer and keeps the scrollbar thumb in step. */
   const applyOffset = (next: number): void => {
     offset = clamp(next, -maxScroll(), 0);
     content.style.transform = `translate3d(0, ${offset.toFixed(2)}px, 0)`;
+    if (scrollable) {
+      const progress = scrollSpan === 0 ? 0 : -offset / scrollSpan;
+      scrollbar.style.transform = `translate3d(0, ${(progress * thumbTravel).toFixed(1)}px, 0)`;
+    }
+  };
+
+  /**
+   * Recomputes whether the content overflows. Called only when content changes
+   * (never per touch), so the mask strings and thumb height are not rebuilt on
+   * the scroll path.
+   */
+  const updateScrollAffordance = (): void => {
+    const viewHeight = viewport.clientHeight;
+    const total = content.scrollHeight;
+    const overflow = total - viewHeight;
+
+    if (viewHeight <= 0 || overflow <= 0) {
+      scrollbar.hidden = true;
+      if (scrollable) {
+        scrollable = false;
+        element.classList.remove("is-scrollable");
+        scrollbar.style.transform = "";
+      }
+      return;
+    }
+
+    const thumbHeight = Math.max(
+      24,
+      Math.min(viewHeight, (viewHeight * viewHeight) / total),
+    );
+    scrollSpan = overflow;
+    thumbTravel = Math.max(0, viewHeight - thumbHeight);
+    scrollable = true;
+    element.classList.add("is-scrollable");
+    scrollbar.hidden = false;
+    scrollbar.style.height = `${thumbHeight.toFixed(0)}px`;
+    applyOffset(offset);
   };
 
   const appendImage = (
@@ -157,24 +225,17 @@ export function createPanelControl(control: PanelControl, ctx: ControlContext): 
     switch (block.type) {
       case "heading": {
         const heading = textBlock("div", block.text, "block-heading", MAX_BODY_CHARS);
-        heading.style.fontWeight = "700";
-        heading.style.fontSize = "17px";
-        heading.style.margin = "4px 0 6px";
         content.append(heading);
         break;
       }
       case "paragraph": {
         const paragraph = textBlock("p", block.text, "block-paragraph", MAX_BODY_CHARS);
-        paragraph.style.margin = "0 0 8px";
-        paragraph.style.whiteSpace = "pre-wrap";
         content.append(paragraph);
         break;
       }
       case "list": {
         const list = document.createElement("ul");
         list.dataset["part"] = "block-list";
-        list.style.margin = "0 0 8px";
-        list.style.paddingLeft = "20px";
         for (const item of block.items) {
           const entry = document.createElement("li");
           setSafeText(entry, item, MAX_LIST_ITEM_CHARS);
@@ -185,7 +246,6 @@ export function createPanelControl(control: PanelControl, ctx: ControlContext): 
       }
       case "image": {
         const wrapper = createPart("div", "block-image");
-        wrapper.style.margin = "0 0 8px";
         appendImage(wrapper, block.src, block.alt, undefined);
         content.append(wrapper);
         break;
@@ -199,14 +259,10 @@ export function createPanelControl(control: PanelControl, ctx: ControlContext): 
         if (value.title !== undefined && value.title.length > 0) {
           const title = createPart("div", "panel-title");
           setSafeText(title, value.title, MAX_TITLE_CHARS);
-          title.style.fontWeight = "700";
-          title.style.fontSize = "17px";
-          title.style.margin = "0 0 6px";
           content.append(title);
         }
         const body = createPart("div", "panel-text");
         setSafeText(body, value.text, MAX_BODY_CHARS);
-        body.style.whiteSpace = "pre-wrap";
         content.append(body);
         break;
       }
@@ -231,12 +287,14 @@ export function createPanelControl(control: PanelControl, ctx: ControlContext): 
   const setContent = (value: PanelContent | null): void => {
     content.replaceChildren();
     offset = 0;
-    content.style.transform = "translate3d(0, 0, 0)";
+    content.style.transform = "";
 
     if (value === null) {
       lastContent = null;
       delete element.dataset["invalidPanel"];
+      element.classList.add("is-empty");
       showPlaceholder(PLACEHOLDER_TEXT);
+      updateScrollAffordance();
       return;
     }
 
@@ -246,14 +304,18 @@ export function createPanelControl(control: PanelControl, ctx: ControlContext): 
       // hostile. A neutral message is safer than rendering a partial object.
       lastContent = null;
       element.dataset["invalidPanel"] = "true";
+      element.classList.add("is-empty");
       showPlaceholder(INVALID_TEXT);
+      updateScrollAffordance();
       return;
     }
 
     lastContent = result.content;
     delete element.dataset["invalidPanel"];
+    element.classList.remove("is-empty");
     placeholder.hidden = true;
     renderContent(result.content);
+    updateScrollAffordance();
   };
 
   setContent(null);

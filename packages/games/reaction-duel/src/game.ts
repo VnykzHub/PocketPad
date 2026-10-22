@@ -11,13 +11,14 @@
  *
  *   init -> simulate(dt, snapshot) -> render(alpha) -> dispose
  *
- * `simulate` observes which slots are present (the only signal the D3 context
- * carries), applies the four-button layout when a slot appears, clears it when
- * the slot leaves, feeds press edges and synced timestamps into the model, and
+ * `simulate` observes which slots are connected (`ControllerState.connected`),
+ * applies the four-button layout when a slot connects, clears it when the slot
+ * disconnects, feeds press edges and synced timestamps into the model, and
  * starts the match once the manifest minimum of players is present. A slot
- * that appears again after an absence is treated as a new occupant: its layout
- * is re-applied and its score restarts at zero. During `matchResult` any
- * four-button press edge from a present slot starts a rematch (GAME-RD-HOST-04).
+ * that disconnects is removed from the model and its layout is cleared; a
+ * later packet reconnects it with its score preserved (FR-5.4). During
+ * `matchResult` any four-button press edge from a connected slot starts a
+ * rematch (GAME-RD-HOST-04).
  *
  * Rendering uses the flat 2D calls that the host's Canvas2D backend exposes
  * (`clear`, `rect`, `circle`, `text`). The SDK's `GameRenderer3D` type does
@@ -49,13 +50,17 @@ export const TARGET_LABELS = ["A", "B", "X", "Y"] as const;
 /** Distinct shapes so the signal is not colour-only (A12, FR-8.3). */
 export const TARGET_SYMBOLS = ["▲", "●", "✕", "■"] as const;
 
-const BACKGROUND = "#101014";
-const FOREGROUND = "#f4f4f6";
-const MUTED = "#9aa0ac";
-const ACCENT = "#ffd166";
-const WIN = "#8bffa0";
+/*
+ * DESIGN.md `true-black-flat` tokens; the canvas stays true black and lime is
+ * reserved for the live target, so the game is the brightest thing on stage.
+ */
+const BACKGROUND = "#000000"; // --ground
+const FOREGROUND = "#ffffff"; // --text
+const MUTED = "#b4b4b4"; // --muted
+const ACCENT = "#c6f24e"; // --accent
+const WIN = "#c6f24e"; // --positive
 
-/** Design-space coordinates; the Canvas2D backend draws in CSS pixels. */
+/** Design-space coordinates; scaled to the real CSS surface each frame. */
 const VIEW_WIDTH = 1280;
 const VIEW_HEIGHT = 720;
 
@@ -64,6 +69,12 @@ const MAX_SLOTS = 8;
 
 /** A/B/X/Y button bits (A12); rematch accepts any of them. */
 const BUTTON_MASK = 0x0f;
+
+/** CSS size a backend may report; absent on test doubles (HP-04). */
+export interface RendererSize {
+  readonly width: number;
+  readonly height: number;
+}
 
 interface Renderer2DLike {
   beginFrame(alpha: number): void;
@@ -79,6 +90,8 @@ interface Renderer2DLike {
     color: string,
     align?: "left" | "center" | "right",
   ): void;
+  /** Actual CSS size; the game scales and letterboxes its design space to it. */
+  readonly size?: RendererSize;
 }
 
 /**
@@ -122,17 +135,14 @@ function isValidSlot(slot: number): boolean {
   return Number.isInteger(slot) && slot >= 1 && slot <= MAX_SLOTS;
 }
 
-/** A slot is present once it has sent input; zeroed slots have never joined. */
+/**
+ * A slot is present while its controller is connected (FR-8.2). The flag is
+ * set by the first packet even when its tick and state are still zero, so a
+ * fresh phone gets its layout before clock sync; this is not an input
+ * heuristic.
+ */
 function isPresent(player: GameControllerState): boolean {
-  return (
-    player.tick > 0 ||
-    player.buttons !== 0 ||
-    player.edges !== 0 ||
-    player.lx !== 0 ||
-    player.ly !== 0 ||
-    player.rx !== 0 ||
-    player.ry !== 0
-  );
+  return player.connected;
 }
 
 function formatDecision(round: RoundSummary): string {
@@ -167,6 +177,10 @@ export function createReactionDuelGame(
   let disposed = false;
   let simNowMs = 0;
   let layoutErrorCount = 0;
+  /** Uniform design-space -> surface transform, refreshed once per frame. */
+  let viewScale = 1;
+  let viewOffsetX = 0;
+  let viewOffsetY = 0;
 
   const laidOutSlots: number[] = [];
   /** One bit per present slot (bit N = slot N); no per-tick allocation. */
@@ -213,29 +227,20 @@ export function createReactionDuelGame(
   }
 
   /**
-   * Registers a slot that just became present. An existing disconnected record
-   * is a reused slot: the new occupant keeps the slot number in the frozen
-   * roster but starts at score 0. A fresh slot may only join from the lobby.
+   * Registers a slot that just connected. `addPlayer` adds a fresh slot in the
+   * lobby or reconnects a disconnected record at any time without resetting
+   * its score (FR-5.4). `seenMask` guarantees one call per connection edge.
    */
-  function addOrReusePlayer(slot: number): void {
-    const current = model;
-    if (current === null) return;
-    const existing = current.getPlayer(slot);
-    if (existing === undefined) {
-      current.addPlayer(slot);
-      return;
-    }
-    if (!existing.connected) {
-      current.reuseSlot(slot);
-    }
+  function addConnectedPlayer(slot: number): void {
+    model?.addPlayer(slot);
   }
 
   /**
-   * Detects joins and departures from this tick's snapshot. Slots are tracked
-   * as bits so the per-tick path allocates nothing; a departure clears the
-   * slot's host layout so a later `set` for the same id is not treated as a
-   * duplicate (FR-8.2) and disconnects the record so a replacement starts
-   * fresh.
+   * Detects connections and disconnections from this tick's snapshot. Slots
+   * are tracked as bits so the per-tick path allocates nothing; a disconnect
+   * clears the slot's host layout so a later `set` for the same id is not
+   * treated as a duplicate (FR-8.2) and marks the record disconnected so a
+   * later packet reconnects it exactly once (FR-5.4).
    */
   function observePlayers(input: GameInputSnapshot): void {
     const players = input.players;
@@ -250,7 +255,7 @@ export function createReactionDuelGame(
       if ((seenMask & bit) !== 0) continue;
       seenMask |= bit;
       applyLayout(slot);
-      addOrReusePlayer(slot);
+      addConnectedPlayer(slot);
     }
 
     let gone = seenMask & ~presentMask;
@@ -264,7 +269,7 @@ export function createReactionDuelGame(
     }
   }
 
-  /** True when any present slot carries an A/B/X/Y press edge this tick. */
+  /** True when any connected slot carries an A/B/X/Y press edge this tick. */
   function hasRematchPress(input: GameInputSnapshot): boolean {
     const players = input.players;
     for (let index = 0; index < players.length; index += 1) {
@@ -295,13 +300,35 @@ export function createReactionDuelGame(
     return activeInputs;
   }
 
+  /**
+   * Paints a string in the 1280x720 design space. Every text call goes
+   * through here so prompts, scoreboard and results share one transform.
+   */
+  function paintText(
+    text: string,
+    x: number,
+    y: number,
+    size: number,
+    color: string,
+    align: "left" | "center" | "right" = "left",
+  ): void {
+    surface?.text(
+      text,
+      viewOffsetX + x * viewScale,
+      viewOffsetY + y * viewScale,
+      size * viewScale,
+      color,
+      align,
+    );
+  }
+
   function paintCenter(
     text: string,
     y: number,
     size: number,
     color: string,
   ): void {
-    surface?.text(text, VIEW_WIDTH / 2, y, size, color, "center");
+    paintText(text, VIEW_WIDTH / 2, y, size, color, "center");
   }
 
   function paintScores(): void {
@@ -312,7 +339,7 @@ export function createReactionDuelGame(
       const player = players[index];
       if (player === undefined) continue;
       const color = current.matchWinnerSlot === player.slot ? WIN : FOREGROUND;
-      surface.text(
+      paintText(
         `P${player.slot}  ${player.score}`,
         80 + index * 150,
         VIEW_HEIGHT - 64,
@@ -449,6 +476,30 @@ export function createReactionDuelGame(
     render(alpha: number): void {
       if (disposed || model === null || surface === null) return;
       const blend = Number.isFinite(alpha) ? Math.min(1, Math.max(0, alpha)) : 0;
+
+      // One uniform scale for the whole frame: the design space is centred and
+      // letterboxed inside the real CSS surface instead of stretching (HP-04).
+      const surfaceSize = surface.size;
+      viewScale = 1;
+      viewOffsetX = 0;
+      viewOffsetY = 0;
+      if (surfaceSize !== undefined) {
+        const width = surfaceSize.width;
+        const height = surfaceSize.height;
+        if (
+          Number.isFinite(width) &&
+          width > 0 &&
+          Number.isFinite(height) &&
+          height > 0
+        ) {
+          const fitX = width / VIEW_WIDTH;
+          const fitY = height / VIEW_HEIGHT;
+          viewScale = fitX < fitY ? fitX : fitY;
+          viewOffsetX = (width - VIEW_WIDTH * viewScale) / 2;
+          viewOffsetY = (height - VIEW_HEIGHT * viewScale) / 2;
+        }
+      }
+
       surface.beginFrame(blend);
       surface.clear(BACKGROUND);
       paintPhase(readClock());
@@ -473,6 +524,9 @@ export function createReactionDuelGame(
       surface = null;
       seenMask = 0;
       activeInputs.length = 0;
+      viewScale = 1;
+      viewOffsetX = 0;
+      viewOffsetY = 0;
     },
   };
 

@@ -18,11 +18,15 @@
  * focus visibility, TV-sized type and the audio-state colours belong there.
  *
  * Lifecycle: the host builds the screen, mounts `element`, feeds
- * `updateProgress()` from the asset loader, sets room credentials with
- * `setRoom()`, and receives `onStart()` exactly once after both assets are
- * ready and audio was unlocked (or found unavailable). A first gesture made
- * while assets are still loading still unlocks audio; it just does not start
- * the game yet.
+ * `updateProgress()` from the asset loader, and receives `onStart()` exactly
+ * once after both assets are ready and audio was unlocked (or found
+ * unavailable). A first gesture made while assets are still loading still
+ * unlocks audio; it just does not start the game yet.
+ *
+ * Page plan HP-02: the lobby's room code and PIN live in the RoomPanel hero
+ * only, so this screen renders the title, the primary action, asset progress,
+ * the audio row and the hint — never the credentials. `setRoom()` stays for
+ * the W1→W2 host-flow handoff and will be removed with its callers.
  */
 import type { AssetProgress } from "../assets/AssetLoader.js";
 import { ProgressBar } from "../assets/ProgressBar.js";
@@ -36,8 +40,12 @@ export const AUDIO_UNLOCKED_MESSAGE = "Sound on.";
 export const AUDIO_UNAVAILABLE_MESSAGE =
   "Audio unavailable — the game will run without sound.";
 
-export const AUDIO_ICON_MUTED = "🔇";
-export const AUDIO_ICON_UNMUTED = "🔊";
+/**
+ * The audio row draws its state as a CSS dot (DESIGN.md bans emoji); these
+ * stay empty for API compatibility with the screen's icon span.
+ */
+export const AUDIO_ICON_MUTED = "";
+export const AUDIO_ICON_UNMUTED = "";
 
 /** The slice of `AudioBus` this screen needs; keeps tests free of Web Audio. */
 export interface StartScreenAudio {
@@ -66,8 +74,6 @@ export class StartScreen {
   private readonly audio: StartScreenAudio;
   private readonly onStart: () => void;
   private readonly target: EventTarget | null;
-  private readonly codeEl: HTMLElement;
-  private readonly pinEl: HTMLElement;
   private readonly audioRow: HTMLElement;
   private readonly audioIcon: HTMLElement;
   private readonly audioText: HTMLElement;
@@ -93,22 +99,6 @@ export class StartScreen {
     const title = doc.createElement("h2");
     title.className = "lanpad-start__title";
     title.textContent = options.title ?? "lanpad";
-
-    const room = doc.createElement("div");
-    room.className = "lanpad-start__room";
-
-    this.codeEl = doc.createElement("span");
-    this.codeEl.className = "lanpad-start__code";
-    this.codeEl.setAttribute("aria-label", "Room code");
-    this.codeEl.textContent = "----";
-
-    this.pinEl = doc.createElement("span");
-    this.pinEl.className = "lanpad-start__pin";
-    this.pinEl.setAttribute("aria-label", "Room PIN");
-    this.pinEl.textContent = "PIN ----";
-
-    room.appendChild(this.codeEl);
-    room.appendChild(this.pinEl);
 
     const button = doc.createElement("button");
     button.setAttribute("type", "button");
@@ -142,7 +132,6 @@ export class StartScreen {
     this.hintEl.textContent = "Loading assets…";
 
     root.appendChild(title);
-    root.appendChild(room);
     root.appendChild(button);
     root.appendChild(this.progressBar.element);
     root.appendChild(this.audioRow);
@@ -169,12 +158,16 @@ export class StartScreen {
     return this.startedFlag;
   }
 
-  /** Shows the room credentials on the start screen (D4 reuses this shell). */
+  /**
+   * Compatibility seam for the W1→W2 host-flow handoff (PAGE-PLANS HP-02):
+   * the lobby hero is the only place the room code and PIN are rendered, so
+   * this screen shows neither. Kept callable until main.ts stops calling it.
+   */
   setRoom(code: string | null, pin: string | null = null): void {
-    this.codeEl.textContent =
-      code === null || code.length === 0 ? "----" : code;
-    this.pinEl.textContent =
-      pin === null || pin.length === 0 ? "PIN ----" : `PIN ${pin}`;
+    // No credentials are rendered here. Referencing the arguments keeps the
+    // signature honest for the callers that still pass them.
+    void code;
+    void pin;
   }
 
   /**

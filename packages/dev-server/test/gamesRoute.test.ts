@@ -14,6 +14,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { request as httpRequest } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import type { Logger } from "@lanpad/broker";
 import {
@@ -121,14 +122,18 @@ afterEach(async () => {
   rmSync(root, { recursive: true, force: true });
 });
 
-async function startApp(options: { gameSources?: boolean } = {}): Promise<Running> {
+async function startApp(
+  options: { gameSources?: boolean; gameSourcesDir?: string } = {},
+): Promise<Running> {
   const staticRoots: StaticRoots = {
     host: roots.host,
     controller: roots.controller,
     games: roots.games,
     experiments: roots.experiments,
   };
-  if (options.gameSources !== false && roots.gameSources !== undefined) {
+  if (options.gameSourcesDir !== undefined) {
+    staticRoots.gameSources = options.gameSourcesDir;
+  } else if (options.gameSources !== false && roots.gameSources !== undefined) {
     staticRoots.gameSources = roots.gameSources;
   }
   const app = createDevServer(
@@ -223,6 +228,32 @@ describe("direct game page", () => {
     const response = await get(`${base}/games/source-only/`);
     expect(response.status).toBe(200);
     expect(await response.text()).toContain("HOST_SHELL");
+  });
+
+  test("[A12] the shipped Coin Run game is discovered at /games/platformer/", async () => {
+    // The real `packages/games` tree, not a fixture: the route must find the
+    // platformer manifest exactly as the dev server does at boot.
+    const { base } = await startApp({
+      gameSourcesDir: fileURLToPath(new URL("../../games", import.meta.url)),
+    });
+
+    const page = await get(`${base}/games/platformer/`);
+    expect(page.status).toBe(200);
+    expect(await page.text()).toContain("HOST_SHELL");
+
+    const manifest = await get(`${base}/games/platformer/game.manifest.json`);
+    expect(manifest.status).toBe(200);
+    expect(await manifest.json()).toMatchObject({
+      name: "Coin Run",
+      minPlayers: 1,
+      maxPlayers: 4,
+    });
+
+    const layout = await get(`${base}/games/platformer/layouts/pf-dpad-v1.json`);
+    expect(layout.status).toBe(200);
+
+    const source = await get(`${base}/games/platformer/src/game.ts`);
+    expect(source.status).toBe(404);
   });
 });
 
