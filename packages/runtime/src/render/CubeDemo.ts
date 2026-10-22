@@ -17,7 +17,9 @@
  */
 import { BUTTON_BITS } from "@lanpad/protocol";
 import type { InputSnapshot } from "../input/types.js";
-import type { Renderer3D } from "./Renderer.js";
+// The SDK's game-facing renderer: the runtime `Renderer3D` satisfies it, and
+// the demo needs nothing beyond what any third-party game receives.
+import type { GameRenderer3D as Renderer3D } from "@lanpad/sdk";
 
 const A_BUTTON_MASK = 1 << BUTTON_BITS.A;
 /** Radians per second at full left-stick X. */

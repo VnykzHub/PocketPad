@@ -3,10 +3,11 @@
  *
  * `ControllerState` is the only input shape game code ever sees (FR-7.17). It
  * carries no socket, packet, queue or decoder field, so a recorded trace can
- * drive a game without a network. D6 adds `gyroActive`/`gyroRecentered`
- * additively; existing fields must not be renamed.
+ * drive a game without a network. D6 adds `gyroActive`/`gyroRecentered` and
+ * the host-integrated `tilt` additively; existing fields must not be renamed.
  */
 import type { InputState } from "@lanpad/protocol";
+import type { TiltState } from "./TiltIntegrator.js";
 
 export type { InputState };
 
@@ -34,6 +35,24 @@ export interface ControllerState {
   ry: number;
   /** Gyro in degrees/second (SPEC §7.5). */
   gyro: { x: number; y: number; z: number };
+  /**
+   * Motion data is active for this slot (D6-RT-01; FR-7.6). Derived from
+   * `InputState.flags` bit 0; games use it to offer a fallback when a phone
+   * has no usable motion sensor.
+   */
+  gyroActive: boolean;
+  /**
+   * The controller recentered its gyro in this packet (FR-7.6), flag bit 1.
+   * Level field: it stays true only until the next packet without the flag.
+   */
+  gyroRecentered: boolean;
+  /**
+   * Host-integrated tilt for this slot (D6-RT-01; FR-7.5, FR-8.5). `InputMapper`
+   * pools the object; `GameHost` updates its values before each `simulate`.
+   * Optional so hand-built snapshots (traces, renderer fakes) that predate D6
+   * still compile; every mapper-produced state carries it.
+   */
+  tilt?: TiltState;
   /** Triggers, 0..1 (FR-7.4). */
   triggers: { lt: number; rt: number };
   /** u32 server-time estimate stamped by the controller at send (A3). */

@@ -1,0 +1,29 @@
+{
+  "name": "@lanpad/latency-harness",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "lanpad-latency": "./dist/cli.js"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b && tsc -p tsconfig.test.json",
+    "test": "vitest run --root ../.. --project tools/latency-harness"
+  },
+  "dependencies": {
+    "@lanpad/input-bot": "*",
+    "@lanpad/protocol": "*"
+  },
+  "devDependencies": {
+    "@lanpad/dev-server": "*"
+  }
+}

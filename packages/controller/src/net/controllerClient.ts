@@ -14,14 +14,24 @@
  * - `hostStatus` handling so the pill can show "Waiting for TV" / "TV paused"
  *   (A9, FR-7.16).
  *
- * Layout handling is unchanged from D2:
- * - A layout arrives in `joined.layout`, or in the first `setLayout` addressed
- *   to this slot (or `all`). It is validated on the controller with the same
+ * D5 layout handling (FR-8.1, FR-8.2; D5-CTRL-01/02):
+ * - A layout arrives in `joined.layout` or a `setLayout` addressed to this
+ *   slot (or `all`). It is validated on the controller with the same
  *   `validateLayout` the host uses (FR-8.4).
- * - Only `button`, `dpad` and `stick` render in D2 (FR-8.1); other valid types
- *   are skipped until D5 registers their renderers.
- * - There is no layout hot-swap in D2 (FR-8.2 is D5-CTRL-02): once a layout is
- *   mounted, later `setLayout` messages are ignored until the socket closes.
+ * - Every valid layout swaps in place: all eleven v1 control types render
+ *   through the registry, active touches are cancelled, old controls are
+ *   disposed, the new DOM is built in a fragment and mounted once, and a
+ *   `layoutAck {layoutId}` is sent. The socket, session, input store and send
+ *   loop are untouched, so no reload or reconnect happens.
+ * - A rejected layout keeps the previous layout and updates
+ *   `currentLayoutError`; it is never acked. A same-id layout is idempotent.
+ * - Private `panel` content is applied by control id and survives a swap when
+ *   the new layout keeps a panel with that id.
+ * - A session reconnect keeps the mounted layout; a leave, kick or terminal
+ *   join error clears it.
+ *
+ * Control events go through one `EventQueue` (D5-CTRL-05) over the same
+ * socket; controls never send directly.
  *
  * The socket remains the only network owner; controls never send. Tokens and
  * PINs are never placed in state that the page, logs or the DOM can read.
@@ -29,7 +39,7 @@
 import {
   BUTTON_BITS,
   MSG,
-  PROTOCOL_VERSION,
+  decodeHaptic,
   decodePong,
   encodeInput,
   encodePing,
@@ -37,7 +47,6 @@ import {
   stringifyJsonMessage,
 } from "@lanpad/protocol";
 import type {
-  ClientToServerMessage,
   HostStatusState,
   InputState,
   JoinErrorReason,
@@ -47,19 +56,31 @@ import {
   resolveServerOrigin,
   toWebSocketUrl,
   validateLayout,
+  validatePanelContent,
   type Control,
   type LayoutDocument,
+  type PanelContent,
 } from "@lanpad/sdk";
 import {
   controlHitRect,
   type ControlContext,
   type ControlRenderer,
-  type RenderedControl,
   type SurfaceSize,
 } from "../controls/control.js";
+import type { ControlEventSink } from "../controls/eventSink.js";
+import type { GyroControlRuntime } from "../controls/gyro.js";
+import { isPanelRenderer } from "../controls/panel.js";
 import { createControl } from "../controls/registry.js";
+import { EventQueue, type EventQueueStats } from "../events/EventQueue.js";
+import {
+  MOTION_STRIP_ID,
+  createMotionStatusStrip,
+  motionStripHitRect,
+} from "../layout/motionStrip.js";
+import type { ViewportTracker } from "../layout/viewport.js";
 import { InputStore } from "../input/InputStore.js";
 import { SendLoop } from "../input/sendLoop.js";
+import type { HitRect } from "../touch/hitTest.js";
 import { CLOCK_PING_INTERVAL_MS, ClockSync } from "./clockSync.js";
 import {
   JOIN_FLOW_MESSAGES,
@@ -70,7 +91,12 @@ import {
   type JoinRequest,
   type JoinTransport,
 } from "../join/joinFlow.js";
-import { createSessionStore, type SessionStore } from "../join/sessionStore.js";
+import {
+  createSessionStore,
+  type SessionStore,
+  type StorageLike,
+} from "../join/sessionStore.js";
+import { connectionPillText } from "../ui/ConnectionPill.js";
 import type { ReplaceStateHistory } from "../route.js";
 import {
   createReconnectController,
@@ -108,36 +134,36 @@ export interface ControllerState {
   host: HostStatusState | null;
 }
 
-/** Human-readable text for every join refusal (FR-5.6 retry path). */
-export const JOIN_ERROR_TEXT: Readonly<Record<JoinErrorReason, string>> = {
-  roomFull: "That room is full.",
-  badToken: "That invite link is no longer valid. Enter the room code and PIN.",
-  badPin: "Wrong PIN. Check the PIN shown on the TV and try again.",
-  expired: "That room has expired. Ask the host for a new code.",
-  rateLimited: "Too many attempts. Wait a moment and try again.",
-  badCode: "No room with that code. Check the code on the TV.",
-  badHostToken: "The host session is not valid.",
-  badVersion: "This controller is out of date. Reload the page.",
-};
+/**
+ * Human-readable text for every join refusal (FR-5.6 retry path). Kept as the
+ * D0 export name; the single source of the wording is `JoinFlow`.
+ */
+export const JOIN_ERROR_TEXT: Readonly<Record<JoinErrorReason, string>> = JOIN_FLOW_MESSAGES;
 
-/** Pill label used by the page shell (the D4 pill is in `ui/ConnectionPill`). */
+/** Shown when the server ends the room because the TV never came back (FR-7.16). */
+export const HOST_LOST_KICK_TEXT = "The TV disconnected and the room ended. Ask for a new code.";
+
+/** Pill label for a client state; the mapping lives in `ui/ConnectionPill` (A9). */
 export function connectionPillLabel(state: ControllerState): string {
-  switch (state.status) {
-    case "connecting":
-      return "Connecting";
-    case "reconnecting":
-      return "Reconnecting";
-    case "connected":
-      if (state.host === "lost") {
-        return "Waiting for TV";
-      }
-      if (state.host === "paused") {
-        return "TV paused";
-      }
-      return state.slot === null ? "Connected" : `Connected (P${state.slot})`;
-    case "disconnected":
-      return "Disconnected";
-  }
+  return connectionPillText({ phase: state.status, slot: state.slot, host: state.host });
+}
+
+/**
+ * Tab-lifetime Web Storage stand-in. Used when the browser storages are
+ * unavailable (private mode) so an in-tab reconnect can still reclaim the slot
+ * by session (FR-5.4); it does not survive a reload.
+ */
+export function createMemoryStorage(): StorageLike {
+  const values = new Map<string, string>();
+  return {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => {
+      values.set(key, value);
+    },
+    removeItem: (key) => {
+      values.delete(key);
+    },
+  };
 }
 
 /** Reads the room code back out of a join-flow state, without any secret. */
@@ -198,11 +224,6 @@ export interface ControllerSendTimers {
   clearTimeout(handle: number): void;
 }
 
-/** Control types that have a D2 renderer; D5 registers the rest. */
-function isD2Renderable(control: Control): control is RenderedControl {
-  return control.type === "button" || control.type === "dpad" || control.type === "stick";
-}
-
 export interface ControllerClientOptions {
   /** Explicit server origin; defaults to `resolveServerOrigin()` (same-origin). */
   origin?: string;
@@ -222,9 +243,9 @@ export interface ControllerClientOptions {
   /** Draw a dashed outline around each control (`?layout=debug`, FR-8.4). */
   debugOutline?: boolean;
   /**
-   * Per-room session storage (FR-5.4). Defaults to a memory-less store, which
-   * makes every rejoin fall back to the manual form; the browser entry passes
-   * the real `sessionStorage`/`localStorage` pair.
+   * Per-room session storage (FR-5.4). Defaults to an in-memory store, so a
+   * reconnect inside this tab still uses the session; the browser entry
+   * passes the real `sessionStorage`/`localStorage` pair for reloads.
    */
   sessionStore?: SessionStore;
   /** History used to strip the URL fragment before the first join (FR-5.1). */
@@ -237,6 +258,16 @@ export interface ControllerClientOptions {
   reconnectTimers?: ReconnectTimers;
   /** Jitter source for reconnect backoff in [0, 1); injected in tests. */
   random?: () => number;
+  /**
+   * Visible-viewport tracker (D5-CTRL-03). Text controls use it to stay above
+   * the on-screen keyboard; the page shell owns and disposes it.
+   */
+  viewport?: ViewportTracker | null;
+  /**
+   * Motion runtime for a sensors-only layout's status strip (D6-CTRL-03).
+   * Optional; the browser uses the default `MotionSource`, tests inject fakes.
+   */
+  motionRuntime?: GyroControlRuntime;
 }
 
 /** Debug counters exposed to the page overlay (D2-CTRL-04 step 6). */
@@ -256,6 +287,14 @@ export interface ControllerClientStats {
   layoutId: string | null;
   /** connect() → first Input packet; null until that packet is sent. */
   joinToFirstInputMs: number | null;
+  /** Queued control events waiting to send (D5-CTRL-05). */
+  eventPending: number;
+  /** Control events dropped for size/rate/overflow/staleness. */
+  eventDropped: number;
+  /** Milliseconds since the last control event reached the socket. */
+  eventLastSendAgeMs: number | null;
+  /** Duration of the most recent accepted layout swap, in ms; null before one. */
+  swapMs: number | null;
 }
 
 const defaultTimers: ControllerTimers = {
@@ -335,15 +374,40 @@ export interface ControllerLayoutViewOptions {
   debugOutline?: boolean;
   /** Called after each touch dispatch with its synchronous duration. */
   onScriptTime?: (ms: number) => void;
+  /** Event sink for choice/text/canvas controls (D5-CTRL-05). */
+  events?: ControlEventSink;
+  /** Visible-viewport tracker passed to text controls (D5-CTRL-03). */
+  viewport?: ViewportTracker;
+  /** Motion runtime for the sensors-only status strip (D6-CTRL-03). */
+  motionRuntime?: GyroControlRuntime;
 }
 
 /**
- * Mounts one validated layout into a play surface (D2-CTRL-04).
+ * Picks an id for the synthetic strip renderer that a layout control cannot
+ * already own (layout ids are arbitrary 1..32-character strings).
+ */
+function uniqueMotionStripId(used: ReadonlyMap<string, ControlRenderer>): string {
+  if (!used.has(MOTION_STRIP_ID)) {
+    return MOTION_STRIP_ID;
+  }
+  let suffix = 2;
+  let candidate = `${MOTION_STRIP_ID}-${suffix}`;
+  while (used.has(candidate)) {
+    suffix += 1;
+    candidate = `${MOTION_STRIP_ID}-${suffix}`;
+  }
+  return candidate;
+}
+
+/**
+ * Layout host: mounts one validated layout and hot-swaps it in place
+ * (D2-CTRL-04, D5-CTRL-02; FR-8.2, FR-8.3).
  *
- * The view owns the D2 touch engine and the control renderers; it never talks
- * to the socket. It is deliberately single-layout: `setLayout` accepts the
- * first layout only, because hot-swap is D5-CTRL-02 (FR-8.2). A surface resize
- * rebuilds the renderers with the new geometry (FR-8.3).
+ * The view owns the touch engine, the control renderers and the last private
+ * panel content by control id; it never talks to the socket. A swap cancels
+ * active touches, disposes the old renderers, builds the new DOM in a
+ * DocumentFragment and mounts it with one `replaceChildren`, then re-caches
+ * the hit rects. A surface resize rebuilds with the new geometry.
  */
 export class ControllerLayoutView {
   private readonly surface: HTMLElement;
@@ -351,12 +415,23 @@ export class ControllerLayoutView {
   private readonly sizeSource: SurfaceSize | (() => SurfaceSize) | undefined;
   private readonly debugOutline: boolean;
   private readonly onScriptTime: ((ms: number) => void) | undefined;
+  private readonly events: ControlEventSink | undefined;
+  private readonly viewport: ViewportTracker | undefined;
+  private readonly motionRuntime: GyroControlRuntime | undefined;
 
   private engine: TouchEngine | null = null;
-  private renderers: Array<{ control: RenderedControl; renderer: ControlRenderer }> = [];
+  private renderers: Array<{
+    control: Control | null;
+    renderer: ControlRenderer;
+    rect: HitRect;
+  }> = [];
   private renderersById = new Map<string, ControlRenderer>();
   private currentLayout: LayoutDocument | null = null;
   private size: SurfaceSize = { width: 0, height: 0 };
+  /** Last panel content per control id, preserved across swaps (FR-8.2). */
+  private panelContentById = new Map<string, PanelContent | null>();
+  /** Slot-wide panel content seen before a panel control existed. */
+  private pendingPanelContent: PanelContent | null | undefined = undefined;
 
   constructor(
     surface: HTMLElement,
@@ -368,6 +443,9 @@ export class ControllerLayoutView {
     this.sizeSource = options.surfaceSize;
     this.debugOutline = options.debugOutline ?? false;
     this.onScriptTime = options.onScriptTime;
+    this.events = options.events;
+    this.viewport = options.viewport;
+    this.motionRuntime = options.motionRuntime;
   }
 
   /** Active touch bindings, for the debug overlay. */
@@ -381,26 +459,53 @@ export class ControllerLayoutView {
   }
 
   /**
-   * Mounts the first layout. Returns false when a layout is already mounted
-   * (D2 has no hot-swap, FR-8.2). The layout must have passed `validateLayout`;
-   * the client validates before calling.
+   * Mounts a validated layout, swapping the current one in place. Returns
+   * false for a same-id layout, which is idempotent and leaves the DOM alone
+   * (D5-CTRL-02). The client validates before calling.
    */
   setLayout(layout: LayoutDocument): boolean {
-    if (this.currentLayout !== null) {
+    if (this.currentLayout !== null && this.currentLayout.id === layout.id) {
       return false;
     }
+    // Release held touches before their renderers can be disposed (FR-7.12).
+    this.engine?.cancelTouches();
     this.currentLayout = layout;
     this.build();
     return true;
   }
 
+  /**
+   * Applies private `panel` content to every panel in the current layout and
+   * remembers it by control id so a same-id panel survives a swap
+   * (D5-CTRL-02). `null` clears. Invalid content is ignored: a malformed
+   * panel message can neither inject markup nor blank a good panel.
+   */
+  setPanelContent(content: unknown): boolean {
+    if (content === null) {
+      this.pendingPanelContent = null;
+      this.panelContentById.clear();
+      this.applyPanelContentToRenderers(null, false);
+      return true;
+    }
+    const result = validatePanelContent(content);
+    if (!result.ok) {
+      return false;
+    }
+    this.pendingPanelContent = result.content;
+    this.applyPanelContentToRenderers(result.content, true);
+    return true;
+  }
+
   /** Removes the renderers and the touch engine, leaving the surface empty. */
   clear(): void {
+    this.engine?.cancelTouches();
     this.disposeRenderers();
     this.engine?.dispose();
     this.engine = null;
     this.currentLayout = null;
     this.size = { width: 0, height: 0 };
+    this.panelContentById.clear();
+    this.pendingPanelContent = undefined;
     this.surface.style.background = "";
   }
 
@@ -421,23 +526,118 @@ export class ControllerLayoutView {
     if (this.debugOutline) {
       ctx.debug = { outline: true };
     }
-
-    for (const control of layout.controls) {
-      if (!isD2Renderable(control)) {
-        // Structurally valid, but its renderer arrives in D5 (FR-8.1).
-        continue;
-      }
-      const renderer = createControl(control, ctx);
-      this.surface.append(renderer.element);
-      this.renderers.push({ control, renderer });
-      this.renderersById.set(control.id, renderer);
+    if (this.events !== undefined) {
+      ctx.events = this.events;
+    }
+    if (this.viewport !== undefined) {
+      ctx.viewport = this.viewport;
     }
 
+    const fragment = document.createDocumentFragment();
+    const renderers: Array<{
+      control: Control | null;
+      renderer: ControlRenderer;
+      rect: HitRect;
+    }> = [];
+    const byId = new Map<string, ControlRenderer>();
+    const sensors = layout.sensors;
+    const hasGyroControl = layout.controls.some((control) => control.type === "gyro");
+    for (const control of layout.controls) {
+      // FR-8.5: layout-level values are defaults for the gyro control; the
+      // control's own smoothing/sensitivity win (D6-RT/CTRL contract).
+      let effective = control;
+      if (sensors !== undefined && control.type === "gyro") {
+        const merged = { ...control };
+        if (merged.smoothing === undefined && sensors.smoothing !== undefined) {
+          merged.smoothing = sensors.smoothing;
+        }
+        if (merged.sensitivity === undefined && sensors.sensitivity !== undefined) {
+          merged.sensitivity = sensors.sensitivity;
+        }
+        effective = merged;
+      }
+      const renderer = createControl(effective, ctx);
+      fragment.append(renderer.element);
+      renderers.push({
+        control: effective,
+        renderer,
+        rect: controlHitRect(effective, this.size),
+      });
+      byId.set(effective.id, renderer);
+    }
+
+    // D6-CTRL-03: a layout may declare `sensors.gyro` without a visible gyro
+    // control. Mount the compact status strip so the sensor is reachable and
+    // its fallback states stay visible, without duplicating the gyro pill.
+    if (sensors?.gyro !== undefined && !hasGyroControl) {
+      const stripId = uniqueMotionStripId(byId);
+      const stripOptions: {
+        id: string;
+        runtime?: GyroControlRuntime;
+        smoothing?: number;
+        sensitivity?: number;
+      } = { id: stripId };
+      if (this.motionRuntime !== undefined) {
+        stripOptions.runtime = this.motionRuntime;
+      }
+      if (sensors.smoothing !== undefined) {
+        stripOptions.smoothing = sensors.smoothing;
+      }
+      if (sensors.sensitivity !== undefined) {
+        stripOptions.sensitivity = sensors.sensitivity;
+      }
+      const strip = createMotionStatusStrip(ctx, stripOptions);
+      fragment.append(strip.element);
+      renderers.push({
+        control: null,
+        renderer: strip,
+        rect: motionStripHitRect(this.size, stripId),
+      });
+      byId.set(stripId, strip);
+    }
+
+    // One mount operation: never leave a frame where some new controls are
+    // attached while old ones are still in the document (FR-8.2 step 3).
+    this.surface.replaceChildren(fragment);
+    this.renderers = renderers;
+    this.renderersById = byId;
     this.surface.style.background = layout.background ?? "";
     this.ensureEngine();
-    this.engine?.setControls(
-      this.renderers.map(({ control }) => controlHitRect(control, this.size)),
-    );
+    this.engine?.setControls(this.renderers.map(({ rect }) => rect));
+    this.restorePanelContent();
+  }
+
+  private applyPanelContentToRenderers(
+    content: PanelContent | null,
+    remember: boolean,
+  ): void {
+    for (const { control, renderer } of this.renderers) {
+      if (control === null || !isPanelRenderer(renderer)) {
+        continue;
+      }
+      renderer.setContent(content);
+      if (remember) {
+        this.panelContentById.set(control.id, content);
+      } else {
+        this.panelContentById.delete(control.id);
+      }
+    }
+  }
+
+  private restorePanelContent(): void {
+    for (const { control, renderer } of this.renderers) {
+      if (control === null || !isPanelRenderer(renderer)) {
+        continue;
+      }
+      if (this.panelContentById.has(control.id)) {
+        renderer.setContent(this.panelContentById.get(control.id) ?? null);
+        continue;
+      }
+      if (this.pendingPanelContent !== undefined) {
+        renderer.setContent(this.pendingPanelContent);
+        this.panelContentById.set(control.id, this.pendingPanelContent);
+      }
+    }
   }
 
   private ensureEngine(): void {
@@ -544,12 +744,14 @@ export class ControllerClient {
   private readonly visibility: VisibilitySource | null | undefined;
   private readonly wakeLock: SuspendWakeLock;
   private readonly sendLoop: SendLoop;
+  private readonly eventQueue: EventQueue;
   private readonly layoutView: ControllerLayoutView | null;
   private readonly joinFlow: JoinFlow;
 
   private readonly listeners = new Set<(state: ControllerState) => void>();
   private readonly layoutListeners = new Set<(layout: LayoutDocument | null) => void>();
   private readonly joinListeners = new Set<(state: JoinFlowState) => void>();
+  private readonly hapticListeners = new Set<(durations: readonly number[]) => void>();
   private state: ControllerState = {
     status: "disconnected",
     slot: null,
@@ -578,6 +780,7 @@ export class ControllerClient {
   private currentLayout: LayoutDocument | null = null;
   private currentLayoutError: string | null = null;
   private lastScriptMs = 0;
+  private lastSwapMs: number | null = null;
 
   private connectStartedAtMs: number | null = null;
   private joinToFirstInputMs: number | null = null;
@@ -590,7 +793,8 @@ export class ControllerClient {
     this.sendTimers = options.sendTimers ?? defaultSendTimers;
     this.reconnectTimers = options.reconnectTimers ?? defaultReconnectTimers;
     this.random = options.random ?? Math.random;
-    this.store = options.sessionStore ?? createSessionStore();
+    this.store =
+      options.sessionStore ?? createSessionStore({ sessionStorage: createMemoryStorage() });
     this.history = options.history ?? noopHistory;
     this.visibility = options.visibility;
     this.wakeLock = options.wakeLock ?? new WakeLockManager();
@@ -623,17 +827,53 @@ export class ControllerClient {
       now: this.now,
     });
 
+    // One event path for every control (D5-CTRL-05): controls hand validated
+    // events to this queue, which stamps the joined slot and sends over the
+    // same socket. No control ever sends directly.
+    this.eventQueue = new EventQueue({
+      transport: {
+        isOpen: () => this.joined && this.socketOpen && this.socket !== null,
+        send: (frame) => {
+          const socket = this.socket;
+          if (socket === null || !this.socketOpen) {
+            return false;
+          }
+          try {
+            socket.send(frame);
+            return true;
+          } catch {
+            return false;
+          }
+        },
+      },
+      getSlot: () => (this.joined ? this.state.slot : null),
+      now: this.now,
+      timers: {
+        set: (callback, delayMs) => this.sendTimers.setTimeout(callback, delayMs),
+        clear: (handle) => {
+          this.sendTimers.clearTimeout(handle as number);
+        },
+      },
+    });
+
     if (options.surface !== undefined) {
       const viewOptions: ControllerLayoutViewOptions = {
+        events: this.eventQueue,
         onScriptTime: (ms) => {
           this.lastScriptMs = ms;
         },
       };
+      if (options.viewport !== undefined && options.viewport !== null) {
+        viewOptions.viewport = options.viewport;
+      }
       if (options.surfaceSize !== undefined) {
         viewOptions.surfaceSize = options.surfaceSize;
       }
       if (options.debugOutline !== undefined) {
         viewOptions.debugOutline = options.debugOutline;
+      }
+      if (options.motionRuntime !== undefined) {
+        viewOptions.motionRuntime = options.motionRuntime;
       }
       this.layoutView = new ControllerLayoutView(
         options.surface,
@@ -675,6 +915,7 @@ export class ControllerClient {
 
   /** Debug counters for the page overlay. */
   get stats(): ControllerClientStats {
+    const events = this.eventQueue.stats();
     return {
       packetsSent: this.sendLoop.packetsSent,
       edgePackets: this.sendLoop.edgePackets,
@@ -688,7 +929,16 @@ export class ControllerClient {
       scriptMs: this.lastScriptMs,
       layoutId: this.currentLayout?.id ?? null,
       joinToFirstInputMs: this.joinToFirstInputMs,
+      eventPending: events.pending,
+      eventDropped: Object.values(events.dropped).reduce((total, count) => total + count, 0),
+      eventLastSendAgeMs: events.lastSendAge,
+      swapMs: this.lastSwapMs,
     };
+  }
+
+  /** Event queue counters, for diagnostics above the generic `stats`. */
+  get eventStats(): EventQueueStats {
+    return this.eventQueue.stats();
   }
 
   /** Subscribes to connection state changes; the listener runs immediately. */
@@ -715,6 +965,18 @@ export class ControllerClient {
     listener(this.joinFlow.state);
     return () => {
       this.joinListeners.delete(listener);
+    };
+  }
+
+  /**
+   * Subscribes to Haptic frames (D6; FR-8.11). The decoded pattern is handed
+   * to the page's `HapticPlayer`, which owns coalescing and the global toggle.
+   * Patterns are never stored or logged (SR-12).
+   */
+  onHaptic(listener: (durations: readonly number[]) => void): () => void {
+    this.hapticListeners.add(listener);
+    return () => {
+      this.hapticListeners.delete(listener);
     };
   }
 
@@ -900,21 +1162,47 @@ export class ControllerClient {
       case "setLayout":
         this.handleSetLayout(message.slot, message.layout);
         return;
+      case "panel":
+        this.handlePanel(message.slot, message.content);
+        return;
       default:
         return;
     }
   }
 
-  /** Pong is the only D2 server→controller binary; others arrive in D5/D6. */
+  /**
+   * Server→controller binary frames: Pong drives clock sync (A3) and Haptic
+   * carries one host pulse (D6; FR-8.11). Unknown frames are ignored so a
+   * future message type cannot close the socket.
+   */
   private handleBinary(frame: Uint8Array): void {
-    if (frame.byteLength === 0 || frame[0] !== MSG.Pong) {
+    if (frame.byteLength === 0) {
       return;
     }
-    try {
-      const { clientTimeMs, serverTimeMs } = decodePong(frame);
-      this.clock.onPong(clientTimeMs, serverTimeMs, this.now());
-    } catch {
-      // A malformed Pong is ignored; the socket stays open.
+    if (frame[0] === MSG.Pong) {
+      try {
+        const { clientTimeMs, serverTimeMs } = decodePong(frame);
+        this.clock.onPong(clientTimeMs, serverTimeMs, this.now());
+      } catch {
+        // A malformed Pong is ignored; the socket stays open.
+      }
+      return;
+    }
+    if (frame[0] === MSG.Haptic) {
+      let durations: number[];
+      try {
+        durations = decodeHaptic(frame);
+      } catch {
+        // A malformed Haptic frame is dropped locally, never forwarded.
+        return;
+      }
+      for (const listener of this.hapticListeners) {
+        try {
+          listener(durations);
+        } catch {
+          // A faulty listener must not break the socket or other listeners.
+        }
+      }
     }
   }
 
@@ -939,8 +1227,10 @@ export class ControllerClient {
       this.roomCode = flowState.code;
     }
 
-    // Keep a mounted layout across a rejoin; D2 has no hot-swap (FR-8.2).
-    if (message.layout !== undefined && this.currentLayout === null) {
+    // A layout in `joined` is authoritative for this connection. A same-id
+    // replay after a reconnect is idempotent; a changed layout hot-swaps in
+    // place without touching the session or the send loop (FR-8.2).
+    if (message.layout !== undefined) {
       this.applyLayout(message.layout);
     }
 
@@ -955,14 +1245,18 @@ export class ControllerClient {
     this.sendInitialInput();
     this.startPing();
     this.setState({ status: "connected", slot: message.slot, error: null, host: this.state.host });
+    // Flush control events buffered while the socket was down, in order
+    // (D5-CTRL-05; FR-7.15).
+    this.eventQueue.drain();
   }
 
   /**
-   * D2 accepts a layout only as the first one for the connection. Later
-   * `setLayout` messages are dropped; hot-swap is D5-CTRL-02 (FR-8.2).
+   * Hot-swap (D5-CTRL-02; FR-8.2): every `setLayout` addressed to this slot
+   * or `all` validates and mounts, repeatedly. Messages for other slots are
+   * ignored; an invalid layout keeps the current one and is never acked.
    */
   private handleSetLayout(slot: number | "all", layout: unknown): void {
-    if (!this.joined || this.currentLayout !== null) {
+    if (!this.joined) {
       return;
     }
     if (slot !== "all" && slot !== this.state.slot) {
@@ -971,24 +1265,69 @@ export class ControllerClient {
     this.applyLayout(layout);
   }
 
-  /** Validates and mounts a layout; returns false and records the error. */
+  /**
+   * Validates and mounts a layout; returns false and records the error
+   * without touching the mounted layout. A successful swap is acked with
+   * `layoutAck` (D5-CTRL-02).
+   */
   private applyLayout(value: unknown): boolean {
     const result = validateLayout(value);
     if (!result.ok) {
       this.currentLayoutError = result.errors.join("; ");
       return false;
     }
+
+    if (this.currentLayout !== null && this.currentLayout.id === result.layout.id) {
+      // Idempotent replay: no rebuild and no DOM work. Ack again so a host
+      // that missed the original ack after a reconnect can settle.
+      this.currentLayoutError = null;
+      this.ackLayout(result.layout.id);
+      return true;
+    }
+
+    const startedAt = nowMilliseconds();
     this.currentLayout = result.layout;
     this.currentLayoutError = null;
     this.layoutView?.setLayout(result.layout);
+    this.lastSwapMs = nowMilliseconds() - startedAt;
     this.notifyLayout();
+    this.ackLayout(result.layout.id);
     return true;
+  }
+
+  /**
+   * Acknowledges one successfully mounted layout over the current socket
+   * (FR-8.2). It is sent synchronously, well inside the 100 ms budget. A
+   * failed send is harmless: the host replays on join and a same-id replay is
+   * idempotent.
+   */
+  private ackLayout(layoutId: string): void {
+    if (!this.joined || this.socket === null || !this.socketOpen) {
+      return;
+    }
+    try {
+      this.socket.send(stringifyJsonMessage({ t: "layoutAck", layoutId }));
+    } catch {
+      // The socket may have gone away between `joined` and this frame.
+    }
+  }
+
+  /**
+   * Private panel content for this slot (D5-CTRL-01; FR-8.1, SR-13). Routing
+   * is checked again here even though the broker already addresses one peer.
+   */
+  private handlePanel(slot: number, content: unknown): void {
+    if (!this.joined || slot !== this.state.slot) {
+      return;
+    }
+    this.layoutView?.setPanelContent(content);
   }
 
   private clearLayout(): void {
     const hadLayout = this.currentLayout !== null || this.currentLayoutError !== null;
     this.currentLayout = null;
     this.currentLayoutError = null;
+    this.lastSwapMs = null;
     this.layoutView?.clear();
     if (hadLayout) {
       this.notifyLayout();
@@ -1218,6 +1557,7 @@ export class ControllerClient {
     if (wasJoined) {
       this.destroySuspend();
       this.releaseWakeLock();
+      this.eventQueue.clear();
       this.resetInput();
       this.clearLayout();
       this.roomCode = null;
@@ -1233,14 +1573,14 @@ export class ControllerClient {
   }
 
   /**
-   * A visibility or socket failure handed control back to the reconnect
-   * layer. Reuses the existing machine when it is still live; a fresh one is
-   * seeded as `connected` so the first drop schedules the 250 ms attempt.
+   * The page became visible but its socket died while hidden (FR-8.8). Hands
+   * control to the reconnect layer. `SuspendController` calls this before
+   * `onShow`, so the suspended flag is cleared here rather than relied on.
+   * Reuses the existing machine when it is still live; a fresh one is seeded
+   * as `connected` so the drop schedules the 250 ms attempt.
    */
   private restartReconnect(): void {
-    if (this.suspended) {
-      return;
-    }
+    this.suspended = false;
     this.stopPing();
     this.sendLoop.stop();
     this.joined = false;
@@ -1419,7 +1759,10 @@ export class ControllerClient {
     this.setState({
       status: "disconnected",
       slot: null,
-      error: joinStateNotice(flowState) ?? "The host removed this controller.",
+      error:
+        reason === "hostLost"
+          ? HOST_LOST_KICK_TEXT
+          : joinStateNotice(flowState) ?? "The host removed this controller.",
       host: null,
     });
   }
@@ -1456,9 +1799,14 @@ export class ControllerClient {
     this.startPing();
   }
 
-  /** The 30 s reservation is gone (or the store lost the session). */
-  private handleSessionLost(_reason: SessionLostReason): void {
-    this.abandonSession(JOIN_FLOW_MESSAGES.expired);
+  /**
+   * Visible again but the slot cannot be reclaimed by session. `expired` (the
+   * page was hidden past the 30 s reservation) tells the player why; `missing`
+   * (no stored session, e.g. storage was cleared) silently re-runs the join
+   * precedence: room token if held, otherwise the manual form (FR-5.5).
+   */
+  private handleSessionLost(reason: SessionLostReason): void {
+    this.abandonSession(reason === "expired" ? JOIN_FLOW_MESSAGES.expired : null);
   }
 
   private ensureSuspendController(): void {
@@ -1533,6 +1881,7 @@ export class ControllerClient {
   private teardownConnection(): void {
     this.stopPing();
     this.sendLoop.stop();
+    this.eventQueue.clear();
     this.closeSocketQuietly();
     this.joined = false;
     this.suspended = false;

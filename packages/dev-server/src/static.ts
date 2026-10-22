@@ -18,6 +18,12 @@ export interface StaticRoots {
   controller: string;
   /** Game bundles, `packages/games/dist`. */
   games: string;
+  /**
+   * Game sources, `packages/games` (D7-SDK-01). Used as a `/games/*` fallback
+   * so manifests and layouts are servable before a game bundle is built.
+   * Only `game.manifest.json` and `layouts/*.json` are ever served from here.
+   */
+  gameSources?: string;
   /** Experiment pages, `experiments`. */
   experiments: string;
 }
@@ -30,8 +36,12 @@ export type StaticRequestHandler = (
 
 export interface StaticHandlers {
   host: StaticRequestHandler;
+  /** Host files without SPA fallback (e.g. `/demo/*` manifests and assets). */
+  hostFiles: StaticRequestHandler;
   controller: StaticRequestHandler;
   games: StaticRequestHandler;
+  /** Present only when `roots.gameSources` is configured. */
+  gameSources?: StaticRequestHandler;
   experiments: StaticRequestHandler;
   assets: StaticRequestHandler;
 }
@@ -85,8 +95,11 @@ function headerSetter(policy: CachePolicy) {
  * `/c/` (Vite `base`), and game bundles live under `/games/`.
  */
 export function createStaticHandlers(roots: StaticRoots): StaticHandlers {
-  return {
+  const handlers: StaticHandlers = {
     host: sirv(roots.host, { dev: true, single: true, setHeaders: headerSetter("spa") }),
+    // `/demo/*` is fetched by `loadGame`; an SPA fallback would return HTML
+    // with a 200 for a missing manifest, so serve existing files only.
+    hostFiles: sirv(roots.host, { dev: true, setHeaders: headerSetter("no-store") }),
     controller: sirv(roots.controller, {
       dev: true,
       single: true,
@@ -99,4 +112,12 @@ export function createStaticHandlers(roots: StaticRoots): StaticHandlers {
       setHeaders: headerSetter("immutable"),
     }),
   };
+  if (roots.gameSources !== undefined) {
+    // Source manifests/layouts change while the server runs; never cache them.
+    handlers.gameSources = sirv(roots.gameSources, {
+      dev: true,
+      setHeaders: headerSetter("no-store"),
+    });
+  }
+  return handlers;
 }

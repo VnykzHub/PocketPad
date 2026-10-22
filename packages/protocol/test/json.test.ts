@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   MAX_JSON_FRAME_BYTES,
+  MAX_LAYOUT_JSON_FRAME_BYTES,
   MAX_PLAYER_NAME_CHARS,
   ProtocolError,
   assertJsonWithinLimit,
@@ -44,6 +45,37 @@ function asciiPanelFrame(byteLength: number): string {
   return JSON.stringify({ t: "panel", slot: 1, content: "x".repeat(padding) });
 }
 
+/** Same idea for a setLayout frame; A13 allows this type up to 16 KB. */
+const SET_LAYOUT_PREFIX_LENGTH = JSON.stringify({
+  t: "setLayout",
+  slot: "all",
+  layout: { id: "big-v1", blob: "" },
+}).length;
+
+function asciiSetLayoutFrame(byteLength: number): string {
+  const padding = byteLength - SET_LAYOUT_PREFIX_LENGTH;
+  expect(padding).toBeGreaterThan(0);
+  return JSON.stringify({
+    t: "setLayout",
+    slot: "all",
+    layout: { id: "big-v1", blob: "x".repeat(padding) },
+  });
+}
+
+/** Same idea for an event frame; events keep the 4 KB cap. */
+const EVENT_PREFIX_LENGTH = JSON.stringify({
+  t: "event",
+  slot: 1,
+  name: "x",
+  data: "",
+}).length;
+
+function asciiEventFrame(byteLength: number): string {
+  const padding = byteLength - EVENT_PREFIX_LENGTH;
+  expect(padding).toBeGreaterThan(0);
+  return JSON.stringify({ t: "event", slot: 1, name: "x", data: "x".repeat(padding) });
+}
+
 function validStat(slot: number): SlotStats {
   return {
     slot,
@@ -84,6 +116,92 @@ describe("JSON framing and validation (D0-PROTO-03)", () => {
     expectProtocolError(() => parseJsonMessage("é".repeat(MAX_JSON_FRAME_BYTES + 1)), "tooLarge");
     // The cap is checked before JSON parsing, so it also guards invalid input.
     expectProtocolError(() => parseJsonMessage("not json ".repeat(600)), "tooLarge");
+  });
+
+  test("[SR-6][FR-8.2] only setLayout JSON frames may exceed 4096 bytes (A13)", () => {
+    // The SDK accepts layout documents up to 16 KB, so a 5-14 KB document must
+    // reach the wire as one setLayout frame.
+    const text = asciiSetLayoutFrame(14 * 1024);
+    expect(jsonByteLength(text)).toBe(14 * 1024);
+    const message = parseJsonMessage(text);
+    expect(message.t).toBe("setLayout");
+    if (message.t !== "setLayout") {
+      throw new Error("expected setLayout");
+    }
+    expect(message.slot).toBe("all");
+    expect(message.layout).toEqual({
+      id: "big-v1",
+      blob: "x".repeat(14 * 1024 - SET_LAYOUT_PREFIX_LENGTH),
+    });
+
+    // The 16 KB ceiling is inclusive; one byte more is rejected before parsing.
+    expect(parseJsonMessage(asciiSetLayoutFrame(MAX_LAYOUT_JSON_FRAME_BYTES)).t).toBe(
+      "setLayout",
+    );
+    expectProtocolError(
+      () => parseJsonMessage(asciiSetLayoutFrame(MAX_LAYOUT_JSON_FRAME_BYTES + 1)),
+      "tooLarge",
+    );
+    // Oversized hostile input never reaches JSON.parse.
+    expectProtocolError(
+      () => parseJsonMessage("x".repeat(MAX_LAYOUT_JSON_FRAME_BYTES + 1)),
+      "tooLarge",
+    );
+  });
+
+  test("[SR-6][FR-8.2] non-setLayout JSON over 4096 bytes is rejected (A13)", () => {
+    // A 4.1 KB panel and a 4.1 KB event keep the SR-6 cap.
+    expectProtocolError(
+      () => parseJsonMessage(asciiPanelFrame(MAX_JSON_FRAME_BYTES + 1)),
+      "tooLarge",
+    );
+    expectProtocolError(
+      () => parseJsonMessage(asciiEventFrame(MAX_JSON_FRAME_BYTES + 1)),
+      "tooLarge",
+    );
+    // Malformed input between 4 KB and 16 KB cannot be a setLayout, so the
+    // default cap still applies.
+    expectProtocolError(
+      () => parseJsonMessage("y".repeat(MAX_JSON_FRAME_BYTES + 1)),
+      "tooLarge",
+    );
+    // A panel at exactly the 4 KB cap is still accepted.
+    expectPanel(asciiPanelFrame(MAX_JSON_FRAME_BYTES));
+  });
+
+  test("[SR-6][FR-8.2][FR-7.9] stringifyJsonMessage selects the per-message cap", () => {
+    const layout = { id: "big-v1", blob: "x".repeat(14 * 1024) };
+    const text = stringifyJsonMessage({ t: "setLayout", slot: "all", layout });
+    expect(jsonByteLength(text)).toBeGreaterThan(MAX_JSON_FRAME_BYTES);
+    expect(parseJsonMessage(text)).toEqual({ t: "setLayout", slot: "all", layout });
+
+    // setLayout still has a ceiling: an over-16 KB body is refused.
+    const maxLayout = { id: "big-v1", blob: "x".repeat(MAX_LAYOUT_JSON_FRAME_BYTES) };
+    expectProtocolError(
+      () => stringifyJsonMessage({ t: "setLayout", slot: "all", layout: maxLayout }),
+      "tooLarge",
+    );
+
+    // Panel and event keep the 4 KB cap.
+    expectProtocolError(
+      () =>
+        stringifyJsonMessage({
+          t: "panel",
+          slot: 1,
+          content: "x".repeat(MAX_JSON_FRAME_BYTES),
+        }),
+      "tooLarge",
+    );
+    expectProtocolError(
+      () =>
+        stringifyJsonMessage({
+          t: "event",
+          slot: 1,
+          name: "x",
+          data: "x".repeat(MAX_JSON_FRAME_BYTES),
+        }),
+      "tooLarge",
+    );
   });
 
   test("[SR-6] jsonByteLength counts UTF-8 bytes for ASCII, accents and emoji", () => {

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E5 - Input-to-canvas latency baseline</title>
+<link rel="stylesheet" href="../shared/probe.css">
+<link rel="stylesheet" href="./e05.css">
+</head>
+<body>
+<main>
+<h1>E5 - Input-to-canvas latency baseline</h1>
+<p>Software baseline for G2. Press Run: this tab creates a throwaway room on this dev server, joins it as host and as one controller over the real <code>/ws</code> room flow, and sends 100 press edges about 120 ms apart. For each tap it records the tap time, the frame write, the host receipt of <code>InputFwd</code>, and the next animation frame after the host flash. All stamps use one <code>performance.now()</code> clock.</p>
+<p><strong>Not measured here:</strong> the phone touch pipeline, Wi-Fi, and display lag. Those need a phone, the TV and a 240 fps camera (see <code>tools/latency-harness/README.md</code>); the JSON marks them PENDING. Display lag is E6 and is never folded into this number. TV probing is deferred.</p>
+<p>Nothing is uploaded; the room code, PIN and tokens are never shown or copied. The raw samples are in the latency-harness log format, so <code>node tools/latency-harness/dist/cli.js analyze</code> can re-read a saved copy.</p>
+
+<button id="run" type="button">Run 100 taps</button>
+<button id="copy" type="button" disabled>Copy JSON</button>
+<p id="status" role="status" aria-live="polite">Not run.</p>
+
+<div class="flash-row" aria-hidden="true">
+  <div id="pad" class="flash">Controller pad</div>
+  <div id="host-flash" class="flash">Host canvas</div>
+</div>
+
+<table id="results" aria-label="E5 results"></table>
+
+<h2>JSON result</h2>
+<pre id="json">Not run.</pre>
+
+<p><a href="../">Back to the experiment index</a></p>
+</main>
+<script type="module" src="./page.js"></script>
+</body>
+</html>

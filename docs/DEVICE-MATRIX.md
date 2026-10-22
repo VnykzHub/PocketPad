@@ -54,7 +54,8 @@ the matrix cells above are the current summary.
 - D4: fill `Controller join`, `Join < 5 s` and `Reconnect` for each real phone;
   append to the check log, do not create a second checklist.
 - D5: add layout/panel evidence in the notes or the check log; keep columns stable.
-- D6: fill `Gyro` and `Vibration` for Android devices; iOS stays deferred.
+- D6: follow `docs/SENSOR-TESTING.md` (secure-context tunnel, E7 steps) before
+  filling `Gyro` and `Vibration` for Android devices; iOS stays deferred.
 - P5: repeat the same rows on the production build and record the build SHA.
 - Any `NOT TESTED` or `PENDING` cell stays explicit so the Gate cannot read it
   as a pass. The Gate's `GATE-QA-02` requires tested / not-tested / deferred to

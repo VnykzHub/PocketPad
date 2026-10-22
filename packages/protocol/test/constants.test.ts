@@ -11,6 +11,7 @@ import {
   MAX_CONTROLLERS,
   MAX_HAPTIC_STEPS,
   MAX_JSON_FRAME_BYTES,
+  MAX_LAYOUT_JSON_FRAME_BYTES,
   MSG,
   PROTOCOL_VERSION,
   ROOM_CODE_ALPHABET,
@@ -44,9 +45,17 @@ describe("protocol constants (D0-PROTO-01)", () => {
     expect(MAX_CONTROLLERS).toBe(8);
     expect(MAX_BINARY_FRAME_BYTES).toBe(64);
     expect(MAX_JSON_FRAME_BYTES).toBe(4096);
+    expect(MAX_LAYOUT_JSON_FRAME_BYTES).toBe(16_384);
     expect(MAX_HAPTIC_STEPS).toBe(8);
     expect(INPUT_FRAME_BYTES).toBe(26);
     expect(INPUT_FWD_FRAME_BYTES).toBe(27);
+  });
+
+  test("[SR-6][FR-8.2] setLayout gets a 16 KB cap; all other JSON frames stay at 4 KB", () => {
+    // Amendment A13: the SDK validator accepts layouts up to 16 KB, so that
+    // one message type may exceed SR-6's default frame cap.
+    expect(MAX_LAYOUT_JSON_FRAME_BYTES).toBe(16_384);
+    expect(MAX_LAYOUT_JSON_FRAME_BYTES).toBeGreaterThan(MAX_JSON_FRAME_BYTES);
   });
 
   test("[FR-7.2] button bitfield matches spec positions", () => {

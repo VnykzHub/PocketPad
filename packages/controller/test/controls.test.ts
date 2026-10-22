@@ -238,7 +238,7 @@ describe("[FR-8.1] controls render and map from layout data", () => {
     expect(renderer.element.style.top).toBe("236px");
   });
 
-  it("[FR-8.1] unimplemented and unknown control types fail with clear errors", () => {
+  it("[FR-8.1] D5 types render and unknown control types fail with clear errors", () => {
     const ctx = freshContext();
     const panel: Control = {
       type: "panel",
@@ -248,7 +248,8 @@ describe("[FR-8.1] controls render and map from layout data", () => {
       w: "40%",
       h: "30%",
     };
-    expect(() => createControl(panel, ctx)).toThrow(/not implemented in D2/);
+    // D5-CTRL-01 registered the remaining v1 types; panel now renders.
+    expect(createControl(panel, ctx).element.dataset["controlType"]).toBe("panel");
 
     const unknown = { type: "hologram", id: "x", x: "0%", y: "0%" } as unknown as Control;
     expect(() => createControl(unknown, ctx)).toThrow(/Unknown control type/);

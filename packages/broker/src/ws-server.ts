@@ -12,7 +12,7 @@ import type { Duplex } from "node:stream";
 import { WebSocket, WebSocketServer } from "ws";
 import {
   MAX_BINARY_FRAME_BYTES,
-  MAX_JSON_FRAME_BYTES,
+  MAX_LAYOUT_JSON_FRAME_BYTES,
   MSG,
   PROTOCOL_VERSION,
   ProtocolError,
@@ -145,7 +145,9 @@ function isProtocolError(error: unknown): error is ProtocolError {
  *
  * - Upgrades are accepted only on `/ws` (FR-4.4).
  * - `Origin` must be in `allowedOrigins` unless missing and allowed (SR-11).
- * - `maxPayload` is the JSON cap; binary frames over 64 bytes close with 1009.
+ * - `maxPayload` is the setLayout JSON cap (A13). `parseJsonMessage` still
+ *   enforces the 4 KB cap for every other JSON type, so a 4.1 KB panel or
+ *   event closes with 1009. Binary frames over 64 bytes close with 1009.
  * - Heartbeat: ping every `heartbeatMs`, terminate after `deadAfterMs` of
  *   silence (FR-7.14).
  */
@@ -169,7 +171,7 @@ export function attachWebSocketServer(server: Server, deps: WsServerDeps): WebSo
 
   const wss = new WebSocketServer({
     noServer: true,
-    maxPayload: MAX_JSON_FRAME_BYTES,
+    maxPayload: MAX_LAYOUT_JSON_FRAME_BYTES,
     perMessageDeflate: false,
   });
 
@@ -191,8 +193,8 @@ export function attachWebSocketServer(server: Server, deps: WsServerDeps): WebSo
     try {
       peer.send(stringifyJsonMessage(message));
     } catch {
-      // A server frame never exceeds the cap in D0. If it somehow does, close
-      // instead of emitting a frame the peer must reject.
+      // A server frame should never exceed its per-type cap. If it somehow
+      // does, close instead of emitting a frame the peer must reject.
       peer.close(CLOSE.tooLarge, "server frame too large");
     }
   }
@@ -235,8 +237,10 @@ export function attachWebSocketServer(server: Server, deps: WsServerDeps): WebSo
           closeSocket(socket, CLOSE.protocol, "HapticCmd is host-only");
           return;
         }
-        // Haptic routing lands in D6-SRV-01. Validate the frame, then drop it.
-        decodeHapticCmd(bytes);
+        // D6-SRV-01: the D0 codec validates type/length/n/slot. The registry
+        // applies the per-slot 20 Hz limit and never logs pattern content.
+        const { slot, durationsMs } = decodeHapticCmd(bytes);
+        registry.routeHaptic(state.code, slot, durationsMs);
         return;
       }
       default: {
@@ -283,6 +287,10 @@ export function attachWebSocketServer(server: Server, deps: WsServerDeps): WebSo
             session: result.session,
             serverTime: result.serverTime,
           });
+          // D5-SRV-01: replay the stored layout/panel after `joined` so a
+          // rejoin recovers without a host resend and never sees state before
+          // it considers itself joined.
+          registry.replayChannelState(message.code, result.slot);
         } else {
           if (sameSocketRejoin) {
             // The reservation lapsed (or the session is unknown): unbind the
@@ -349,14 +357,25 @@ export function attachWebSocketServer(server: Server, deps: WsServerDeps): WebSo
         registry.suspend(state.code, state.slot, registry.nowMs(), peer);
         return;
       }
+      case "layoutAck": {
+        if (state.role !== "controller" || state.code === null || state.slot === null) {
+          closeSocket(socket, CLOSE.policy, `${message.t} requires a joined controller`);
+          return;
+        }
+        // D5-SRV-01: never trust a controller-supplied slot; the authenticated
+        // peer slot is filled in when forwarding to the host.
+        registry.routeLayoutAck(state.code, state.slot, message.layoutId);
+        return;
+      }
       case "event": {
         if (state.role !== "controller" || state.code === null || state.slot === null) {
           closeSocket(socket, CLOSE.policy, `${message.t} requires a joined controller`);
           return;
         }
-        // D5-SRV-01 owns event forwarding; D4 only records the activity so a
-        // controller that is sending events does not idle the room out.
-        registry.noteActivity(state.code, registry.nowMs());
+        // D5-SRV-01: the registry compares `message.slot` with the
+        // authenticated slot, applies the 30/s burst-60 limit and forwards the
+        // body unchanged.
+        registry.routeEvent(state.code, state.slot, message);
         return;
       }
       case "hostPause": {
@@ -386,7 +405,14 @@ export function attachWebSocketServer(server: Server, deps: WsServerDeps): WebSo
           closeSocket(socket, CLOSE.policy, `${message.t} requires a host connection`);
           return;
         }
-        // Layout and panel routing are D5.
+        if (message.t === "setLayout") {
+          // D5-SRV-01: opaque body; the registry records the last layout for
+          // rejoin and fans out only to the requested slot(s).
+          registry.setLayout(state.code, message.slot, message.layout);
+        } else {
+          // D5-SRV-01: private to the addressed slot; never echoed to the host.
+          registry.setPanel(state.code, message.slot, message.content);
+        }
         return;
       }
       default: {

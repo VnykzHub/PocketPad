@@ -952,7 +952,9 @@ describe("[FR-8.1] canvas stroke capture", () => {
     const move = sink.events[1]?.data as StrokeEventData;
     expect(move.phase).toBe("move");
     expect(move.points).toHaveLength(2);
-    expect(move.points[1]).toMatchObject({ x: (650 - 480) / 240, y: (100 - 40) / 80 });
+    // Coordinates are rounded to 4 decimals by the stroke batcher (E10 bytes).
+    expect(move.points[1]?.x).toBeCloseTo((650 - 480) / 240, 4);
+    expect(move.points[1]?.y).toBeCloseTo((100 - 40) / 80, 4);
 
     clock = 1_070;
     renderer.onTouchEnd(binding(1, "draw", 650, 100, 480, 40));

@@ -12,11 +12,11 @@
 | 1 | D0 Foundations | `phase-1-dev/D0-foundations.md` | approved plan | — | Complete (local acceptance; CI run pending) |
 | 2 | D1 Device probes | `phase-1-dev/D1-device-probes.md` | D0 exit | — | In progress — desktop probes/docs done; actual TV, E2 full, E14 deferred |
 | 3 | D2 Controller v0 | `phase-1-dev/D2-controller-v0.md` | D1 E1–E3 recorded | — | Implementation done; manual acceptance pending |
-| 4 | D3 Runtime v0 | `phase-1-dev/D3-runtime-v0.md` | D2 exit | — | In progress (Wave 2; desktop provisional target) |
-| 5 | D4 Pairing/sessions | `phase-1-dev/D4-pairing-sessions.md` | D3 exit | — | In progress (Wave 2 close-out wiring) |
-| 6 | D5 Layouts/events | `phase-1-dev/D5-layouts-events.md` | D4 exit | — | In progress (Wave 2 SDK/protocol/controls) |
-| 7 | D6 Sensors/haptics | `phase-1-dev/D6-sensors-haptics.md` | D5 exit | — | Not started |
-| 8 | D7 Proof games | `phase-1-dev/D7-proof-games.md` | D6 exit | — | Not started |
+| 4 | D3 Runtime v0 | `phase-1-dev/D3-runtime-v0.md` | D2 exit | — | Implementation complete; stage exit open (TV, E6/E11, E12 ADR) |
+| 5 | D4 Pairing/sessions | `phase-1-dev/D4-pairing-sessions.md` | D3 exit | — | Implementation complete; stage exit open (8-bot, G1, E4/E9/E15) |
+| 6 | D5 Layouts/events | `phase-1-dev/D5-layouts-events.md` | D4 exit | — | Implementation complete; D5-SEC-01 implemented (`safeRender`/`safeData`, 21 hostile tests); exit open (E10/E16, QA) |
+| 7 | D6 Sensors/haptics | `phase-1-dev/D6-sensors-haptics.md` | D5 exit | — | Implementation complete; D6-CTRL-03 motion strip implemented (14 tests); D6-DOC-01 done; exit open (E7/E8, QA) |
+| 8 | D7 Proof games | `phase-1-dev/D7-proof-games.md` | D6 exit | — | In progress — D7-SDK-01 + Reaction Duel adapter; RT/HUB/PERF/EXP/QA open |
 | 9 | Dev Exit Gate | `phase-1-dev/GATE-dev-exit.md` | D7 + all E1–E17 | — | Not started |
 | 10 | P0 Infra decision | `phase-2-production/P0-infra-decision.md` | Gate GO | — | Not started |
 | 11 | P1 Relay | `phase-2-production/P1-relay.md` | P0 signed | **P2** | Not started |
@@ -128,15 +128,26 @@
 
 ## 6. Current execution
 
+> Last reconciled: 2026-10-22 (Wave 5). No stage exit is claimed. Full gate
+> evidence and open items live in
+> `docs/todos/CHECKPOINT-2026-10-22-wave3.md`.
+
 - [x] Plan set complete (`docs/todos/`).
 - [x] D0 automated gates — protocol, SDK, server, runtime, controller and tools done; `npm ci`, typecheck, lint, 232 tests, build, size and stage-D0 trace pass.
 - [x] `D0-QA-02` manual two-phone/TV acceptance run — Android phone + Android tablet in Chrome, instant join, Test input registered on the host.
 - [x] D1 probe pages, tests and desktop measurements — E1/E3 on desktop Chrome; **D1 exit still open**: actual TV, E2 full ceiling, E14 tunnel.
 - [x] D2 implementation — layout/touch/input/controls/mapper/integration/QA/perf; **manual device acceptance and D2 RESULTS row pending**.
-- [x] D4 foundation modules — protocol/auth/sessions/host recovery/join/reconnect/room panel/bot; **end-to-end wiring pending**.
+- [x] D4 foundation modules — protocol/auth/sessions/host recovery/join/reconnect/room panel/bot.
+- [x] D4 end-to-end wiring — host recovery, stats, detach, suspend and hostPause/hostResume in the broker; join/reconnect, RoomPanel and the input-bot CLI mounted. **D4 acceptance experiments remain PENDING**: 8-bot 10-minute run, G1 device trials, E4 on 5 GHz, E9 phone pair and E15.
+- [x] D3 implementation — D3-RT-01..07, D3-SDK-01 and D3-TOOL-01 code plus scoped tests; Canvas2D fallback and a desktop-provisional renderer. **D3-QA-01, E6, E11 and every TV row are open; the E12 ADR is written and stays desktop-provisional.**
+- [x] D5 implementation — D5-SDK-01, D5-PROTO-01, D5-SRV-01, D5-CTRL-01..05 (including hot-swap and the event queue), D5-RT-01 and D5-SEC-01 (`packages/controller/src/render/safeRender.ts`, `packages/runtime/src/game/safeData.ts`; controller `xss` 12 tests + runtime `xss` 9 tests). **D5-EXP-01 (E10/E16) and D5-QA-01 are PENDING.**
+- [x] D6 implementation — D6-CTRL-01..04, D6-SRV-01 and D6-RT-01, wired into the controller (HapticPlayer/HapticsToggle, `onHaptic`) and the host (HapticApi). The `sensors.gyro`-without-a-visible-gyro motion strip is implemented (`packages/controller/src/layout/motionStrip.ts`, 14 tests) and D6-DOC-01 is done (`docs/SENSOR-TESTING.md`). **D6-EXP-01 (E7/E8) and D6-QA-01 remain open; no Android device run.**
+- [x] D7-SDK-01 core and the Reaction Duel four-button adapter — bundled-game registry, lazy per-game loading, `/games/<slug>/` route, RoundManager and the GameContext-only adapter. **The `sdk/README.md` authoring guide is still missing. D7-RT-01, D7-HUB-01, D7-PERF-01, D7-EXP-01 and D7-QA-01 are not started; LAN play with phones is unverified.**
 - [x] Wave 1 code integration — `npm run check` green: 59 test files, 661 tests, build, size and stage-D0 trace.
-- [ ] Wave 1 acceptance close-out — D4 wiring, D2 manual checks, D1 TV/E2-full/E14.
-- [ ] D2–D7 stage exits.
+- [x] Wave 2 + Wave 3 integration gate — `npm run check` green: 105 test files, 1,225 tests, build, size (controller 36,712 B gz; host 54,199 B gz) and stage-D0 trace (20/138 required IDs, 0 missing, 28 deferred, 0 unknown, 188 test files).
+- [x] Wave 4 integration gate — `npm run check` green: 109 test files, 1,285 tests, build, size (controller 37,911 B gz of 40,960; host 55,754 B gz) and stage-D0 trace (0 missing, 0 unknown). **Wave 5 final gate green:** 113 test files, 1,354 tests, build, size (controller 37,911 B gz of 40,960; host 55,754 B gz) and stage-D0 trace (20/139 required IDs, 0 missing, 24 deferred, 0 unknown, 192 test files); see checkpoint §11.
+- [ ] Acceptance close-out — D1 TV/E2-full/E14, D2 manual checks, D3-QA-01/E6/E11 (E12 ADR written), D4 8-bot/G1/device experiments, D5 E10/E16, D6 E7/E8, D7 LAN play.
+- [ ] D2–D7 stage exits — none of the stage exit checklists is fully met.
 - [ ] Dev Exit Gate.
 - [ ] Phase 2.
 
@@ -147,15 +158,17 @@
 
 **Wave 1 integration gate:** `npm run check` green — typecheck, lint, 59 test files / 661 tests, build, size (controller 16,605 gz; host 5,739 gz) and stage-D0 trace with 0 missing / 0 unknown. Checkpoint commits: `d326559`, `d454f85`.
 
-**Wave 2 running (2026-10-21):**
+**Wave 2 (2026-10-21, paused at `fd37121`, completed 2026-10-22):**
 - D3 runtime v0 — `wyqpp0wp8` (`wf_6ef70fed-d7b`).
 - D4 close-out wiring — `w9bllbzpc` (`wf_6595d802-0b9`).
 - D5 contracts/controls — `wm15jx0dy` (`wf_a2030ee4-769`).
 - Reaction Duel content — `w5qw3xkpw` (`wf_5ad3a8f2-cf8`).
 
-**TV assumption:** actual-TV probing is deferred by user decision. Desktop Chrome 155 (WebGL2 yes, binary WS yes, RTX 3050 Ti) is the provisional v1 target. Agents must mark TV rows PENDING and must not claim TV measurements. Revisit the TV matrix before the Dev Exit Gate.
+**Wave 3 completed (2026-10-22):** D5-SRV-01 event/layout/panel routing and D6-SRV-01 haptics in the broker; D5-CTRL-02 hot-swap and D5-RT-01 in the controller/runtime; D6 controller sensors/haptics wired end-to-end; D4-HOST-02 host recovery; D7-SDK-01 and the Reaction Duel adapter with the `/games/<slug>/` route; SDK capability reconciliation (`layouts`, `panels`, `events`, `haptics`). The integration gate is the `npm run check` above. Work is uncommitted (see `git status`; 96 changed paths when the checkpoint was written).
 
-**Next action:** Wave 2 integration gate, then D7-SDK-01 and the Reaction Duel adapter. D5-SRV-01, D5-CTRL-02 hot-swap, D5-RT-01/SEC/QA, D4-HOST-02 and D6 follow; the platformer follows after D7-RT-01.
+**TV assumption:** actual-TV probing is deferred by user decision. Desktop Chrome 155 (WebGL2 yes, binary WS yes, RTX 3050 Ti) is the provisional v1 target. Agents must mark TV rows PENDING and must not claim TV measurements. **E2 full ceiling and E14 also stay PENDING.** Revisit the TV matrix before the Dev Exit Gate.
+
+**Next action:** close the evidence gaps before any stage exit. Order: (1) run Reaction Duel on the LAN with two phones and a host — the Wave 3 gate is not yet verified; (2) run D5-EXP-01 (E10/E16) and D5-QA-01 — D5-SEC-01 is implemented; (3) run E7/E8 on Android and D6-QA-01 — the motion strip and `docs/SENSOR-TESTING.md` are done; (4) re-run D3-QA-01/E6/E11 on hardware — the E12 ADR is written; (5) run the D4 8-bot 10-minute and G1 device trials; (6) build D7-RT-01/HUB-01/PERF-01/EXP-01/QA-01 and the remaining proof games. Do not convert any PENDING row to PASS without device evidence.
 
 ## 7. Accelerated first-game track — Reaction Duel four-button (2026-10-21)
 
@@ -179,19 +192,19 @@ playable game (Reaction Duel); **completeness** finishes the planned product.
 
 **Critical path:** `D2 controller → D3 runtime → D7-SDK-01 → GAME-RD four-button`.
 
-**Completeness track:** `D4 sessions (running) → D5 layouts/events → D6 sensors/haptics → D7 proof games → hub`.
+**Completeness track:** `D4 sessions (complete) → D5 layouts/events (implemented; EXP/QA open) → D6 sensors/haptics (implemented; EXP/QA open) → D7 proof games → hub`.
 
 D7-RT-01 (2D renderer/physics) is **not** on the Reaction Duel path; it is only
 needed for the platformer and physics proof games.
 
-| Wave | Runs in parallel | Depends on | Integration gate |
+| Wave | Runs in parallel | Depends on | Integration gate / status |
 |---|---|---|---|
-| 1 (running) | D1 probes and docs; D2 controller; D4 protocol/server/join/reconnect; platformer plan (deferred) | D0 | Full `npm run check`, trace and docs reconciliation |
-| 2 (running) | D3-RT-01/03 → RT-02/05/06/07 → RT-04/SDK/TOOL/EXP/QA; D4 close-out wiring/QA; D5-SDK-01 + PROTO-01 → CTRL-01/03/04/05; Reaction Duel layout + pure rules | Wave 1 | Full check; D3 desktop cube; D5 contract/control tests; RD rules tests; TV rows PENDING |
-| 3 | D3-SDK/TOOL/EXP/QA; D7-SDK-01; GAME-RD four-button; D7-RT-01 (platformer path); D4-HOST-02; D5-CTRL-01..05 after D5-SDK + D4-CTRL-01; D5-SRV-01 after D4-SRV-02 | E1 + D2 + D4 proto/server | Full check; Reaction Duel playable on LAN |
-| 4 | GAME-PF platformer after D7-RT-01; D5-RT-01/SEC/EXP/QA; D6-CTRL/SRV/RT after D5 | Wave 3 | Platformer playable on LAN; D5/D6 exit |
-| 5 | D7 proof games, D7-RT-02/PERF/EXP/QA, hub after D4-HOST-01 | D6 + D4/D5 | Dev Exit Gate |
-| 6 | P0-P6 production | Gate GO | Production gates |
+| 1 (complete; close-out open) | D1 probes and docs; D2 controller; D4 protocol/server/join/reconnect; platformer plan (deferred) | D0 | Full `npm run check` green (59 files / 661 tests). Close-out still open: D1 TV/E2-full/E14, D2 manual checks, D4 acceptance experiments. |
+| 2 (complete) | D3-RT-01/03 → RT-02/05/06/07 → RT-04/SDK/TOOL/EXP/QA; D4 close-out wiring/QA; D5-SDK-01 + PROTO-01 → CTRL-01/03/04/05; Reaction Duel layout + pure rules | Wave 1 | Full check green (105 files / 1,225 tests). D3 desktop cube and overlay recorded; D5 contract/control tests and RD rules tests pass. E6/E11 and every TV row PENDING. |
+| 3 (complete; evidence gaps) | D3-SDK/TOOL; D7-SDK-01; GAME-RD four-button; D4-HOST-02; D5-CTRL-01..05; D5-SRV-01; D6-CTRL/SRV/RT | E1 + D2 + D4 proto/server | Full check green. Reaction Duel loads through `/games/reaction-duel/` on Canvas2D; **playable-on-LAN with phones is not yet verified**. D3-EXP-01/QA-01, D5-EXP-01/QA-01 and D6-EXP-01/QA-01 remain open (D5-SEC-01 and the D6 motion strip landed in Wave 4). |
+| 4 (not done) | GAME-PF platformer after D7-RT-01; D5-EXP-01/QA-01; D6-EXP-01/QA-01 | Wave 3 | D5-RT-01, D5-SEC-01 and D6-CTRL/SRV/RT plus the motion strip landed in Waves 3–4; the remaining D5/D6 exit evidence and the platformer are open. |
+| 5 (not done) | D7 proof games, D7-RT-01/02, D7-HUB-01, D7-PERF-01/EXP-01/QA-01 | D6 + D4/D5 | D7-SDK-01 and the Reaction Duel adapter landed early; the other three proof games, hub, physics/HUD, perf and soak remain. |
+| 6 | P0–P6 production | Gate GO | Production gates |
 
 **File-ownership rules for parallel work:**
 

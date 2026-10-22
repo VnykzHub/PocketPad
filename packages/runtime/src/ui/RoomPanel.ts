@@ -19,6 +19,7 @@ import {
   QR_CANVAS_SIZE,
   type QrRenderer,
 } from "./QrCode.js";
+import { hostStatusText, type HostStatusKind } from "./HostStatus.js";
 
 /** Exact persistent notice required by SR-10. */
 export const SECURITY_NOTICE =
@@ -149,7 +150,7 @@ export class RoomPanel {
     this.statusEl.className = "room-panel__status";
     this.statusEl.setAttribute("role", "status");
     this.statusEl.setAttribute("aria-live", "polite");
-    this.statusEl.textContent = "Waiting for a room…";
+    this.statusEl.textContent = hostStatusText("waiting");
 
     actions.append(this.newRoomButton, this.statusEl);
 
@@ -187,9 +188,30 @@ export class RoomPanel {
 
   /** Updates the status line when the host socket joins or drops. */
   setHostJoined(joined: boolean): void {
-    this.statusEl.textContent = joined
-      ? "Room ready: scan the QR or enter the code and PIN."
-      : "Joining the room…";
+    this.setHostStatus(joined ? "connected" : "waiting");
+  }
+
+  /** D4-HOST-02 status line: waiting, connected, reconnecting or lost. */
+  setHostStatus(kind: HostStatusKind): void {
+    this.statusEl.textContent = hostStatusText(kind);
+  }
+
+  /**
+   * Reload recovery path: only `{code, hostToken}` survived in
+   * sessionStorage, so the room token/PIN for a fresh QR are gone. Phones
+   * that are already connected stay in the room; the QR stays hidden
+   * instead of showing a stale or token-bearing image.
+   */
+  setResumedRoom(code: string): void {
+    this.lastRoomKey = "";
+    this.qrGeneration += 1;
+    this.codeEl.textContent = code;
+    this.pinEl.textContent = "PIN ----";
+    this.qrCanvas.hidden = true;
+    this.qrFallback.textContent =
+      "Room resumed — phones already connected stay in the game.";
+    this.qrFallback.hidden = false;
+    this.statusEl.textContent = hostStatusText("connected");
   }
 
   /** Removes listeners and panel content (host teardown). */

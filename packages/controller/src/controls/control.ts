@@ -37,6 +37,7 @@ import type { InputStore } from "../input/InputStore.js";
 import { MIN_TOUCH_TARGET_PX, type HitRect } from "../touch/hitTest.js";
 import type { TouchBinding } from "../touch/touchEngine.js";
 import type { ControlEventSink } from "./eventSink.js";
+import type { ViewportTracker } from "../layout/viewport.js";
 
 /** Surface size in CSS pixels; viewport dimensions for percent lengths. */
 export interface SurfaceSize {
@@ -65,6 +66,12 @@ export interface ControlContext {
    * interactive locally but sends nothing.
    */
   events?: ControlEventSink;
+  /**
+   * Visible-viewport tracker (D5-CTRL-03). Optional; text controls use it to
+   * stay visible above the on-screen keyboard. The page shell owns and
+   * disposes it.
+   */
+  viewport?: ViewportTracker;
 }
 
 /**

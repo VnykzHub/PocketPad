@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "cube-demo-v1",
+  "orientation": "landscape",
+  "background": "#0b1020",
+  "controls": [
+    {
+      "type": "stick",
+      "id": "stick-left",
+      "x": "25%",
+      "y": "55%",
+      "size": "40%",
+      "axis": "left",
+      "mode": "floating"
+    },
+    {
+      "type": "button",
+      "id": "btn-a",
+      "x": "78%",
+      "y": "55%",
+      "label": "A",
+      "shape": "circle",
+      "r": "14%",
+      "bit": 0
+    }
+  ]
+}

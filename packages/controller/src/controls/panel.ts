@@ -17,7 +17,6 @@
  * is unchanged, and `isPanelRenderer` is the type guard callers use.
  */
 import {
-  isAllowedImageSrc,
   validatePanelContent,
   type PanelBlock,
   type PanelContent,
@@ -32,9 +31,15 @@ import {
   type ControlRenderer,
 } from "./control.js";
 import type { TouchBinding } from "../touch/touchEngine.js";
+import { appendSafeImage, setSafeText } from "../render/safeRender.js";
 
 const PLACEHOLDER_TEXT = "Private panel";
 const INVALID_TEXT = "Panel content unavailable";
+
+/** Per-field caps mirror the SDK panel contract; defence in depth. */
+const MAX_TITLE_CHARS = 80;
+const MAX_BODY_CHARS = 1_000;
+const MAX_LIST_ITEM_CHARS = 120;
 
 /** Panel renderer with the in-place content update used by hot-swap. */
 export interface PanelRenderer extends ControlRenderer {
@@ -58,9 +63,14 @@ function clamp(value: number, min: number, max: number): number {
   return value;
 }
 
-function textBlock(tag: "div" | "p", text: string, part: string): HTMLElement {
+function textBlock(
+  tag: "div" | "p",
+  text: string,
+  part: string,
+  maxLen: number,
+): HTMLElement {
   const block = createPart(tag, part);
-  block.textContent = text;
+  setSafeText(block, text, maxLen);
   return block;
 }
 
@@ -140,27 +150,13 @@ export function createPanelControl(control: PanelControl, ctx: ControlContext): 
   ): void => {
     // Belt and braces: the SDK validator already checked this, but a renderer
     // must never assign a protocol URL. Only vetted paths/data URIs reach `.src`.
-    if (!isAllowedImageSrc(src)) {
-      return;
-    }
-    const image = document.createElement("img");
-    image.setAttribute("src", src);
-    image.alt = alt ?? "";
-    image.draggable = false;
-    image.style.display = "block";
-    image.style.maxWidth = "100%";
-    if (fit !== undefined) {
-      image.style.width = "100%";
-      image.style.height = "100%";
-      image.style.objectFit = fit;
-    }
-    parent.append(image);
+    appendSafeImage(parent, src, alt, fit);
   };
 
   const renderBlock = (block: PanelBlock): void => {
     switch (block.type) {
       case "heading": {
-        const heading = textBlock("div", block.text, "block-heading");
+        const heading = textBlock("div", block.text, "block-heading", MAX_BODY_CHARS);
         heading.style.fontWeight = "700";
         heading.style.fontSize = "17px";
         heading.style.margin = "4px 0 6px";
@@ -168,7 +164,7 @@ export function createPanelControl(control: PanelControl, ctx: ControlContext): 
         break;
       }
       case "paragraph": {
-        const paragraph = textBlock("p", block.text, "block-paragraph");
+        const paragraph = textBlock("p", block.text, "block-paragraph", MAX_BODY_CHARS);
         paragraph.style.margin = "0 0 8px";
         paragraph.style.whiteSpace = "pre-wrap";
         content.append(paragraph);
@@ -181,7 +177,7 @@ export function createPanelControl(control: PanelControl, ctx: ControlContext): 
         list.style.paddingLeft = "20px";
         for (const item of block.items) {
           const entry = document.createElement("li");
-          entry.textContent = item;
+          setSafeText(entry, item, MAX_LIST_ITEM_CHARS);
           list.append(entry);
         }
         content.append(list);
@@ -202,14 +198,14 @@ export function createPanelControl(control: PanelControl, ctx: ControlContext): 
       case "text": {
         if (value.title !== undefined && value.title.length > 0) {
           const title = createPart("div", "panel-title");
-          title.textContent = value.title;
+          setSafeText(title, value.title, MAX_TITLE_CHARS);
           title.style.fontWeight = "700";
           title.style.fontSize = "17px";
           title.style.margin = "0 0 6px";
           content.append(title);
         }
         const body = createPart("div", "panel-text");
-        body.textContent = value.text;
+        setSafeText(body, value.text, MAX_BODY_CHARS);
         body.style.whiteSpace = "pre-wrap";
         content.append(body);
         break;

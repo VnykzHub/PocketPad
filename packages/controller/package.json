@@ -13,7 +13,7 @@
   },
   "files": ["dist"],
   "scripts": {
-    "build": "tsc -b && vite build",
+    "build": "node -e \"require('node:fs').rmSync('dist/assets',{recursive:true,force:true})\" && tsc -b && vite build",
     "test": "vitest run --root ../.. --project packages/controller",
     "typecheck": "tsc -b"
   },

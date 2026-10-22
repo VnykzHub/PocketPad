@@ -448,12 +448,15 @@ describe("game-facing contract (FR-7.17, PR-9.3)", () => {
       "buttons",
       "edges",
       "gyro",
+      "gyroActive",
+      "gyroRecentered",
       "lx",
       "ly",
       "rx",
       "ry",
       "slot",
       "tick",
+      "tilt",
       "triggers",
     ]);
     expect(Object.keys(player.gyro).sort()).toEqual(["x", "y", "z"]);

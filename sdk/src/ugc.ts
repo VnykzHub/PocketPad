@@ -50,6 +50,12 @@ const UNSAFE_URL_CHAR_PATTERN = /[\u0000- \u007F-\u009F\\]/;
 /** Wire event-name pattern (D5-SEC-01; SR-13). */
 const EVENT_NAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9_.-]{0,63}$/;
 
+/** CSS hex colour: `#rgb` or `#rrggbb` (D5-SEC-01). */
+const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+/** Player display names are plain text, at most 24 characters (SR-13). */
+export const MAX_PLAYER_NAME_CHARS = 24;
+
 /**
  * Returns `input` as plain text with C0/C1 control characters removed (tab,
  * line feed and carriage return are kept) and truncates to at most `maxLen`
@@ -90,7 +96,7 @@ export function sanitizeText(input: unknown, maxLen: number): string {
  * `http(s):`, `javascript:`, `blob:`, protocol-relative (`//`), SVG/HTML data
  * URIs and malformed base64 are rejected.
  */
-export function isAllowedImageSrc(src: string): boolean {
+export function isAllowedImageSrc(src: unknown): src is string {
   if (typeof src !== "string" || src.length === 0 || src.length > MAX_IMAGE_SRC_CHARS) {
     return false;
   }
@@ -124,6 +130,24 @@ export function isAllowedImageSrc(src: string): boolean {
  */
 export function isValidEventName(name: unknown): boolean {
   return typeof name === "string" && EVENT_NAME_PATTERN.test(name);
+}
+
+/**
+ * True when `value` is a CSS hex colour (`#rgb` or `#rrggbb`). Named colours,
+ * `rgb()`, `var()`, `url()`, `expression()` and any string carrying extra CSS
+ * syntax are rejected, so a validated colour is safe to assign to `style`.
+ */
+export function isAllowedColor(value: unknown): value is string {
+  return typeof value === "string" && HEX_COLOR_PATTERN.test(value);
+}
+
+/**
+ * Sanitizes a player display name: C0/C1 controls stripped, at most
+ * `MAX_PLAYER_NAME_CHARS` (24) code points, surrounding whitespace trimmed.
+ * Render the result with `textContent` only; nothing here stores it.
+ */
+export function sanitizePlayerName(input: unknown): string {
+  return sanitizeText(input, MAX_PLAYER_NAME_CHARS).trim();
 }
 
 function clampUnit(value: number): number {

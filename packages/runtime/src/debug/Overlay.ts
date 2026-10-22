@@ -15,7 +15,9 @@
  * - pooled entity counts (PR-9.4) and the active layout's gyro smoothing alpha
  *   (FR-8.5) so both are inspectable without a debugger;
  * - per slot: last input age, packets/s, RTT, jitter and drops. RTT/jitter are
- *   placeholders (`—`) until D4 supplies server stats.
+ *   placeholders (`—`) until D4 supplies server stats;
+ * - D6: per-slot gyro-active and integrated tilt, plus the last haptic pulse.
+ *   These fields are optional, so the D3 stats shape keeps working unchanged.
  *
  * Performance contract:
  *
@@ -73,6 +75,16 @@ export function isDebugEnabled(search: string): boolean {
   return new URLSearchParams(search).get("debug") === "1";
 }
 
+/** Host-integrated tilt shown per slot (D6-RT-01; FR-7.5). */
+export interface OverlayTiltStats {
+  /** Integrated pitch in degrees, clamped to ±30°. */
+  readonly angleX: number;
+  /** Integrated yaw/roll in degrees, clamped to ±30°. */
+  readonly angleY: number;
+  /** False while motion is inactive; the angles decay toward 0. */
+  readonly available: boolean;
+}
+
 /** Per-slot diagnostics as displayed; RTT/jitter are null until D4. */
 export interface OverlaySlotStats {
   /** Slot number, 1..8. */
@@ -87,6 +99,23 @@ export interface OverlaySlotStats {
   readonly rttMs: number | null;
   /** Jitter from server stats, or null until D4. */
   readonly jitterMs: number | null;
+  /**
+   * Motion data is active for this slot (D6-RT-01; FR-7.6). Optional: the
+   * host supplies it once sensor wiring lands; without it the row is unchanged.
+   */
+  readonly gyroActive?: boolean;
+  /** Host-integrated tilt (D6-RT-01; FR-7.5); optional for the same reason. */
+  readonly tilt?: OverlayTiltStats;
+}
+
+/** Most recent haptic pulse sent by the host (D6-RT-01; FR-8.11). */
+export interface OverlayHapticStats {
+  /** Slot the pulse targeted, 1..8, or 0 for every controller. */
+  readonly target: number;
+  /** Milliseconds since the pulse, or null when the host clock is unknown. */
+  readonly ageMs: number | null;
+  /** Durations in the pattern, 1..8. */
+  readonly steps: number;
 }
 
 /** Canvas and dynamic-resolution state supplied by the host (D3-RT-07). */
@@ -128,6 +157,11 @@ export interface OverlaySnapshot {
   readonly entities: OverlayEntityStats | null;
   /** Active layout's gyro smoothing alpha (FR-8.5), or null when unset. */
   readonly gyroSmoothing: number | null;
+  /**
+   * Last haptic pulse (D6-RT-01; FR-8.11), or null/absent when the host has
+   * not supplied one. Optional so existing host wiring stays source-compatible.
+   */
+  readonly lastHaptic?: OverlayHapticStats | null;
   /** Per-slot stats, 0..8 entries; missing slots display `—`. */
   readonly slots: ReadonlyArray<OverlaySlotStats>;
 }
@@ -298,6 +332,7 @@ interface OverlayFields {
   dpr: HTMLElement;
   entities: HTMLElement;
   gyroSmoothing: HTMLElement;
+  lastHaptic: HTMLElement;
   slots: HTMLElement[];
 }
 
@@ -340,6 +375,7 @@ function buildFields(mount: HTMLElement): OverlayFields {
     dpr: addRow("DPR", "dpr"),
     entities: addRow("Entities", "entities"),
     gyroSmoothing: addRow("Gyro smoothing", "gyroSmoothing"),
+    lastHaptic: addRow("Last haptic", "lastHaptic"),
     slots: [],
   };
 
@@ -388,6 +424,17 @@ function formatOptionalMs(value: number | null, digits: number): string {
   return finite === null ? EMPTY_VALUE : `${finite.toFixed(digits)} ms`;
 }
 
+function formatTilt(tilt: OverlayTiltStats): string {
+  if (
+    !tilt.available ||
+    !Number.isFinite(tilt.angleX) ||
+    !Number.isFinite(tilt.angleY)
+  ) {
+    return EMPTY_VALUE;
+  }
+  return `${tilt.angleX.toFixed(1)}°/${tilt.angleY.toFixed(1)}°`;
+}
+
 function formatSlot(stats: OverlaySlotStats): string {
   const age =
     Number.isFinite(stats.lastInputAgeMs) && stats.lastInputAgeMs >= 0
@@ -397,7 +444,25 @@ function formatSlot(stats: OverlaySlotStats): string {
   const rtt = formatOptionalMs(stats.rttMs, 1);
   const jitter = formatOptionalMs(stats.jitterMs, 1);
   const drops = `${formatCount(stats.drops)} drops`;
-  return `age ${age} · ${packets} · rtt ${rtt} · jitter ${jitter} · ${drops}`;
+  let row = `age ${age} · ${packets} · rtt ${rtt} · jitter ${jitter} · ${drops}`;
+  // D6 fields are optional so the pre-D6 row stays byte-identical when the
+  // host has not supplied them yet (screenshots and gate evidence rely on it).
+  if (stats.gyroActive !== undefined) {
+    row += ` · gyro ${stats.gyroActive ? "on" : "off"}`;
+  }
+  if (stats.tilt !== undefined) {
+    row += ` · tilt ${formatTilt(stats.tilt)}`;
+  }
+  return row;
+}
+
+function formatHaptic(stats: OverlayHapticStats): string {
+  const target = stats.target === 0 ? "all" : `P${formatCount(stats.target)}`;
+  const age = finiteOrNull(stats.ageMs);
+  const ageText = age === null ? EMPTY_VALUE : `${formatCount(age)} ms ago`;
+  const steps = formatCount(stats.steps);
+  const unit = stats.steps === 1 ? "step" : "steps";
+  return `${target} · ${ageText} · ${steps} ${unit}`;
 }
 
 function formatDpr(dpr: number): string {
@@ -601,6 +666,12 @@ export class DebugOverlay {
       smoothing === null ? EMPTY_VALUE : String(smoothing),
     );
 
+    const haptic = snapshot.lastHaptic;
+    this.setText(
+      fields.lastHaptic,
+      haptic === undefined || haptic === null ? EMPTY_VALUE : formatHaptic(haptic),
+    );
+
     const slots = snapshot.slots;
     for (let index = 0; index < fields.slots.length; index += 1) {
       const element = fields.slots[index];
@@ -687,6 +758,7 @@ export class DebugOverlay {
       fields.dpr,
       fields.entities,
       fields.gyroSmoothing,
+      fields.lastHaptic,
     ]) {
       this.setText(element, EMPTY_VALUE);
     }

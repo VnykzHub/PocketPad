@@ -123,6 +123,18 @@ export class TouchEngine {
     return this.staleLayout;
   }
 
+  /**
+   * Releases every active binding and emits `cancel` to the control layer.
+   * Used by a layout hot-swap so a held touch cannot stay pressed or bind to a
+   * removed control (FR-7.12, FR-8.2).
+   */
+  cancelTouches(): void {
+    if (this.disposed) {
+      return;
+    }
+    this.cancelAllTouches();
+  }
+
   /** Removes every listener, observer and pending frame; bindings are cleared. */
   dispose(): void {
     if (this.disposed) {

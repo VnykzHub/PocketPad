@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   MAX_JSON_FRAME_BYTES,
+  MAX_LAYOUT_JSON_FRAME_BYTES,
   PROTOCOL_VERSION,
   ProtocolError,
   isClientToServerMessage,
@@ -440,7 +441,7 @@ describe("D5 layout, panel and event messages (D5-PROTO-01)", () => {
     expect(forwardedAck.t).toBe("layoutAck");
   });
 
-  test("[SR-6] event and layout JSON frames are capped at 4096 UTF-8 bytes", () => {
+  test("[SR-6][FR-8.2][A13] event frames are capped at 4096; setLayout may reach 16 KB (A13)", () => {
     // Exactly 4096 ASCII bytes is accepted; 4097 is rejected before parsing.
     const atLimit = asciiEventFrame(MAX_JSON_FRAME_BYTES);
     expect(atLimit.length).toBe(MAX_JSON_FRAME_BYTES);
@@ -463,10 +464,13 @@ describe("D5 layout, panel and event messages (D5-PROTO-01)", () => {
     expect(jsonByteLength(multibyte)).toBe(MAX_JSON_FRAME_BYTES + 1);
     expectProtocolError(() => parseJsonMessage(multibyte), "tooLarge");
 
-    // Outbound frames obey the same cap; this also documents that a layout
-    // body over 4 KB cannot travel in one JSON frame (SDK's 16 KB validator
-    // limit is stricter than the wire and needs a chunking decision).
-    const oversizedLayout = { id: "big-v1", blob: "x".repeat(MAX_JSON_FRAME_BYTES) };
+    // A13: setLayout is the one type that may exceed 4 KB because the SDK
+    // validator accepts layouts up to 16 KB, but the 16 KB frame ceiling holds.
+    const largeLayout = { id: "big-v1", blob: "x".repeat(MAX_JSON_FRAME_BYTES) };
+    expect(
+      jsonByteLength(stringifyJsonMessage({ t: "setLayout", slot: "all", layout: largeLayout })),
+    ).toBeGreaterThan(MAX_JSON_FRAME_BYTES);
+    const oversizedLayout = { id: "big-v1", blob: "x".repeat(MAX_LAYOUT_JSON_FRAME_BYTES) };
     expectProtocolError(
       () => stringifyJsonMessage({ t: "setLayout", slot: "all", layout: oversizedLayout }),
       "tooLarge",
@@ -490,7 +494,7 @@ describe("D5 layout, panel and event messages (D5-PROTO-01)", () => {
     expectProtocolError(() => parseJsonMessage(hostile), "tooLarge");
 
     // A 4.1 KB valid event frame is rejected at the frame layer exactly like
-    // an oversized panel or layout frame.
+    // an oversized panel frame; only setLayout gets the 16 KB cap (A13).
     expectProtocolError(
       () => parseJsonMessage(asciiEventFrame(MAX_JSON_FRAME_BYTES + 100)),
       "tooLarge",

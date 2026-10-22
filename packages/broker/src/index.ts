@@ -18,3 +18,7 @@ export * from "./auth/tokens.js";
 export * from "./auth/rateLimit.js";
 export * from "./room/host.js";
 export * from "./room/stats.js";
+export * from "./room/rateLimit.js";
+export * from "./room/events.js";
+export * from "./room/layout.js";
+export * from "./room/haptics.js";

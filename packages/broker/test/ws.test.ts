@@ -8,8 +8,11 @@ import { Socket, type AddressInfo } from "node:net";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { WebSocket, WebSocketServer } from "ws";
 import {
+  MAX_LAYOUT_JSON_FRAME_BYTES,
+  decodeHaptic,
   decodeInputFwd,
   decodePong,
+  encodeHapticCmd,
   encodeInput,
   encodePing,
   parseJsonMessage,
@@ -262,6 +265,52 @@ function hostJoinMessage(room: { code: string; hostToken: string }, version = 1)
   });
 }
 
+const PANEL_PREFIX_LENGTH = JSON.stringify({ t: "panel", slot: 1, content: "" }).length;
+
+/** Builds an ASCII panel frame of exactly `byteLength` bytes. */
+function asciiPanelFrame(byteLength: number): string {
+  const padding = byteLength - PANEL_PREFIX_LENGTH;
+  if (padding <= 0) {
+    throw new Error("panel frame length must exceed the envelope");
+  }
+  return JSON.stringify({ t: "panel", slot: 1, content: "x".repeat(padding) });
+}
+
+const EVENT_PREFIX_LENGTH = JSON.stringify({
+  t: "event",
+  slot: 1,
+  name: "x",
+  data: "",
+}).length;
+
+/** Builds an ASCII event frame of exactly `byteLength` bytes. */
+function asciiEventFrame(byteLength: number): string {
+  const padding = byteLength - EVENT_PREFIX_LENGTH;
+  if (padding <= 0) {
+    throw new Error("event frame length must exceed the envelope");
+  }
+  return JSON.stringify({ t: "event", slot: 1, name: "x", data: "x".repeat(padding) });
+}
+
+const SET_LAYOUT_PREFIX_LENGTH = JSON.stringify({
+  t: "setLayout",
+  slot: "all",
+  layout: { id: "big-v1", blob: "" },
+}).length;
+
+/** Builds an ASCII setLayout frame of exactly `byteLength` bytes (A13: 16 KB). */
+function asciiSetLayoutFrame(byteLength: number): {
+  readonly text: string;
+  readonly layout: { id: string; blob: string };
+} {
+  const padding = byteLength - SET_LAYOUT_PREFIX_LENGTH;
+  if (padding <= 0) {
+    throw new Error("setLayout frame length must exceed the envelope");
+  }
+  const layout = { id: "big-v1", blob: "x".repeat(padding) };
+  return { text: JSON.stringify({ t: "setLayout", slot: "all", layout }), layout };
+}
+
 describe("WebSocket upgrade policy", () => {
   test("[SR-11] disallowed origins are rejected and missing origins follow the switch", async () => {
     const strict = await startHarness({ allowMissingOrigin: false });
@@ -306,6 +355,60 @@ describe("WebSocket frame limits", () => {
     const client = await openClient(harness.url);
     const closed = nextClose(client);
     client.send("x".repeat(4097));
+    expect((await closed).code).toBe(CLOSE.tooLarge);
+  });
+
+  test("[SR-6][A13] 4.1 KB panel and event frames close with 1009 (A13)", async () => {
+    const harness = await startHarness();
+
+    const panelClient = await openClient(harness.url);
+    const panelClosed = nextClose(panelClient);
+    panelClient.send(asciiPanelFrame(4097));
+    expect((await panelClosed).code).toBe(CLOSE.tooLarge);
+
+    const eventClient = await openClient(harness.url);
+    const eventClosed = nextClose(eventClient);
+    eventClient.send(asciiEventFrame(4097));
+    expect((await eventClosed).code).toBe(CLOSE.tooLarge);
+  });
+
+  test("[SR-6][FR-8.2] 5-14 KB setLayout frames are accepted and forwarded to controllers", async () => {
+    const harness = await startHarness();
+    const room = harness.registry.createRoom();
+
+    const host = await openClient(harness.url);
+    const hostJoined = nextJson(host, "hostJoined");
+    host.send(hostJoinMessage(room));
+    await hostJoined;
+
+    const controller = await openClient(harness.url);
+    const joined = nextJson(controller, "joined");
+    controller.send(JSON.stringify({ t: "join", v: 1, code: room.code, pin: room.pin }));
+    await joined;
+    const controllerMessages = collectJson(controller);
+
+    const fiveKb = asciiSetLayoutFrame(5 * 1024);
+    const fourteenKb = asciiSetLayoutFrame(14 * 1024);
+    expect(Buffer.byteLength(fiveKb.text)).toBe(5 * 1024);
+    expect(Buffer.byteLength(fourteenKb.text)).toBe(14 * 1024);
+
+    host.send(fiveKb.text);
+    host.send(fourteenKb.text);
+
+    await waitFor(
+      () => controllerMessages.filter((message) => message.t === "setLayout").length === 2,
+    );
+    expect(controllerMessages.filter((message) => message.t === "setLayout")).toEqual([
+      { t: "setLayout", slot: "all", layout: fiveKb.layout },
+      { t: "setLayout", slot: "all", layout: fourteenKb.layout },
+    ]);
+  });
+
+  test("[SR-6][FR-8.2] a setLayout frame over 16 KB closes with 1009", async () => {
+    const harness = await startHarness();
+    const host = await openClient(harness.url);
+    const closed = nextClose(host);
+    host.send(asciiSetLayoutFrame(MAX_LAYOUT_JSON_FRAME_BYTES + 1).text);
     expect((await closed).code).toBe(CLOSE.tooLarge);
   });
 
@@ -751,5 +854,147 @@ describe("WebSocket D4 session wiring", () => {
     expect(latest?.slots[0]?.rttMs).toBeGreaterThanOrEqual(0);
     expect(latest?.slots[0]?.jitterMs).toBeGreaterThanOrEqual(0);
     expect(latest?.slots[0]?.lastInputAgeMs).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe("WebSocket D5/D6 routing", () => {
+  test("[FR-8.11] a HapticCmd reaches only the addressed controller", async () => {
+    const harness = await startHarness();
+    const room = harness.registry.createRoom();
+
+    const host = await openClient(harness.url);
+    const hostJoined = nextJson(host, "hostJoined");
+    host.send(hostJoinMessage(room));
+    await hostJoined;
+
+    const first = await openClient(harness.url);
+    const firstJoined = nextJson(first, "joined");
+    first.send(JSON.stringify({ t: "join", v: 1, code: room.code, pin: room.pin }));
+    expect(await firstJoined).toMatchObject({ t: "joined", slot: 1 });
+
+    const second = await openClient(harness.url);
+    const secondJoined = nextJson(second, "joined");
+    second.send(JSON.stringify({ t: "join", v: 1, code: room.code, pin: room.pin }));
+    expect(await secondJoined).toMatchObject({ t: "joined", slot: 2 });
+
+    const firstFrames = collectBinary(first);
+    const secondFrames = collectBinary(second);
+    host.send(encodeHapticCmd(2, [30, 40]));
+
+    await waitFor(() => secondFrames.length > 0);
+    expect(decodeHaptic(secondFrames[0]!)).toEqual([30, 40]);
+    await new Promise<void>((resolve) => setTimeout(resolve, 50));
+    expect(firstFrames).toHaveLength(0);
+  });
+
+  test("[FR-8.11] HapticCmd is host-only", async () => {
+    const harness = await startHarness();
+    const room = harness.registry.createRoom();
+    const controller = await openClient(harness.url);
+    const joined = nextJson(controller, "joined");
+    controller.send(JSON.stringify({ t: "join", v: 1, code: room.code, pin: room.pin }));
+    await joined;
+
+    const closed = nextClose(controller);
+    controller.send(encodeHapticCmd(1, [10]));
+    expect((await closed).code).toBe(CLOSE.protocol);
+  });
+
+  test("[FR-7.8][FR-7.9] events forward opaquely and a spoofed slot is dropped", async () => {
+    const harness = await startHarness();
+    const room = harness.registry.createRoom();
+
+    const host = await openClient(harness.url);
+    const hostJoined = nextJson(host, "hostJoined");
+    host.send(hostJoinMessage(room));
+    await hostJoined;
+    const hostMessages = collectJson(host);
+
+    const controller = await openClient(harness.url);
+    const joined = nextJson(controller, "joined");
+    controller.send(JSON.stringify({ t: "join", v: 1, code: room.code, pin: room.pin }));
+    await joined;
+
+    const data = { value: "A", nested: { points: [1, 2, 3] } };
+    controller.send(JSON.stringify({ t: "event", slot: 1, name: "answer", data }));
+    await waitFor(() => hostMessages.some((message) => message.t === "event"));
+    expect(hostMessages.filter((message) => message.t === "event")).toEqual([
+      { t: "event", slot: 1, name: "answer", data },
+    ]);
+
+    controller.send(
+      JSON.stringify({ t: "event", slot: 2, name: "answer", data: { value: "spoof" } }),
+    );
+    await waitFor(() => harness.registry.getRoom(room.code)?.controllers.get(1)?.drops === 1);
+    await new Promise<void>((resolve) => setTimeout(resolve, 50));
+    expect(hostMessages.filter((message) => message.t === "event")).toHaveLength(1);
+  });
+
+  test("[FR-8.2] layout, private panel, ack and rejoin replay", async () => {
+    const harness = await startHarness();
+    const room = harness.registry.createRoom();
+
+    const host = await openClient(harness.url);
+    const hostJoined = nextJson(host, "hostJoined");
+    host.send(hostJoinMessage(room));
+    await hostJoined;
+    const hostMessages = collectJson(host);
+
+    const controller = await openClient(harness.url);
+    const joined = nextJson(controller, "joined");
+    controller.send(JSON.stringify({ t: "join", v: 1, code: room.code, pin: room.pin }));
+    const joinedMessage = await joined;
+    if (joinedMessage.t !== "joined") {
+      throw new Error("controller did not join");
+    }
+    const controllerMessages = collectJson(controller);
+
+    const layout = { id: "L-ws", controls: [{ type: "button", id: "jump", event: "jump" }] };
+    host.send(JSON.stringify({ t: "setLayout", slot: "all", layout }));
+    await waitFor(() => controllerMessages.some((message) => message.t === "setLayout"));
+    expect(controllerMessages.find((message) => message.t === "setLayout")).toEqual({
+      t: "setLayout",
+      slot: "all",
+      layout,
+    });
+
+    const panel = { kind: "text", text: "private" };
+    host.send(JSON.stringify({ t: "panel", slot: 1, content: panel }));
+    await waitFor(() => controllerMessages.some((message) => message.t === "panel"));
+    expect(controllerMessages.find((message) => message.t === "panel")).toEqual({
+      t: "panel",
+      slot: 1,
+      content: panel,
+    });
+    expect(hostMessages.filter((message) => message.t === "panel")).toHaveLength(0);
+
+    // A controller-supplied slot is ignored; the authenticated one is filled in.
+    controller.send(JSON.stringify({ t: "layoutAck", layoutId: "L-ws", slot: 2 }));
+    await waitFor(() => hostMessages.some((message) => message.t === "layoutAck"));
+    expect(hostMessages.find((message) => message.t === "layoutAck")).toEqual({
+      t: "layoutAck",
+      layoutId: "L-ws",
+      slot: 1,
+    });
+
+    // Drop the socket (slot reserved), then rejoin with the session.
+    controller.close();
+    await waitFor(() => harness.registry.getRoom(room.code)?.controllers.get(1)?.peer === null);
+
+    const reconnected = await openClient(harness.url);
+    const reconnectedMessages = collectJson(reconnected);
+    reconnected.send(
+      JSON.stringify({ t: "join", v: 1, code: room.code, session: joinedMessage.session }),
+    );
+    await waitFor(() => reconnectedMessages.some((message) => message.t === "panel"));
+    expect(
+      reconnectedMessages.filter(
+        (message) => message.t === "setLayout" || message.t === "panel",
+      ),
+    ).toEqual([
+      { t: "setLayout", slot: 1, layout },
+      { t: "panel", slot: 1, content: panel },
+    ]);
+    expect(reconnectedMessages.filter((message) => message.t === "joined")).toHaveLength(1);
   });
 });

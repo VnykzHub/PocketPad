@@ -4,8 +4,9 @@
  * The field names here are frozen for D0: D4 fills sessions and reservations
  * without renaming anything. Additive fields are allowed.
  */
-import type { JoinErrorReason } from "@lanpad/protocol";
+import type { JoinErrorReason, JsonValue } from "@lanpad/protocol";
 import type { Peer } from "./peer.js";
+import type { TokenBucket } from "./room/rateLimit.js";
 
 /** A room is active while the host is attached; D4 adds the 30 s hostLost window. */
 export type RoomState = "active" | "hostLost" | "expired";
@@ -69,6 +70,20 @@ export interface Room {
    * where a room token alone is sufficient.
    */
   requirePinForQr: boolean;
+  /** Per-slot event token buckets (D5-SRV-01: 30/s, burst 60). */
+  eventBuckets: Map<number, TokenBucket>;
+  /** Last layout routed to each slot, for rejoin replay (D5-SRV-01). */
+  layouts: Map<number, JsonValue>;
+  /**
+   * Last private panel per slot; `content:null` stores a clear marker that is
+   * replayed to a rejoining controller (D5-SRV-01). A slot with no key has
+   * never had a panel and receives nothing on rejoin.
+   */
+  panels: Map<number, JsonValue>;
+  /** Per-slot haptic token buckets (D6-SRV-01: 20/s). */
+  hapticBuckets: Map<number, TokenBucket>;
+  /** Haptic commands dropped by validation or the 20 Hz limiter (D6-SRV-01). */
+  hapticDrops: number;
 }
 
 /** Optional room settings. D4 uses the default (false) for every room. */

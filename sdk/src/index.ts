@@ -9,3 +9,6 @@ export * from "./manifest.js";
 export * from "./config.js";
 export * from "./layout.js";
 export * from "./layout-validate.js";
+export * from "./panel.js";
+export * from "./ugc.js";
+export * from "./game-api.js";

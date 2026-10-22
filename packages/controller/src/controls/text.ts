@@ -12,12 +12,14 @@
  * coordinates instead of relying on a native `click`. The `click` listener is
  * still present for keyboard/assistive activation.
  *
- * `font-size: 16px` avoids Android's focus-zoom (D5-CTRL-01 risk note). The
- * full on-screen-keyboard viewport management lives in D5-CTRL-03; this
- * renderer keeps the control and send button inside its own box so that work
- * can resize the surface without losing the input.
+ * `font-size: 16px` avoids Android's focus-zoom (D5-CTRL-01 risk note).
+ * Keyboard-facing behavior — maxLen on input/paste, IME composition, Enter,
+ * submit/clear/blur, and keeping the input visible while the on-screen
+ * keyboard resizes the viewport — lives in `textInput.ts` (D5-CTRL-03). The
+ * additive optional layout flag `keepFocus` is read defensively until the SDK
+ * types it.
  */
-import { sanitizeText, type TextControl } from "@lanpad/sdk";
+import type { TextControl } from "@lanpad/sdk";
 import type { InputState } from "@lanpad/protocol";
 import {
   applyControlElementStyle,
@@ -29,6 +31,8 @@ import {
   type ControlRenderer,
 } from "./control.js";
 import { emitControlEvent } from "./eventSink.js";
+import { bindTextInput } from "./textInput.js";
+import { setSafeText } from "../render/safeRender.js";
 import type { TouchBinding } from "../touch/touchEngine.js";
 
 /** Minimum send-button edge (AR-5). */
@@ -81,7 +85,7 @@ export function createTextControl(control: TextControl, ctx: ControlContext): Co
 
   const send = createPart("button", "send");
   send.type = "button";
-  send.textContent = "Send";
+  setSafeText(send, "Send", 16);
   send.setAttribute("aria-label", "send answer");
   send.style.flex = `0 0 ${TEXT_SEND_BUTTON_WIDTH_PX}px`;
   send.style.width = `${TEXT_SEND_BUTTON_WIDTH_PX}px`;
@@ -112,40 +116,25 @@ export function createTextControl(control: TextControl, ctx: ControlContext): Co
     notifyDebugState(ctx, control.id, active);
   };
 
-  const submit = (): boolean => {
-    // Trim after sanitizing so whitespace padding is never charged to maxLen.
-    const value = sanitizeText(input.value, control.maxLen).trim();
-    if (value.length === 0) {
-      return false;
-    }
-    const accepted = emitControlEvent(ctx.events, control.event, { value }, "high");
-    if (accepted) {
-      input.value = "";
-      delete element.dataset["eventBlocked"];
-    } else {
-      // Keep the text so nothing is silently lost without a queue.
-      element.dataset["eventBlocked"] = "true";
-    }
-    return accepted;
-  };
+  const keepFocus = (control as TextControl & { keepFocus?: unknown }).keepFocus === true;
+  const textEntry = bindTextInput(input, {
+    maxLen: control.maxLen,
+    keepFocus,
+    ...(ctx.viewport !== undefined ? { viewport: ctx.viewport } : {}),
+    onSubmit: (value) => {
+      const accepted = emitControlEvent(ctx.events, control.event, { value }, "high");
+      if (accepted) {
+        delete element.dataset["eventBlocked"];
+      } else {
+        // Keep the text so nothing is silently lost without a queue.
+        element.dataset["eventBlocked"] = "true";
+      }
+      return accepted;
+    },
+  });
+  const submit = (): boolean => textEntry.submit();
 
   const isSendPoint = (clientX: number): boolean => clientX >= sendLeft;
-
-  input.addEventListener("input", () => {
-    // Paste is allowed but truncated; this never sends (FR-7.8).
-    const plain = sanitizeText(input.value, control.maxLen);
-    if (plain !== input.value) {
-      input.value = plain;
-    }
-  });
-
-  input.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter" || event.isComposing) {
-      return;
-    }
-    event.preventDefault();
-    submit();
-  });
 
   // Keyboard and assistive-technology activation path; touch uses the
   // coordinate handler below because the surface consumes native clicks.
@@ -232,7 +221,7 @@ export function createTextControl(control: TextControl, ctx: ControlContext): Co
       activeIdentifier = null;
       sendCandidate = false;
       applyVisual(false);
-      input.blur();
+      textEntry.dispose();
       element.remove();
     },
   };

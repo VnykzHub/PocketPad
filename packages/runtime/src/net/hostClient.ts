@@ -47,6 +47,7 @@ import {
   stringifyJsonMessage,
   type HostToServerMessage,
   type InputState,
+  type JoinErrorReason,
   type JsonControlMessage,
   type ServerToClientMessage,
   type SlotStats,
@@ -248,6 +249,8 @@ const SERVER_MESSAGE_TYPES: ReadonlySet<string> = new Set([
   "playerResumed",
   "setLayout",
   "panel",
+  "event",
+  "layoutAck",
   "kick",
   "stats",
 ]);
@@ -347,6 +350,8 @@ export class HostClient {
   private connectionState: HostConnectionState = "idle";
   private serverTimeOffsetMs: number | null = null;
   private lastCloseInfo: WebSocketCloseInfo | null = null;
+  /** Reason from the most recent `joinError`; D4 recovery classifies it. */
+  private lastJoinErrorValue: JoinErrorReason | null = null;
 
   private pendingOpen: PendingOpen | null = null;
   private pendingHostJoin: PendingHostJoin | null = null;
@@ -391,6 +396,16 @@ export class HostClient {
   /** Close information from the last unexpected socket close; D4 uses it. */
   get lastClose(): WebSocketCloseInfo | null {
     return this.lastCloseInfo;
+  }
+
+  /**
+   * Reason from the most recent `joinError`, or null when the last attempt
+   * succeeded/was replaced. `HostReconnect` treats `expired` and
+   * `badHostToken` as terminal. The reason is a protocol enum, never a body
+   * or token.
+   */
+  get lastJoinError(): JoinErrorReason | null {
+    return this.lastJoinErrorValue;
   }
 
   /** InputFwd frames decoded successfully. */
@@ -497,6 +512,7 @@ export class HostClient {
 
     this.serverTimeOffsetMs = null;
     this.lastCloseInfo = null;
+    this.lastJoinErrorValue = null;
     this.connectionState = "connecting";
 
     // Created synchronously so a bad origin/constructor throws to the caller
@@ -591,6 +607,20 @@ export class HostClient {
       throw new Error("send() requires an open WebSocket; call connect() first.");
     }
     socket.send(stringifyJsonMessage(message));
+  }
+
+  /**
+   * Sends one encoded binary host→server command (currently `HapticCmd` from
+   * `ctx.haptics`). Games never reach this method (FR-7.17).
+   */
+  sendBinary(frame: Uint8Array): void {
+    if (!(frame instanceof Uint8Array) || frame.byteLength === 0) {
+      throw new TypeError("sendBinary() requires a non-empty Uint8Array frame.");
+    }
+    if (this.connectionState !== "connected" || this.socket === null) {
+      throw new Error("sendBinary() requires a connected host socket.");
+    }
+    this.socket.send(frame);
   }
 
   onOpen(listener: () => void): () => void {
@@ -738,6 +768,7 @@ export class HostClient {
         this.resolveHostJoin(message);
         break;
       case "joinError":
+        this.lastJoinErrorValue = message.reason;
         this.failPendingHostJoin(new Error(`Host join failed: ${message.reason}.`));
         break;
       case "playerJoined":
@@ -770,6 +801,7 @@ export class HostClient {
       return;
     }
     this.pendingHostJoin = null;
+    this.lastJoinErrorValue = null;
     pending.resolve({ serverTime: message.serverTime });
   }
 

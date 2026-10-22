@@ -25,10 +25,14 @@ import {
   type ControlRenderer,
 } from "./control.js";
 import { emitControlEvent } from "./eventSink.js";
+import { setSafeText } from "../render/safeRender.js";
 import type { TouchBinding } from "../touch/touchEngine.js";
 
 /** Fixed row height. AR-5 floor for every option target. */
 export const CHOICE_ROW_HEIGHT_PX = 44;
+
+/** Longest option label rendered; keeps a hostile label from bloating a row. */
+const MAX_OPTION_LABEL_CHARS = 120;
 
 /** Movement past this many pixels turns a tap into a scroll drag. */
 const TAP_SLOP_PX = 8;
@@ -86,7 +90,7 @@ export function createChoiceControl(control: ChoiceControl, ctx: ControlContext)
     row.style.textOverflow = "ellipsis";
     row.style.whiteSpace = "nowrap";
     row.dataset["part"] = "option";
-    row.textContent = option.label;
+    setSafeText(row, option.label, MAX_OPTION_LABEL_CHARS);
     rows.push(row);
     list.append(row);
   }

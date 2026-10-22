@@ -34,6 +34,10 @@ const AXIS_MAX = 32767;
 const TRIGGER_MAX = 255;
 const GYRO_WIRE_SCALE = 10;
 const BITMASK_16 = 0xffff;
+/** `InputState.flags` bit 0: motion data active for this packet (D6, FR-7.6). */
+const FLAG_MOTION_ACTIVE = 0x01;
+/** `InputState.flags` bit 1: the controller recentered in this packet. */
+const FLAG_RECENTERED = 0x02;
 /** Half of the u32 range; `(a - b) >>> 0 < HALF_U32` means "a is not older". */
 const HALF_U32 = 0x80000000;
 const RATE_WINDOW_MS = 1000;
@@ -90,6 +94,10 @@ export class InputMapper {
         rx: 0,
         ry: 0,
         gyro: { x: 0, y: 0, z: 0 },
+        gyroActive: false,
+        gyroRecentered: false,
+        // Pooled here so GameHost can integrate in place (D6-RT-01).
+        tilt: { angleX: 0, angleY: 0, available: false },
         triggers: { lt: 0, rt: 0 },
         tick: 0,
       };
@@ -146,6 +154,8 @@ export class InputMapper {
     state.gyro.x = packet.gx / GYRO_WIRE_SCALE;
     state.gyro.y = packet.gy / GYRO_WIRE_SCALE;
     state.gyro.z = packet.gz / GYRO_WIRE_SCALE;
+    state.gyroActive = (packet.flags & FLAG_MOTION_ACTIVE) !== 0;
+    state.gyroRecentered = (packet.flags & FLAG_RECENTERED) !== 0;
     state.triggers.lt = normalizeTrigger(packet.lt);
     state.triggers.rt = normalizeTrigger(packet.rt);
     state.tick = tick;
@@ -247,6 +257,13 @@ function clearRecord(record: SlotRecord): void {
   state.gyro.x = 0;
   state.gyro.y = 0;
   state.gyro.z = 0;
+  state.gyroActive = false;
+  state.gyroRecentered = false;
+  if (state.tilt !== undefined) {
+    state.tilt.angleX = 0;
+    state.tilt.angleY = 0;
+    state.tilt.available = false;
+  }
   state.triggers.lt = 0;
   state.triggers.rt = 0;
   state.tick = 0;

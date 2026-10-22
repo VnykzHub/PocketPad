@@ -131,6 +131,47 @@ export function makeRegistry(options: RegistryOptions = {}): RegistryHarness {
   return { registry, clock, calls };
 }
 
+export interface RoomHarness extends RegistryHarness {
+  code: string;
+  host: FakePeer;
+  controllers: FakePeer[];
+}
+
+export interface RoomHarnessOptions extends RegistryOptions {
+  /** Controllers joined with the room token, occupying slots 1..n. Default 1. */
+  controllerCount?: number;
+}
+
+/**
+ * A live room with an attached host and `controllerCount` joined controllers.
+ * Slots are assigned in ascending order, so `controllers[0]` is always slot 1.
+ */
+export function makeRoomHarness(options: RoomHarnessOptions = {}): RoomHarness {
+  const { controllerCount = 1, ...registryOptions } = options;
+  const base = makeRegistry(registryOptions);
+  const credentials = base.registry.createRoom();
+  const host = new FakePeer();
+  const hosted = base.registry.hostJoin(credentials.code, credentials.hostToken, host);
+  if (!hosted.ok) {
+    throw new Error("test fixture could not attach the host");
+  }
+
+  const controllers: FakePeer[] = [];
+  for (let index = 0; index < controllerCount; index += 1) {
+    const peer = new FakePeer({ remoteAddress: `127.0.0.${index + 2}` });
+    const joined = base.registry.join(
+      { code: credentials.code, token: credentials.roomToken },
+      peer,
+    );
+    if (!joined.ok) {
+      throw new Error("test fixture could not join a controller");
+    }
+    controllers.push(peer);
+  }
+
+  return { ...base, code: credentials.code, host, controllers };
+}
+
 /**
  * SR-9: no log field may be named like a credential, and no logged value may
  * carry a token or equal a PIN. The room code is public and is skipped.

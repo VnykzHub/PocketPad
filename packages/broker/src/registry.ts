@@ -19,13 +19,25 @@ import {
   ROOM_PIN_LENGTH,
   encodeInputFwd,
   stringifyJsonMessage,
+  type EventMessage,
   type InputState,
+  type JsonValue,
   type ServerToClientMessage,
 } from "@lanpad/protocol";
 import type { Logger, Peer } from "./peer.js";
 import { constantTimeEqual, generateToken as createToken } from "./auth/tokens.js";
 import { HostRecovery } from "./room/host.js";
 import { StatsCollector } from "./room/stats.js";
+import {
+  routeEvent as forwardEvent,
+  routeLayoutAck as forwardLayoutAck,
+} from "./room/events.js";
+import { routeHaptic as forwardHaptic } from "./room/haptics.js";
+import {
+  replayChannelState as replayChannels,
+  setLayout as applyLayout,
+  setPanel as applyPanel,
+} from "./room/layout.js";
 import {
   ROOM_MAX_LIFETIME_MS,
   type ControllerSlot,
@@ -128,6 +140,7 @@ export class RoomRegistry {
         if (this.rooms.get(room.code) === room) {
           this.rooms.delete(room.code);
         }
+        this.clearChannelRoom(room);
         this.notifyRoomExpired(room);
       },
     });
@@ -189,6 +202,11 @@ export class RoomRegistry {
       reservations: new Map(),
       droppedInputs: 0,
       requirePinForQr: options.requirePinForQr ?? false,
+      eventBuckets: new Map(),
+      layouts: new Map(),
+      panels: new Map(),
+      hapticBuckets: new Map(),
+      hapticDrops: 0,
     };
     this.rooms.set(code, room);
     this.logger.info("room.create", { code, rooms: this.rooms.size });
@@ -385,6 +403,77 @@ export class RoomRegistry {
   }
 
   /**
+   * D5-SRV-01: forwards one controller event to the host unchanged except for
+   * the slot, which is rebuilt from the authenticated peer. A spoofed or
+   * over-rate event is dropped and counted; `data` is never interpreted
+   * (FR-7.9).
+   */
+  routeEvent(codeInput: string, authenticatedSlot: number, event: EventMessage): boolean {
+    const room = this.liveRoom(codeInput);
+    if (room === undefined) {
+      return false;
+    }
+    return forwardEvent(room, authenticatedSlot, event, this.now(), this.logger);
+  }
+
+  /** D5-SRV-01: forwards a layout ack with the peer's authenticated slot filled in. */
+  routeLayoutAck(codeInput: string, authenticatedSlot: number, layoutId: string): boolean {
+    const room = this.liveRoom(codeInput);
+    if (room === undefined) {
+      return false;
+    }
+    return forwardLayoutAck(room, authenticatedSlot, layoutId, this.now(), this.logger);
+  }
+
+  /**
+   * D5-SRV-01: routes an opaque host layout to one slot or every slot and
+   * records it for rejoin replay.
+   */
+  setLayout(codeInput: string, slot: number | "all", layout: JsonValue): boolean {
+    const room = this.liveRoom(codeInput);
+    if (room === undefined) {
+      return false;
+    }
+    return applyLayout(room, slot, layout, this.now());
+  }
+
+  /**
+   * D5-SRV-01: routes a private panel to exactly one slot and records it for
+   * rejoin. `content: null` clears the stored panel.
+   */
+  setPanel(codeInput: string, slot: number, content: JsonValue): boolean {
+    const room = this.liveRoom(codeInput);
+    if (room === undefined) {
+      return false;
+    }
+    return applyPanel(room, slot, content, this.now());
+  }
+
+  /**
+   * D5-SRV-01: re-sends the stored layout and panel for a rejoined slot. The
+   * transport calls this immediately after `joined`; returns frames sent.
+   */
+  replayChannelState(codeInput: string, slot: number): number {
+    const room = this.liveRoom(codeInput);
+    if (room === undefined) {
+      return 0;
+    }
+    return replayChannels(room, slot);
+  }
+
+  /**
+   * D6-SRV-01: routes a host haptic command (slot 0 = all connected) with the
+   * 20 Hz per-slot limit. Returns the number of controllers reached.
+   */
+  routeHaptic(codeInput: string, slot: number, durationsMs: readonly number[]): number {
+    const room = this.liveRoom(codeInput);
+    if (room === undefined) {
+      return 0;
+    }
+    return forwardHaptic(room, slot, durationsMs, this.now());
+  }
+
+  /**
    * A controller hid its page and asked for a suspension (FR-8.8). The slot is
    * held for 30 s and the host sees `playerSuspended` (FR-5.4).
    *
@@ -469,6 +558,7 @@ export class RoomRegistry {
 
     clearReservationFor(room, controller.session);
     room.controllers.delete(slot);
+    this.clearChannelSlot(room, slot);
     room.lastActivityAt = now;
     this.logger.info("room.leave", { code: room.code, slot, players: room.controllers.size });
     this.sendToHost(room, { t: "playerLeft", slot });
@@ -569,6 +659,7 @@ export class RoomRegistry {
       }
       room.controllers.delete(found.controller.slot);
       found.controller.reservationExpiresAt = null;
+      this.clearChannelSlot(room, found.controller.slot);
       this.logger.info("room.leave", {
         code: room.code,
         slot: found.controller.slot,
@@ -631,6 +722,7 @@ export class RoomRegistry {
 
   private expireReservationsFor(room: Room, now: number): void {
     for (const { controller } of expireReservations(room, now)) {
+      this.clearChannelSlot(room, controller.slot);
       this.logger.info("room.leave", {
         code: room.code,
         slot: controller.slot,
@@ -639,6 +731,39 @@ export class RoomRegistry {
       });
       this.sendToHost(room, { t: "playerLeft", slot: controller.slot });
     }
+  }
+
+  /**
+   * Resolves a room for a routing call and expires it lazily when past its
+   * idle or maximum-age limit. `undefined` means the frame is dropped.
+   */
+  private liveRoom(codeInput: string): Room | undefined {
+    const now = this.now();
+    const room = this.rooms.get(normalizeCode(codeInput));
+    if (room === undefined) {
+      return undefined;
+    }
+    if (isRoomExpired(room, now)) {
+      this.expireRoom(room, now);
+      return undefined;
+    }
+    return room;
+  }
+
+  /** Drops the channel state of a slot that is freed or whose reservation lapsed. */
+  private clearChannelSlot(room: Room, slot: number): void {
+    room.eventBuckets.delete(slot);
+    room.hapticBuckets.delete(slot);
+    room.layouts.delete(slot);
+    room.panels.delete(slot);
+  }
+
+  /** Drops all channel state when a room expires (SR-12). */
+  private clearChannelRoom(room: Room): void {
+    room.eventBuckets.clear();
+    room.hapticBuckets.clear();
+    room.layouts.clear();
+    room.panels.clear();
   }
 
   private generateCode(): string {
@@ -720,6 +845,7 @@ export class RoomRegistry {
     room.host = null;
     room.controllers.clear();
     room.reservations.clear();
+    this.clearChannelRoom(room);
 
     // FR-5.2: every peer gets a kick before the socket closes.
     const kick = stringifyJsonMessage({ t: "kick", reason: "expired" });

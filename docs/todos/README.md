@@ -1,6 +1,6 @@
 # lanpad / vynkzhub — Development Plan Set
 
-> **Status:** planning v0.1 — 2026-10-21. No implementation has started.
+> **Status:** implementation in progress — wave 5 (final cleanup), 2026-10-22. Work is uncommitted; no stage exit is claimed.
 > **Source spec:** `SPEC.md` v0.3 (repo root). The spec is authoritative.
 > **Scope:** Phase 1 Dev (D0–D7 + Dev Exit Gate), Phase 2 Production (P0–P6), every game, every architectural layer.
 > **Execution model:** one stage at a time, each stage gated by its own exit checklist. Phase 2 is blocked until the Dev Exit Gate is signed off.
@@ -50,6 +50,7 @@ These are the only deliberate deviations or gap-fills. Each one exists to preven
 | **A10** | Add `badVersion` to the `JoinErrorReason` union. | `join`/`hostJoin` carry `v`; a mismatched client must learn why. Reusing `badToken` would hide the cause and confuse reconnect logic. | §7.2 | D4 |
 | **A11** | Add `pinRequired` to `JoinErrorReason`; allow `join` to carry `token` + `pin` together when the room has `requirePinForQr`. | The optional "PIN required for QR" mode needs a way to prompt for the PIN and then submit both credentials. `badPin` alone cannot distinguish "prompt" from "wrong PIN". Additive error value; the credential rule becomes session-alone, token-alone, pin-alone, or token+pin (QR PIN mode); `session` never combines with token/pin. | §5.1, SR-4 | P3 |
 | **A12** | Reaction Duel Minimal uses four buttons per controller (A/B/X/Y target match); the one-button tap mode remains a Full-version mode. | User decision 2026-10-21: the first game must require at least four inputs per controller. The four-button layout exercises D2 multi-button/touch without needing D5 hot-swap. | §17.2, FR-8.1, FR-8.6 | D7 |
+| **A13** | `setLayout` JSON frames may be up to 16 KB; all other JSON frames remain capped at 4 KB (SR-6). The broker enforces the per-message cap. | The SDK accepts layout documents up to 16 KB (FR-8.4), but SR-6 caps every JSON frame at 4 KB, so a valid 5-16 KB layout could never reach a controller. Only the layout channel needs the larger frame. | §7.2, SR-6, FR-8.2 | D5 |
 
 ### 1.1 Adopted defaults where the spec is silent
 
@@ -388,6 +389,6 @@ The spec's §22 questions, with the default this plan uses until answered.
 | Stage-level work items (`###` headings) | 127 |
 | Requirement / experiment / capability IDs mapped | 100+ |
 
-**Start at [`phase-1-dev/D0-foundations.md`](phase-1-dev/D0-foundations.md).** No code has been written; the first action is `D0-REPO-01`. Do not skip D1's device probes, and do not start Phase 2 before the Dev Exit Gate signs GO.
+**Start at [`phase-1-dev/D0-foundations.md`](phase-1-dev/D0-foundations.md).** Implementation began at `D0-REPO-01`; see [`IMPLEMENTATION-ORDER.md`](IMPLEMENTATION-ORDER.md) for the current wave. Do not skip D1's device probes, and do not start Phase 2 before the Dev Exit Gate signs GO.
 
 If a spec requirement seems missing, check [`TRACEABILITY.md`](TRACEABILITY.md) first; if it is genuinely unowned, add the row and the owning work item before implementing.

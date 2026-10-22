@@ -268,3 +268,131 @@ h2 {
 .input-table.show-tick th.tick {
   display: table-cell;
 }
+
+/* --- D3 runtime: start screen, stage, notices (D3-RT-04/05) --- */
+
+#game-root {
+  display: grid;
+  gap: 16px;
+}
+
+.lanpad-canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 8px;
+}
+
+.lanpad-canvas[hidden],
+.lanpad-start [hidden] {
+  display: none;
+}
+
+.lanpad-start {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: 32px 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.lanpad-start__title {
+  margin: 0;
+  font-size: 40px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  color: var(--text);
+}
+
+.lanpad-start__room {
+  display: flex;
+  gap: 24px;
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+}
+
+.lanpad-start__button {
+  font: inherit;
+  font-size: 28px;
+  font-weight: 700;
+  padding: 16px 40px;
+  color: var(--bg);
+  background: var(--text);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.lanpad-start__button:focus-visible,
+.lanpad-start__button:focus {
+  outline: 4px solid #6ee7ff;
+  outline-offset: 4px;
+}
+
+.lanpad-start__audio,
+.lanpad-start__hint {
+  margin: 0;
+  font-size: 18px;
+  color: var(--muted);
+}
+
+.lanpad-start__audio[data-state="unavailable"] {
+  color: var(--bad-text);
+}
+
+.lanpad-progress {
+  width: min(480px, 100%);
+  display: grid;
+  gap: 6px;
+}
+
+.lanpad-progress-track {
+  height: 10px;
+  background: var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.lanpad-progress-fill {
+  width: 0;
+  height: 100%;
+  background: #6ee7ff;
+}
+
+.lanpad-progress[data-mode="indeterminate"] .lanpad-progress-fill {
+  opacity: 0.5;
+}
+
+.lanpad-progress-label {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.lanpad-notice,
+.lanpad-error {
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.lanpad-error {
+  background: var(--bad-bg);
+  color: var(--bad-text);
+}
+
+.lanpad-notice p,
+.lanpad-error p {
+  margin: 4px 0;
+}
+
+.lanpad-error button {
+  font: inherit;
+  margin-top: 8px;
+  padding: 8px 20px;
+}

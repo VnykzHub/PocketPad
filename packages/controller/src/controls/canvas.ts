@@ -1,23 +1,23 @@
 /**
  * Canvas control renderer (D5-CTRL-01; FR-8.1, FR-8.3, FR-7.8, SR-13, AR-5).
  *
- * One stroke at a time. Points are normalized to 0..1 and sampled at most
- * every 16 ms or every 8 px of finger travel; each sample is drawn locally
- * before the handler returns, so the drawer sees ink immediately, then batched
- * into `move` events (~50 ms / 16 points). `start` carries the first point and
- * `end` carries the final flushes; the payload is the frozen D5 stroke shape
- * `{points, color, width, phase}` (D5 contract 5).
+ * One stroke at a time. Sampling, normalization, batching, the 20 KB/s cap
+ * and pressure coalescing live in `StrokeBatcher` (D5-CTRL-04); this renderer
+ * binds the first touch and draws each accepted sample locally before the
+ * handler returns, so the drawer sees ink before any batch leaves (E10). The
+ * payload is the frozen D5 stroke shape `{points, color, width, phase}`
+ * (D5 contract 5); `end` also carries the total `count`.
  *
  * `color`/`width` are additive layout fields (defaults `#ffffff` and 6 px,
  * capped at 1..32 px). They are read defensively because the D2 `CanvasControl`
  * type does not declare them yet; the JSON schema keeps `additionalProperties`
- * open, and D5-CTRL-04 promotes them into the typed surface.
+ * open; promoting them into the SDK types is still an open D5 item.
  *
  * Rendering uses a real `<canvas>` 2D context. When no context is available
  * (jsdom without the `canvas` package, or a hostile environment) pointer and
  * event bookkeeping still works — only local ink is skipped.
  */
-import { normalizeStrokePoint, type CanvasControl } from "@lanpad/sdk";
+import { isAllowedColor, type CanvasControl } from "@lanpad/sdk";
 import type { InputState } from "@lanpad/protocol";
 import {
   applyControlElementStyle,
@@ -29,6 +29,7 @@ import {
   type ControlRenderer,
 } from "./control.js";
 import { emitControlEvent, type StrokePoint } from "./eventSink.js";
+import { StrokeBatcher } from "./strokeBatcher.js";
 import type { TouchBinding } from "../touch/touchEngine.js";
 
 /** Default ink color when the layout omits the additive `color` field. */
@@ -38,12 +39,7 @@ export const DEFAULT_STROKE_WIDTH = 6;
 
 const MAX_STROKE_WIDTH = 32;
 const MIN_STROKE_WIDTH = 1;
-const SAMPLE_INTERVAL_MS = 16;
-const SAMPLE_DISTANCE_PX = 8;
-const MOVE_FLUSH_MS = 50;
-const MOVE_BATCH_POINTS = 16;
 const HARD_MAX_POINTS = 4_096;
-const COLOR_PATTERN = /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/;
 
 /** Additive fields D5-CTRL-01 reads before the schema types them. */
 type CanvasInkControl = CanvasControl & { color?: unknown; width?: unknown };
@@ -51,10 +47,8 @@ type CanvasInkControl = CanvasControl & { color?: unknown; width?: unknown };
 /** Resolves and validates the additive ink fields. */
 export function resolveCanvasInk(control: CanvasControl): { color: string; width: number } {
   const raw = control as CanvasInkControl;
-  const color =
-    typeof raw.color === "string" && COLOR_PATTERN.test(raw.color)
-      ? raw.color
-      : DEFAULT_STROKE_COLOR;
+  // Shared SR-13 allowlist (#rgb / #rrggbb); one validator for every ink path.
+  const color = isAllowedColor(raw.color) ? raw.color : DEFAULT_STROKE_COLOR;
   const rawWidth = raw.width;
   const width =
     typeof rawWidth === "number" && Number.isFinite(rawWidth)
@@ -128,13 +122,23 @@ export function createCanvasControl(
 
   let activeIdentifier: number | null = null;
   let pressed = false;
-  let pointCount = 0;
-  let pending: StrokePoint[] = [];
   let lastPoint: StrokePoint | null = null;
-  let lastRawX = 0;
-  let lastRawY = 0;
-  let lastSampleAt = 0;
-  let lastMoveFlushAt = 0;
+
+  // The batcher is the only stroke path (D5-CTRL-04): it samples, normalizes,
+  // batches and caps bandwidth; this renderer only binds touches and draws.
+  const batcher = new StrokeBatcher({
+    color: ink.color,
+    width: ink.width,
+    now: nowMs,
+    maxStrokePoints: maxPoints,
+    timers: {
+      set: (callback, delayMs) => setTimeout(callback, delayMs),
+      clear: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
+    },
+    emit: (data) => {
+      emitControlEvent(ctx.events, control.event, data, "low");
+    },
+  });
 
   const drawDot = (point: StrokePoint): void => {
     if (context === null) {
@@ -164,6 +168,17 @@ export function createCanvasControl(
     context.stroke();
   };
 
+  /** Draws the segment to a freshly sampled point before any batch leaves. */
+  const drawTo = (point: StrokePoint | null): void => {
+    if (point === null) {
+      return;
+    }
+    if (lastPoint !== null) {
+      drawSegment(lastPoint, point);
+    }
+    lastPoint = point;
+  };
+
   const applyVisual = (active: boolean): void => {
     if (active === pressed) {
       return;
@@ -174,33 +189,10 @@ export function createCanvasControl(
     notifyDebugState(ctx, control.id, active);
   };
 
-  const pointAt = (x: number, y: number, stamp: number): StrokePoint =>
-    normalizeStrokePoint((x - box.left) / box.width, (y - box.top) / box.height, stamp);
-
-  const flushMove = (stamp: number): void => {
-    lastMoveFlushAt = stamp;
-    if (pending.length === 0) {
-      return;
-    }
-    const batch = pending;
-    pending = [];
-    emitControlEvent(
-      ctx.events,
-      control.event,
-      { points: batch, color: ink.color, width: ink.width, phase: "move" },
-      "low",
-    );
-  };
-
-  const resetStroke = (): void => {
+  const finishStroke = (): void => {
     activeIdentifier = null;
-    pointCount = 0;
-    pending = [];
     lastPoint = null;
-    lastRawX = 0;
-    lastRawY = 0;
-    lastSampleAt = 0;
-    lastMoveFlushAt = 0;
+    applyVisual(false);
   };
 
   return {
@@ -216,99 +208,37 @@ export function createCanvasControl(
       if (activeIdentifier !== null) {
         return;
       }
-      const stamp = nowMs();
-      const point = pointAt(binding.startX, binding.startY, stamp);
       activeIdentifier = binding.identifier;
-      pointCount = 1;
-      pending = [];
-      lastPoint = point;
-      lastRawX = binding.startX;
-      lastRawY = binding.startY;
-      lastSampleAt = stamp;
-      lastMoveFlushAt = stamp;
-
       applyVisual(true);
-      drawDot(point);
-      emitControlEvent(
-        ctx.events,
-        control.event,
-        { points: [point], color: ink.color, width: ink.width, phase: "start" },
-        "low",
-      );
+      const point = batcher.begin(binding.startX, binding.startY, box);
+      if (point !== null) {
+        drawDot(point);
+        lastPoint = point;
+      }
     },
 
     onTouchMove(binding: TouchBinding): void {
       if (binding.identifier !== activeIdentifier) {
         return;
       }
-      const stamp = nowMs();
-      const rawDistance = Math.hypot(binding.lastX - lastRawX, binding.lastY - lastRawY);
-      // Sample when 16 ms has passed OR the finger moved 8 px, whichever first.
-      if (stamp - lastSampleAt < SAMPLE_INTERVAL_MS && rawDistance < SAMPLE_DISTANCE_PX) {
-        return;
-      }
-      if (pointCount >= maxPoints) {
-        return;
-      }
-
-      const point = pointAt(binding.lastX, binding.lastY, stamp);
-      if (lastPoint !== null) {
-        drawSegment(lastPoint, point);
-      }
-      pending.push(point);
-      pointCount += 1;
-      lastPoint = point;
-      lastRawX = binding.lastX;
-      lastRawY = binding.lastY;
-      lastSampleAt = stamp;
-
-      if (stamp - lastMoveFlushAt >= MOVE_FLUSH_MS || pending.length >= MOVE_BATCH_POINTS) {
-        flushMove(stamp);
-      }
+      drawTo(batcher.move(binding.lastX, binding.lastY));
     },
 
     onTouchEnd(binding: TouchBinding): void {
       if (binding.identifier !== activeIdentifier) {
         return;
       }
-      const stamp = nowMs();
-      // Capture the release position if it moved since the last sample, so the
-      // end of a fast flick is not lost.
-      if (lastPoint !== null && pointCount < maxPoints) {
-        const rawDistance = Math.hypot(binding.lastX - lastRawX, binding.lastY - lastRawY);
-        if (rawDistance >= 1) {
-          const point = pointAt(binding.lastX, binding.lastY, stamp);
-          drawSegment(lastPoint, point);
-          pending.push(point);
-          pointCount += 1;
-        }
-      }
-      const finalPoints = pending;
-      pending = [];
-      emitControlEvent(
-        ctx.events,
-        control.event,
-        { points: finalPoints, color: ink.color, width: ink.width, phase: "end" },
-        "low",
-      );
-      resetStroke();
-      applyVisual(false);
+      // The release position is captured so a fast flick's tail is not lost.
+      drawTo(batcher.end(binding.lastX, binding.lastY));
+      finishStroke();
     },
 
     onTouchCancel(binding: TouchBinding): void {
       if (binding.identifier !== activeIdentifier) {
         return;
       }
-      const finalPoints = pending;
-      pending = [];
-      emitControlEvent(
-        ctx.events,
-        control.event,
-        { points: finalPoints, color: ink.color, width: ink.width, phase: "end" },
-        "low",
-      );
-      resetStroke();
-      applyVisual(false);
+      batcher.cancel();
+      finishStroke();
     },
 
     getState(): Partial<InputState> {
@@ -316,8 +246,8 @@ export function createCanvasControl(
     },
 
     dispose(): void {
-      resetStroke();
-      applyVisual(false);
+      batcher.reset();
+      finishStroke();
       element.remove();
     },
   };

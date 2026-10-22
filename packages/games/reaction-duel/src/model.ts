@@ -261,6 +261,25 @@ export class ReactionDuelModel {
   }
 
   /**
+   * Rejoins a removed slot as a new occupant (slot reuse).
+   *
+   * The slot keeps its place in the frozen mid-match roster, but the new
+   * occupant starts at score 0. The game adapter uses this when a slot stops
+   * being present and later appears again: the D3 input carries no player
+   * identity, so a reconnect and a replacement are indistinguishable there.
+   * Returns false when the slot has no record or is already connected.
+   */
+  reuseSlot(slot: number): boolean {
+    const player = this.findPlayer(slot);
+    if (player === undefined || player.connected) {
+      return false;
+    }
+    player.connected = true;
+    player.score = 0;
+    return true;
+  }
+
+  /**
    * Starts a match from the lobby. Fails unless the connected player count is
    * inside the configured range. Scores always start at zero.
    */

@@ -282,6 +282,8 @@ function snapshotWith(lx: number, ly: number, edges = 0): InputSnapshot {
         rx: 0,
         ry: 0,
         gyro: { x: 0, y: 0, z: 0 },
+        gyroActive: false,
+        gyroRecentered: false,
         triggers: { lt: 0, rt: 0 },
         tick: 1,
       },
@@ -613,7 +615,9 @@ describe("cube demo", () => {
     );
     expect(source).not.toContain("WebGL2Renderer");
     expect(source).not.toContain("Canvas2DRenderer");
-    expect(source).toContain('import type { Renderer3D } from "./Renderer.js";');
+    expect(source).toContain(
+      'import type { GameRenderer3D as Renderer3D } from "@lanpad/sdk";',
+    );
     expect(source).not.toContain("document.");
     expect(source).not.toContain("html");
 

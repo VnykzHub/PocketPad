@@ -5,6 +5,7 @@ import {
   PROTOCOL_VERSION,
   decodeInput,
   decodePing,
+  encodeHaptic,
   encodePong,
 } from "@lanpad/protocol";
 import type { LayoutDocument } from "@lanpad/sdk";
@@ -149,7 +150,7 @@ const TAP_LAYOUT: LayoutDocument = {
   ],
 };
 
-/** A structurally valid layout containing a control type D2 cannot render. */
+/** A structurally valid layout mixing a D2 input with a D5 panel. */
 const MIXED_LAYOUT: LayoutDocument = {
   id: "mixed-v1",
   orientation: "landscape",
@@ -269,7 +270,7 @@ describe("[FR-5.6] manual join over the same-origin socket", () => {
   it("[FR-5.6] joined shows the assigned slot in the connection pill", () => {
     join(2);
 
-    expect(client.currentState).toEqual({ status: "connected", slot: 2, error: null });
+    expect(client.currentState).toEqual({ status: "connected", slot: 2, error: null, host: null });
     expect(connectionPillLabel(client.currentState)).toBe("Connected (P2)");
   });
 
@@ -286,7 +287,7 @@ describe("[FR-5.6] manual join over the same-origin socket", () => {
 });
 
 describe("[FR-8.5] connection pill reflects real socket state", () => {
-  it("[FR-8.5] pill is Disconnected until joined, Connected after, and Disconnected on close", () => {
+  it("[FR-8.5] pill is Disconnected until joined, Connected after, Reconnecting on a drop", () => {
     expect(connectionPillLabel(client.currentState)).toBe("Disconnected");
 
     client.connect("ABCD", "1234");
@@ -298,7 +299,11 @@ describe("[FR-8.5] connection pill reflects real socket state", () => {
     socket.deliver({ t: "joined", slot: 3, session: "session-1", serverTime: 5_000 });
     expect(connectionPillLabel(client.currentState)).toBe("Connected (P3)");
 
+    // D4 (FR-7.15): a drop keeps the slot reserved and starts reconnecting.
     socket.serverClose();
+    expect(connectionPillLabel(client.currentState)).toBe("Reconnecting");
+
+    client.disconnect();
     expect(connectionPillLabel(client.currentState)).toBe("Disconnected");
   });
 });
@@ -429,6 +434,45 @@ describe("[FR-7.3] edge preservation and timing", () => {
   });
 });
 
+describe("[FR-8.11] haptic frame delivery", () => {
+  it("[FR-8.11] decodes Haptic frames and fans out the duration list", () => {
+    join();
+    const received: number[][] = [];
+    const unsubscribe = client.onHaptic((durations) => {
+      received.push([...durations]);
+    });
+
+    socket.deliverBinary(encodeHaptic([40, 20, 60]));
+    expect(received).toEqual([[40, 20, 60]]);
+
+    unsubscribe();
+    socket.deliverBinary(encodeHaptic([10]));
+    expect(received).toEqual([[40, 20, 60]]);
+  });
+
+  it("[FR-8.11] malformed frames and throwing listeners leave Pong intact", () => {
+    join();
+    const received: number[][] = [];
+    client.onHaptic(() => {
+      throw new Error("listener failed");
+    });
+    client.onHaptic((durations) => {
+      received.push([...durations]);
+    });
+
+    // count=2 promises two u16 steps but the frame carries none.
+    socket.deliverBinary(new Uint8Array([MSG.Haptic, 2, 0]));
+    expect(received).toEqual([]);
+
+    socket.deliverBinary(encodeHaptic([25, 25]));
+    expect(received).toEqual([[25, 25]]);
+
+    socket.deliverBinary(encodePong(1_000, 5_010));
+    expect(client.clock.samples).toBe(1);
+    expect(client.currentState.status).toBe("connected");
+  });
+});
+
 describe("[FR-7.10] clock sync over Ping/Pong", () => {
   it("[FR-7.10] pong samples update the controller clock and feed the debug stats", () => {
     join();
@@ -452,10 +496,13 @@ describe("[FR-7.10] clock sync over Ping/Pong", () => {
     expect(socket.pings()).toHaveLength(1);
     expect(decodePing(socket.pings()[0] as Uint8Array)).toEqual({ clientTimeMs: 1_000 });
 
+    // Each Pong is server activity, which keeps the 7 s watchdog fed (FR-7.14).
+    socket.deliverBinary(encodePong(1_000, 5_000));
     advance(5_000);
     expect(socket.pings()).toHaveLength(2);
     expect(decodePing(socket.pings()[1] as Uint8Array)).toEqual({ clientTimeMs: 6_000 });
 
+    socket.deliverBinary(encodePong(6_000, 10_000));
     advance(5_000);
     expect(socket.pings()).toHaveLength(3);
     expect(decodePing(socket.pings()[2] as Uint8Array)).toEqual({ clientTimeMs: 11_000 });
@@ -475,41 +522,47 @@ describe("[FR-7.10] clock sync over Ping/Pong", () => {
   });
 });
 
-describe("[FR-7.15 groundwork] closing stops every timer and never auto-reconnects", () => {
-  it("[FR-7.15] socket close stops the send loop, the Ping cadence and the touch engine", () => {
+describe("[FR-7.15] a socket close stops local traffic and hands off to reconnect", () => {
+  it("[FR-7.15] socket close stops the send loop and Ping cadence but keeps the slot and layout", () => {
     join(1, LAYOUT);
     expect(vi.getTimerCount()).toBeGreaterThan(0);
 
     socket.serverClose(1006, "lost");
 
-    expect(client.currentState.status).toBe("disconnected");
-    expect(client.currentState.error).toBe("Connection lost.");
+    // D4: the slot is reserved server-side for 30 s; reconnect, do not reset.
+    expect(client.currentState.status).toBe("reconnecting");
+    expect(client.currentState.slot).toBe(1);
     expect(client.isJoined).toBe(false);
-    expect(vi.getTimerCount()).toBe(0);
-    // D2 has no reconnect loop (D4-CTRL-02); the factory was called once.
-    expect(socketsCreated).toBe(1);
+    expect(client.layout?.id).toBe("platformer-v1");
+    expect(surface.querySelectorAll(".control")).toHaveLength(3);
 
     const inputsAfterClose = socket.inputs().length;
     const pingsAfterClose = socket.pings().length;
-    advance(2_000);
+    advance(200);
+    // Nothing is written to the dead socket while the 250 ms backoff runs.
     expect(socket.inputs()).toHaveLength(inputsAfterClose);
     expect(socket.pings()).toHaveLength(pingsAfterClose);
     expect(socketsCreated).toBe(1);
+
+    advance(100);
+    // The first retry opened a new socket (FR-7.15, 250 ms ± 20%).
+    expect(socketsCreated).toBe(2);
   });
 
-  it("[FR-7.15] a manual reconnect after close starts fresh timers and state", () => {
+  it("[FR-7.15] a manual connect() after a drop replaces the reconnect with fresh state", () => {
     join();
     socket.serverClose();
 
-    advance(250);
+    // Inside the 250 ms backoff and past the 4 ms send spacing.
+    advance(5);
     join(2);
 
-    expect(client.currentState).toEqual({ status: "connected", slot: 2, error: null });
+    expect(client.currentState).toEqual({ status: "connected", slot: 2, error: null, host: null });
     expect(socket.inputs()).toHaveLength(2);
     expect(vi.getTimerCount()).toBeGreaterThan(0);
   });
 
-  it("[FR-7.15] joinError and kick also stop timers and clear the layout", () => {
+  it("[FR-7.15] a kick stops timers, clears the layout and never reconnects", () => {
     join(1, LAYOUT);
     expect(client.layout?.id).toBe("platformer-v1");
 
@@ -517,8 +570,10 @@ describe("[FR-7.15 groundwork] closing stops every timer and never auto-reconnec
 
     expect(client.layout).toBeNull();
     expect(surface.querySelectorAll(".control")).toHaveLength(0);
-    expect(client.currentState.error).toContain("host removed");
+    expect(client.currentState.error).toBe("The host ended this controller's session.");
     expect(vi.getTimerCount()).toBe(0);
+    advance(10_000);
+    expect(socketsCreated).toBe(1);
   });
 
   it("[FR-7.1] disconnect stops the timers", () => {
@@ -621,12 +676,14 @@ describe("[FR-8.1] layout render and touch mapping", () => {
     expect(client.input.snapshot(0).rx).toBe(0);
   });
 
-  it("[FR-8.1] valid control types without a D2 renderer are skipped", () => {
+  it("[FR-8.1] every valid control type renders, including the D5 panel", () => {
     join(1, MIXED_LAYOUT);
 
     expect(client.layout?.controls).toHaveLength(2);
-    expect(surface.querySelectorAll(".control")).toHaveLength(1);
-    expect(surface.querySelector('[data-control-id="score"]')).toBeNull();
+    expect(surface.querySelectorAll(".control")).toHaveLength(2);
+    expect(surface.querySelector('[data-control-id="score"]')?.dataset["controlType"]).toBe(
+      "panel",
+    );
     expect(surface.querySelector('[data-control-id="fire"]')).not.toBeNull();
   });
 
@@ -666,23 +723,28 @@ describe("[FR-8.1] layout render and touch mapping", () => {
   });
 });
 
-describe("[FR-8.2] first layout mounts without a reload", () => {
-  it("[FR-8.2] a joined layout mounts; later setLayout messages do not hot-swap", () => {
+describe("[FR-8.2] layout hot-swap per slot and all", () => {
+  it("[FR-8.2] a later all-slot setLayout swaps in place and acks", () => {
     join(1, LAYOUT);
     expect(client.layout?.id).toBe("platformer-v1");
 
     socket.deliver({ t: "setLayout", slot: "all", layout: SECOND_LAYOUT });
 
-    expect(client.layout?.id).toBe("platformer-v1");
-    expect(surface.querySelectorAll(".control")).toHaveLength(3);
+    expect(client.layout?.id).toBe("second-v1");
+    expect(surface.querySelectorAll(".control")).toHaveLength(1);
+    expect(surface.querySelector('[data-control-id="jump"]')).toBeNull();
+    expect(surface.querySelector('[data-control-id="dash"]')).not.toBeNull();
+    expect(JSON.parse(socket.texts().at(-1) ?? "null")).toEqual({
+      t: "layoutAck",
+      layoutId: "second-v1",
+    });
   });
 
-  it("[FR-8.2] without a joined layout, the first matching setLayout mounts it", () => {
-    join();
+  it("[FR-8.2] a setLayout for another slot is ignored; this slot swaps", () => {
+    join(1);
     expect(client.layout).toBeNull();
     expect(surface.querySelectorAll(".control")).toHaveLength(0);
 
-    // Wrong slot first: ignored while the slot has no layout.
     socket.deliver({ t: "setLayout", slot: 2, layout: SECOND_LAYOUT });
     expect(client.layout).toBeNull();
 
@@ -691,14 +753,15 @@ describe("[FR-8.2] first layout mounts without a reload", () => {
     expect(surface.querySelectorAll(".control")).toHaveLength(3);
 
     socket.deliver({ t: "setLayout", slot: 1, layout: SECOND_LAYOUT });
-    expect(client.layout?.id).toBe("platformer-v1");
+    expect(client.layout?.id).toBe("second-v1");
+    expect(surface.querySelectorAll(".control")).toHaveLength(1);
   });
 
-  it("[FR-8.2] closing the socket clears the mounted layout for the next join", () => {
+  it("[FR-8.2] a fresh join after a drop clears the mounted layout", () => {
     join(1, LAYOUT);
     socket.serverClose();
-    expect(client.layout).toBeNull();
-    expect(surface.querySelectorAll(".control")).toHaveLength(0);
+    // A reconnect keeps the layout; an explicit new join replaces it.
+    expect(client.layout?.id).toBe("platformer-v1");
 
     join(1, SECOND_LAYOUT);
     expect(client.layout?.id).toBe("second-v1");

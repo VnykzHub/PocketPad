@@ -297,6 +297,13 @@ Automated implementation result: **PASS**; manual device acceptance **PENDING**.
   open. Layout delivery still waits for D5 `setLayout`; D2 accepts
   `joined.layout` or the first matching `setLayout`.
 
+> **Post-integration note (2026-10-22, Wave 3):** the D5 layout path is now
+> implemented end-to-end in code — the broker routes `setLayout`, the
+> controller applies it with in-place hot-swap, and the host sends it through
+> `LayoutApi`. Layout delivery therefore no longer waits on D5. No browser or
+> phone run was recorded for this note, so the manual D2 checks above and the
+> D2 exit remain PENDING.
+
 ## D4 — Session foundation (2026-10-21)
 
 Module-level result: **PASS**; end-to-end wiring **PENDING**.
@@ -315,3 +322,165 @@ Module-level result: **PASS**; end-to-end wiring **PENDING**.
   `pinRequired` is not in the error union.
 - D4 QA (8-client 10-minute stability, reconnect matrix, G1 timing) is
   PENDING. D4 is **NOT** complete.
+
+> **Post-integration note (2026-10-22, Wave 3):** the wiring gaps listed above
+> are addressed in the working tree. `ws-server.ts`/`registry.ts` now use host
+> recovery, stats, detach/suspend, hostPause/hostResume and the SR-5 join
+> limiter; controller `main.ts` drives join/reconnect through
+> `ControllerClient`, which owns suspend/Wake Lock; `RoomPanel` is mounted in
+> the runtime host; input-bot CLI flags are wired. Join limiting now checks
+> every token/PIN attempt before any credential comparison, not only
+> PIN-bearing attempts. A11 is enforced in behaviour: a token-only join to a
+> room with `requirePinForQr` is rejected with `badPin`; the dedicated
+> `pinRequired` member is still not in `JoinErrorReason` (deferred to P3). No
+> browser, phone or 8-bot run was recorded for this note, so D4 QA and the D4
+> exit remain PENDING.
+
+---
+
+## D3 — Runtime experiments (2026-10-22)
+
+Environment for every row below unless the row says otherwise:
+`pc-win11-rtx3050`, Windows 11 Home Single Language 10.0.26300, Chrome
+155.0.0.0 (persistent Chrome driven by the Chrome MCP), 1920x1080 at DPR 1,
+dev server `http://localhost:8080` on loopback. This is a desktop browser; no
+phone or TV was attached. Per `docs/TESTING.md`, a loopback browser run is a
+software baseline, not a phone or TV substitute.
+
+### E5 — input-to-canvas
+
+Method: open `http://localhost:8080/x/e05/`, press Run, read the Copy JSON
+block. The run is a same-tab controller socket -> `/ws` -> host socket with one
+`performance.now()` clock; 100 taps at 120 ms. Run timestamp
+`2026-10-21T19:07:55.994Z` (2026-10-22 local).
+
+| Experiment | Date | Device | OS | Browser | Conditions | Measurement | Verdict | Notes |
+|---|---|---|---|---|---|---|---|---|
+| E5 | 2026-10-22 | pc-win11-rtx3050 | Windows 11 Home Single Language 10.0.26300 | Chrome 155.0.0.0 | Desktop, loopback, 100 taps @ 120 ms, software legs only | samples 100/100, missed 0; inputToCanvas p50 8.6 ms, p95 9.1 ms (min 5.9, max 109.6); tapToEncode p50 0.1 / p95 0.3; packetToHost p50 0.8 / p95 1.2 (max 1.7); receiveToPaint p50 7.7 / p95 8.3 | PASS (desktop software baseline) | p95 is below the 25 ms budget; the 109.6 ms maximum is one paint outlier. Phone touch pipeline, Wi-Fi, TV display and camera legs are not included. |
+| E5 | 2026-10-22 | phone + tv | PENDING | PENDING | LAN, 5 GHz, phone -> TV, 1000 taps, camera-measured | not run | PENDING | No phone or TV attached. The desktop row does not replace this run. |
+| E5 (latency-harness live) | 2026-10-22 | pc-win11-rtx3050 | Windows 11 Home Single Language 10.0.26300 | Node v22.14.0 (no browser) | `node tools/latency-harness/dist/cli.js live --server http://localhost:8123 --taps 100 --interval 120 --out %TEMP%/lanpad-vt/e5-live-100.json`; input-bot socket -> broker -> host socket, one process clock | 100/100 paired; tapToEncode p50 10.107 / p95 28.159 (min 0.439, max 31.296); packetToHost p50 0.467 / p95 0.69 (max 1.08); inputAge p50 10.585 / p95 28.695; harness gate `pass: false` at 25 ms | FAIL (harness gate) | Analyze mode confirms `inputAge p95 >= 25 ms: FAIL`. The bot sends on a 60 Hz tick, so tapToEncode includes 0..16.7 ms of quantization; the broker leg itself was 0.69 ms p95. Treat this as a bot/harness artifact, not a measured phone pipeline; re-run with a phone or a non-tick-limited sender. |
+
+### E6 — TV display lag
+
+| Experiment | Date | Device | OS | Browser | Conditions | Measurement | Verdict | Notes |
+|---|---|---|---|---|---|---|---|---|
+| E6 | 2026-10-22 | tv | PENDING | PENDING | Game Mode on and off, 240 fps camera or photodiode | not run | PENDING | `experiments/e06/` has `flash.ts` and `page.ts` but no `index.html` or build, so the flash page is not runnable; display lag also needs a TV and camera. Not measured and not inferred from E5. |
+
+### E11 — audio latency
+
+| Experiment | Date | Device | OS | Browser | Conditions | Measurement | Verdict | Notes |
+|---|---|---|---|---|---|---|---|---|
+| E11 | 2026-10-22 | tv | PENDING | PENDING | Start-screen gesture, wired and Bluetooth if available | not run | PENDING | No `experiments/e11/` page exists and no TV is attached. Audio output latency cannot be measured from a desktop loopback run. |
+
+### E12 — renderer decision
+
+Decision: **custom WebGL2 renderer (`WebGL2Renderer`) with a
+`Canvas2DRenderer` fallback**, both behind the frozen `Renderer`,
+`Renderer2D` and `Renderer3D` interfaces. No Three.js dependency:
+`packages/runtime/package.json` declares only `@lanpad/protocol` and
+`@lanpad/sdk`. This is a **desktop-provisional** decision; the TV half of the
+size/frame/memory comparison is PENDING.
+
+| Experiment | Date | Device | OS | Browser | Conditions | Measurement | Verdict | Notes |
+|---|---|---|---|---|---|---|---|---|
+| E12 | 2026-10-22 | pc-win11-rtx3050 | Windows 11 Home Single Language 10.0.26300 | Chrome 155.0.0.0 | Built `packages/runtime/dist`; gzip via `zlib.gzipSync` | Page-load HTML+CSS+JS 128,073 raw / 42,353 gz; all `.js/.css/.html/.json` in dist 332,079 raw / 105,746 gz (37 files); hard cap 5,242,880 gz | RECORDED | Page-load gzip is about 0.8% of the hard cap. All-text dist over-counts because the tsc module tree is not all loaded by the page. |
+| E12 | 2026-10-22 | tv | PENDING | PENDING | Same cube scene, one texture, 1080p; frame p95 and memory on TV | not run | PENDING | No TV. A desktop host run reported backend `webgl2`, but FPS 0, frame p50/p95 "-", draw calls 0 because the cube demo never loaded: `/demo/cube-demo/game.manifest.json` returns HTTP 404. No frame-time or memory number is claimed. |
+
+Why custom: the implemented backend adds no runtime package, the Canvas2D
+fallback is already implemented and tested, and the measured page-load gzip is
+far under the 5 MB cap. If the TV run later shows the custom backend missing
+the frame budget, a Three.js backend can replace it behind `Renderer3D` without
+touching game code; the ADR (`docs/ADR-0001-renderer.md`) is still to be
+written by its owner.
+
+> **Post-integration note (2026-10-22, Wave 4):** `docs/ADR-0001-renderer.md`
+> now records the E12 decision as desktop-provisional. The wave's full gate
+> measured the host runtime dev bundle at **55,754 B gz** (dev target
+> 3,145,728; hard 5,242,880) and the controller at **37,911 B gz** (dev target
+> 40,960; hard 61,440). These are size-gate totals, not renderer-only numbers,
+> and they add no frame-time or memory evidence. The two E12 rows above are
+> unchanged: the desktop overlay run is still invalid because it was not
+> re-run after the `/demo/*` 404 fix, and the TV comparison remains **PENDING**.
+> No Three.js dependency exists in the tree.
+
+### D3-QA-01 — Cube on TV acceptance
+
+| Check | Date | Device | OS | Browser | Conditions | Measurement | Verdict | Notes |
+|---|---|---|---|---|---|---|---|---|
+| D3-QA-01 (desktop overlay only) | 2026-10-22 | pc-win11-rtx3050 | Windows 11 Home Single Language 10.0.26300 | Chrome 155.0.0.0 | `http://localhost:8080/?debug=1` | backend webgl2; FPS 0; frame p50/p95 "-"; sim ticks 0; draw calls 0; texture 0.00 MB; JS heap 3.4 MB; canvas 300x150; render scale 100%; DPR 1 | RECORDED | Overlay fields render, but the cube never started because the game manifest returns 404. This is not a TV acceptance run. |
+| D3-QA-01 | 2026-10-22 | tv + phone | PENDING | PENDING | Actual TV, phone join, stick/A, `?debug=1`, 100-tap E5, screenshot | not run | PENDING | Blocked by no TV or phone and by the manifest 404 above. Cube-on-TV, console-clean, frame p95 <= 14 ms and dynamic-resolution checks are all unmeasured. |
+
+> **Post-integration note (2026-10-22, Wave 3):** the
+> `/demo/cube-demo/game.manifest.json` 404 recorded above is addressed in the
+> tree — the dev server now routes `/demo/*` from the built host, and
+> `packages/runtime/dist/demo/cube-demo/game.manifest.json` exists after
+> `npm run build`. No browser re-run was performed for this note, so the E12
+> and D3-QA-01 verdicts above are unchanged. Re-run the overlay and the TV
+> acceptance before claiming either result.
+
+## D4 — Session experiments (2026-10-22)
+
+The module-level D4 section above still stands. These rows record the
+`D4-EXP-01` experiment runs. Environment is the same desktop as D3 unless the
+row says otherwise.
+
+### E4 — LAN network quality
+
+| Experiment | Date | Device | OS | Browser | Conditions | Measurement | Verdict | Notes |
+|---|---|---|---|---|---|---|---|---|
+| E4 | 2026-10-22 | pc-win11-rtx3050 | Windows 11 Home Single Language 10.0.26300 | Chrome 155.0.0.0 | Loopback, 1 socket, 200 pings @ 20 ms | sent 200, received 200, lost 0 (0%); RTT p50 0.8 ms, p95 1.2 ms, max 1.5, mean 0.857; jitter 0.15 ms | RECORDED | This is not the E4 criterion: loopback is not 5 GHz Wi-Fi. |
+| E4 | 2026-10-22 | phone + tv | PENDING | PENDING | 5 GHz, idle and busy, 1000 pings per band, 2.4 GHz comparison | not run | PENDING | Needs a phone and TV on the LAN. |
+
+### E9 — clock fairness
+
+| Experiment | Date | Device | OS | Browser | Conditions | Measurement | Verdict | Notes |
+|---|---|---|---|---|---|---|---|---|
+| E9 | 2026-10-22 | pc-win11-rtx3050 | Windows 11 Home Single Language 10.0.26300 | Chrome 155.0.0.0 | Same-machine ground truth on, 2 sockets, 20 rounds x 16 pings @ 20 ms | pairError p50 0.212 ms, p95 0.751, max 0.775; absErrorVsTruth p95 0.504; worst error bound 0.3 ms; passes true | PASS (same-machine estimator) | Same OS clock. Validates the minimum-RTT estimator against truth, not Wi-Fi path asymmetry between two phones. |
+| E9 | 2026-10-22 | phone pair | PENDING | PENDING | Two phones tapping together; synced timestamps vs arrival order | not run | PENDING | Needs two phones. If it fails, Reaction Duel uses arrival order plus a documented tie rule. |
+
+### E15 — phone lifecycle
+
+| Experiment | Date | Device | OS | Browser | Conditions | Measurement | Verdict | Notes |
+|---|---|---|---|---|---|---|---|---|
+| E15 | 2026-10-22 | phone | PENDING | PENDING | Lock screen, app switch, browser kill; rejoin inside the 30 s reservation | not run | PENDING | The in-page recorder refuses to report until a real hide/show occurs ("recorder armed; no hide/show yet"). No lifecycle event was performed, so no recovery time is claimed. |
+
+### G1 — scan-to-playable
+
+| Experiment | Date | Device | OS | Browser | Conditions | Measurement | Verdict | Notes |
+|---|---|---|---|---|---|---|---|---|
+| G1 (in-page instrumentation) | 2026-10-22 | pc-win11-rtx3050 | Windows 11 Home Single Language 10.0.26300 | Chrome 155.0.0.0 | Self-hosted room, same-machine page run | pageLoadToJoined 32,447.2 ms (human wait 32,390.7); runToJoined 31.3 ms; joinRoundTrip 1.4 ms; machine 56.5 ms; slot 1 | RECORDED | The 32.4 s is human reading time. This excludes the QR scan and the first rendered input, so it is not a G1 trial. |
+| G1 | 2026-10-22 | phone + tv | PENDING | PENDING | 10 trials, stopwatch from QR scan to visible movement | not run | PENDING | Needs a phone and TV. Pass is median < 5 s, hard fail 10 s. |
+
+D4 QA (8-client 10-minute stability, reconnect matrix) remains PENDING as
+recorded in the D4 section above.
+
+## D5 — Layouts and events (2026-10-22)
+
+Environment is the same desktop as D3 unless the row says otherwise. Both
+experiments need a real phone; neither has a runnable page in `experiments/`.
+
+### E10 — stroke streaming
+
+| Experiment | Date | Device | OS | Browser | Conditions | Measurement | Verdict | Notes |
+|---|---|---|---|---|---|---|---|---|
+| E10 | 2026-10-22 | phone + tv | PENDING | PENDING | Draw fast for 30 s; bytes/s per drawer and visible TV delay | not run | PENDING | `experiments/e10/` does not exist. `packages/controller/src/controls/strokeBatcher.ts` and its unit tests exist, but a unit test is not a device measurement; no bytes/s or TV delay is claimed. |
+| E10 | 2026-10-22 | phone + tv | PENDING | PENDING | Slow and medium drawing; compare batching settings | not run | PENDING | Same blocker. |
+
+### E16 — keyboard handling
+
+| Experiment | Date | Device | OS | Browser | Conditions | Measurement | Verdict | Notes |
+|---|---|---|---|---|---|---|---|---|
+| E16 | 2026-10-22 | android phone | PENDING | PENDING | Text control, 60 chars, submit, rotate with keyboard open | not run | PENDING | `experiments/e16/` does not exist and no Android phone was attached. iOS is deferred per A5. |
+
+## D6 — Sensors and haptics (2026-10-22)
+
+Sensor and haptic modules exist under `packages/controller/src/sensors/` and
+`packages/controller/src/haptics/`, but no experiment pages exist and no
+Android device was attached. Every row is PENDING; no sensor or vibration
+number is claimed.
+
+| Experiment | Date | Device | OS | Browser | Conditions | Measurement | Verdict | Notes |
+|---|---|---|---|---|---|---|---|---|
+| E7 | 2026-10-22 | android phone | PENDING | PENDING | `rotationRate` units/signs/axes, portrait and landscape; HTTP vs HTTPS secure context; 60 s drift | not run | PENDING | `experiments/e07/` and `docs/SENSOR-TESTING.md` do not exist. iOS leg is deferred per A5, not failed. |
+| E8 | 2026-10-22 | android phone (two if available) | PENDING | PENDING | 10/20 Hz patterns: 10 ms, 20 ms, [10,30], [20,40], long patterns | not run | PENDING | `experiments/e08/` does not exist. Whether 20 Hz is distinct or stutters is unmeasured. |
+| Swing feasibility | 2026-10-22 | android phone | PENDING | PENDING | 30 swings per direction; peak magnitude and axis; false positives/negatives | not run | PENDING | `experiments/e07-swing/` does not exist. No go/no-go for Sword Swing Duel is issued from desktop code. |

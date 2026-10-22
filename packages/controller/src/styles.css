@@ -45,13 +45,25 @@ body.playing .shell {
 
 .topbar {
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 8px;
   padding: 12px 16px 0;
   /* Keep the pill readable above the fixed play surface. */
   position: relative;
   z-index: 2;
-  /* The pill is status-only; never let it intercept a control touch. */
+  /* Statuses are display-only; the haptics button opts back in below. */
   pointer-events: none;
+}
+
+/* D6-CTRL-04: the only interactive topbar element (FR-8.12). */
+.haptics-toggle {
+  pointer-events: auto;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
 }
 
 /* Full-screen host for layout controls (D2-CTRL-04). */
@@ -118,6 +130,14 @@ body.playing .shell {
 .pill[data-state="connected"] {
   background: #123d24;
   color: #7ff0a8;
+}
+
+/* D4 (A9): slot held, waiting on the network or the TV. */
+.pill[data-state="reconnecting"],
+.pill[data-state="waiting-for-tv"],
+.pill[data-state="tv-paused"] {
+  background: #4a3b12;
+  color: #ffd479;
 }
 
 .shell {

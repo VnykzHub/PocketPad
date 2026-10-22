@@ -8,6 +8,7 @@
  * production origins are config-driven.
  */
 import { randomBytes as secureRandomBytes } from "node:crypto";
+import { existsSync } from "node:fs";
 import {
   createServer,
   type IncomingMessage,
@@ -44,6 +45,8 @@ export interface DevServerConfig {
     host: string;
     controller: string;
     games: string;
+    /** Unbuilt game sources, used for manifests/layouts only. */
+    gameSources?: string;
     experiments: string;
   };
   /** Derived at boot from LAN IPs + localhost; never `*`. */
@@ -91,6 +94,7 @@ export function defaultConfig(repoRoot = defaultRepoRoot()): DevServerConfig {
       host: join(repoRoot, "packages/runtime/dist"),
       controller: join(repoRoot, "packages/controller/dist"),
       games: join(repoRoot, "packages/games/dist"),
+      gameSources: join(repoRoot, "packages/games"),
       experiments: join(repoRoot, "experiments"),
     },
     allowedOrigins: allowedOriginsFromUrls(urls),
@@ -110,6 +114,27 @@ function rewritePrefix(req: IncomingMessage, prefix: string): void {
   const url = new URL(req.url ?? "/", "http://localhost");
   const rest = url.pathname.slice(prefix.length) || "/";
   req.url = `${rest}${url.search}`;
+}
+
+/** Exact game page: `/games/<slug>` or `/games/<slug>/` (A12). */
+const GAME_PAGE_PATTERN = /^\/games\/([a-z0-9][a-z0-9-]*)\/?$/;
+
+/**
+ * The only source-tree paths a game exposes before it is built: its manifest
+ * and layout documents. `src/**`, tests and READMEs stay server-side.
+ */
+const GAME_SOURCE_ASSET_PATTERN =
+  /^\/[a-z0-9][a-z0-9-]*\/(?:game\.manifest\.json|layouts\/[^/]+\.json)$/;
+
+/** True when the slug has a manifest in the built tree or the source tree. */
+function hasGameManifest(roots: DevServerConfig["staticRoots"], slug: string): boolean {
+  if (existsSync(join(roots.games, slug, "game.manifest.json"))) {
+    return true;
+  }
+  return (
+    roots.gameSources !== undefined &&
+    existsSync(join(roots.gameSources, slug, "game.manifest.json"))
+  );
 }
 
 function sendText(res: ServerResponse, status: number, body: string): void {
@@ -204,14 +229,45 @@ export function createDevServer(config: DevServerConfig, deps: DevServerDeps = {
       staticHandlers.host(req, res, () => sendText(res, 404, "Not found"));
       return;
     }
+    if (pathname === "/demo" || pathname.startsWith("/demo/")) {
+      // Bundled demo manifests and assets (`public/demo` copied into the host
+      // build). No SPA fallback: a missing manifest must be a visible 404.
+      staticHandlers.hostFiles(req, res, () => sendText(res, 404, "Not found"));
+      return;
+    }
     if (pathname === "/c" || pathname.startsWith("/c/")) {
       rewritePrefix(req, "/c");
       staticHandlers.controller(req, res, () => sendText(res, 404, "Not found"));
       return;
     }
     if (pathname.startsWith("/games/")) {
+      // A direct game page (`/games/reaction-duel/`) serves the host SPA,
+      // which selects the manifest from the URL (A12). Only slugs that
+      // actually have a manifest qualify; everything else stays a 404.
+      const page = GAME_PAGE_PATTERN.exec(pathname);
+      if (
+        page !== null &&
+        page[1] !== undefined &&
+        hasGameManifest(config.staticRoots, page[1])
+      ) {
+        staticHandlers.host(req, res, () => sendText(res, 404, "Not found"));
+        return;
+      }
       rewritePrefix(req, "/games");
-      staticHandlers.games(req, res, () => sendText(res, 404, "Not found"));
+      staticHandlers.games(req, res, () => {
+        // Unbuilt games still expose their manifest and layouts from the
+        // source tree; no other source files are reachable.
+        const sourcePath = pathnameOf(req.url);
+        if (
+          staticHandlers.gameSources !== undefined &&
+          sourcePath !== null &&
+          GAME_SOURCE_ASSET_PATTERN.test(sourcePath)
+        ) {
+          staticHandlers.gameSources(req, res, () => sendText(res, 404, "Not found"));
+          return;
+        }
+        sendText(res, 404, "Not found");
+      });
       return;
     }
     if (pathname.startsWith("/x/")) {

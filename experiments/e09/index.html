@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E4/E9/E15/G1 - LAN quality, clock fairness, lifecycle, join timing</title>
+<link rel="stylesheet" href="../shared/probe.css">
+</head>
+<body>
+<main>
+<h1>E4/E9/E15/G1 - LAN quality, clock fairness, lifecycle, join timing</h1>
+<p>Measures, from this browser to the dev server: <strong>E4</strong> Ping/Pong RTT p50/p95, jitter and loss; <strong>E9</strong> clock-offset estimation error between two sockets (the implied press-time error for two players pressing together); <strong>E15</strong> hide/show timing and session-rejoin time; <strong>G1</strong> page load to <code>joined</code>.</p>
+<p>Nothing runs until you press <strong>Run</strong>. The first Run joins a room (a throwaway self-hosted room, or the external room below) and arms the lifecycle recorder. For E15, lock the screen or switch apps, come back, and press <strong>Run</strong> again. Room code, PIN, tokens and session are never written to the result. Open this page through a URL printed by the dev server (LAN IP or <code>localhost</code>) so the WebSocket Origin allowlist matches.</p>
+
+<fieldset>
+<legend>Settings</legend>
+<p><label>E4 pings per socket <input id="pings" type="number" min="10" max="5000" value="200"></label></p>
+<p><label>E4 interval (ms) <input id="interval" type="number" min="1" max="1000" value="20"></label></p>
+<p><label>E4 parallel sockets (8 = G4 load) <input id="sockets" type="number" min="1" max="8" value="1"></label></p>
+<p><label>E9 rounds <input id="rounds" type="number" min="1" max="100" value="20"></label></p>
+<p><label>E9 pings per burst <input id="burst" type="number" min="4" max="200" value="16"></label></p>
+<p><label><input id="same-machine" type="checkbox"> This browser runs on the dev-server machine (enables E9 ground truth)</label></p>
+<p><label>External room code (optional, e.g. a TV host) <input id="room-code" type="text" maxlength="4" autocomplete="off"></label>
+<label>PIN <input id="room-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></label></p>
+</fieldset>
+
+<button id="run" type="button">Run</button>
+<button id="copy" type="button" disabled>Copy JSON</button>
+<p id="status" role="status" aria-live="polite">Not run.</p>
+
+<table id="results" aria-label="E4/E9/E15/G1 results"></table>
+
+<h2>JSON result</h2>
+<pre id="json">Not run.</pre>
+
+<p><a href="../">Back to the experiment index</a></p>
+</main>
+<script type="module" src="./page.js"></script>
+</body>
+</html>

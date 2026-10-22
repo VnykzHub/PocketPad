@@ -92,8 +92,8 @@ Goals are not one-time tasks; they are proof points. Each must be demonstrated a
 | FR-8.7 | Pressed state renders in the same frame as the touch | Controller | D2-CTRL-02 | G2, G5 |
 | FR-8.8 | On hidden: `suspend`, stop sensors, release wake lock; on visible: rejoin by session | Controller | D4-CTRL-02 | G1, G4 |
 | FR-8.9 | `text`/`canvas` handle the on-screen keyboard resizing the viewport | Controller | D5-CTRL-03 | G5 |
-| FR-8.10 | Games always provide a non-gyro fallback | Controller/SDK | D6-CTRL-03 | G5 |
-| FR-8.11 | Haptics rate-limited 20 Hz per slot and coalesced | Controller | D6-CTRL-04 | G5 |
+| FR-8.10 | Games always provide a non-gyro fallback | Controller/SDK | D5-SDK-01, D6-CTRL-03 | G5 |
+| FR-8.11 | Haptics rate-limited 20 Hz per slot and coalesced | Controller | D6-CTRL-04, D6-SRV-01, D6-RT-01 | G5 |
 | FR-8.12 | Global haptics toggle | Controller | D6-CTRL-04 | G5 |
 
 ### 2.5 Host runtime (§9)
@@ -120,7 +120,7 @@ Goals are not one-time tasks; they are proof points. Each must be demonstrated a
 |---|---|---|---|---|
 | FR-10.1 | `protocol` has zero dependencies and runs in Node, browsers and Deno | Protocol | D0-PROTO-01, D0-REPO-01 | G7, G8 |
 | FR-10.2 | `runtime` must not import `controller` (ESLint rule) | Runtime/Tools | D0-REPO-01 | G7 |
-| FR-10.3 | Game manifest: name, entry, layouts, assetBudget, minPlayers, maxPlayers, needsGyro, chunkConfig? | SDK | D0-SDK-01, D3-SDK-01 | G8 |
+| FR-10.3 | Game manifest: name, entry, layouts, assetBudget, minPlayers, maxPlayers, needsGyro, chunkConfig? | SDK | D0-SDK-01, D3-SDK-01, D7-SDK-01 | G8 |
 | FR-10.4 | Engine/protocol/controller/SDK MIT; games keep their authors' licenses; brand boundary documented | Docs | P4-DOCS-01 | G8 |
 
 ### 2.7 Device capability (§12)
@@ -169,7 +169,7 @@ Goals are not one-time tasks; they are proof points. Each must be demonstrated a
 | SR-3 | Dev server binds to LAN with visible warning; never public | Server | D0-SRV-01 | G7 |
 | SR-4 | PIN always required for manual join; optional PIN-required-for-QR mode | Server | D4-SRV-01, P3-SEC-02 | G1 |
 | SR-5 | Join rate limit 5 attempts/min/IP, then lockout | Server | D4-SRV-01, P3-SEC-01 | G4 |
-| SR-6 | Max 8 controllers; binary frames > 64 B and JSON > 4 KB rejected and socket closed | Protocol/Server | D0-PROTO-03, D5-SRV-01, P3-SEC-03 | G4 |
+| SR-6 | Max 8 controllers; binary frames > 64 B and JSON > 4 KB rejected and socket closed (A13: `setLayout` JSON up to 16 KB) | Protocol/Server | D0-PROTO-03, D5-PROTO-01, D5-SRV-01, D5-CTRL-05, P3-SEC-03 | G4 |
 | SR-7 | No PII, no analytics | Infra/docs | P3-OPS-01, P4-DOCS-01 | G7 |
 | SR-8 | CSP on both apps; production CSP lists relay origins | Infra/ops | P2-SEC-01, P3-SEC-03 | G6 |
 | SR-9 | Log room create/join/leave, never tokens | Server | D0-SRV-03, D4-SRV-01, P3-OPS-01 | G7 |
@@ -185,7 +185,7 @@ Goals are not one-time tasks; they are proof points. Each must be demonstrated a
 | ID | Short requirement | Layer | Primary work item(s) | Goal |
 |---|---|---|---|---|
 | AR-3 | Global haptics toggle | Controller | D6-CTRL-04 | G5 |
-| AR-4 | Host is operable with TV remote arrow keys and Enter | Runtime/Hub | D4-HOST-01, P6-HUB-01, P5-QA-04 | G6 |
+| AR-4 | Host is operable with TV remote arrow keys and Enter | Runtime/Hub | D3-RT-05, D4-HOST-01, P6-HUB-01, P5-QA-04 | G6 |
 | AR-5 | Minimum touch target 44 × 44 CSS px | Controller | D2-CTRL-01, D2-CTRL-02 | G5 |
 
 ---
@@ -250,7 +250,7 @@ These are not requirements; they map which platform capability each game needs a
 - [ ] Every goal G1–G8 has the listed evidence recorded.
 - [ ] Every capability C1–C10 is exercised by at least one proof or catalog game.
 - [ ] No test tags reference an ID that does not exist here.
-- [ ] Amendments A1–A11 are either implemented or explicitly rejected with a replacement plan.
+- [ ] Amendments A1–A13 are either implemented or explicitly rejected with a replacement plan.
 
 ---
 
@@ -270,3 +270,4 @@ These are not requirements; they map which platform capability each game needs a
 | A10 | `badVersion` join error reason | D4-PROTO-01 | Version mismatch must be distinguishable from a bad token |
 | A11 | `pinRequired` + `token`+`pin` join for QR PIN mode | P3-SEC-02 | Optional QR PIN mode needs a prompt path; additive error value |
 | A12 | Reaction Duel four-button target-match Minimal | games/reaction-duel.md, D2-CTRL-02, D7-SDK-01 | User wants at least four inputs per controller; one-button mode remains Full |
+| A13 | `setLayout` JSON frames may be up to 16 KB; all other JSON frames remain capped at 4 KB (SR-6). The broker enforces the per-message cap | D5-PROTO-01, D0-SRV-03, D5-RT-01 | SDK accepts 16 KB layouts (FR-8.4) but SR-6 caps JSON at 4 KB; without the exception a valid layout never reaches controllers |

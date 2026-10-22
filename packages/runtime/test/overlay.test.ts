@@ -367,6 +367,58 @@ describe("overlay fields", () => {
     expect(field(mount, "gyroSmoothing")).toBe("—");
   });
 
+  test("[FR-8.5][FR-7.6] per-slot gyro active and tilt angle are visible", () => {
+    const { mount, clock, overlay } = createOverlay();
+
+    clock.advance(OVERLAY_UPDATE_INTERVAL_MS);
+    overlay.update(
+      snapshotWith({
+        slots: [
+          slotStats({
+            slot: 1,
+            packetsPerSecond: 60,
+            gyroActive: true,
+            tilt: { angleX: 12.34, angleY: -4.56, available: true },
+          }),
+          slotStats({
+            slot: 2,
+            gyroActive: false,
+            tilt: { angleX: 12.3, angleY: 4.5, available: false },
+          }),
+        ],
+      }),
+    );
+
+    expect(field(mount, "slot-1")).toBe(
+      "age — · 60 pkt/s · rtt — · jitter — · 0 drops · gyro on · tilt 12.3°/-4.6°",
+    );
+    expect(field(mount, "slot-2")).toBe(
+      "age — · 0 pkt/s · rtt — · jitter — · 0 drops · gyro off · tilt —",
+    );
+    // Without the optional D6 fields the pre-D6 row is unchanged.
+    expect(field(mount, "slot-3")).toBe("—");
+  });
+
+  test("[FR-8.11] the last haptic pulse is visible", () => {
+    const { mount, clock, overlay } = createOverlay();
+
+    clock.advance(OVERLAY_UPDATE_INTERVAL_MS);
+    overlay.update(
+      snapshotWith({ lastHaptic: { target: 0, ageMs: 40, steps: 2 } }),
+    );
+    expect(field(mount, "lastHaptic")).toBe("all · 40 ms ago · 2 steps");
+
+    clock.advance(OVERLAY_UPDATE_INTERVAL_MS);
+    overlay.update(
+      snapshotWith({ lastHaptic: { target: 2, ageMs: null, steps: 1 } }),
+    );
+    expect(field(mount, "lastHaptic")).toBe("P2 · — · 1 step");
+
+    clock.advance(OVERLAY_UPDATE_INTERVAL_MS);
+    overlay.update(snapshotWith({ lastHaptic: null }));
+    expect(field(mount, "lastHaptic")).toBe("—");
+  });
+
   test("[PR-9.4] pooled entity counts are reported so pool churn is visible", () => {
     const { mount, clock, overlay } = createOverlay();
     const entities = { active: 12, pooled: 64, spawned: 130 };

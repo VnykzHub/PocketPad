@@ -14,6 +14,7 @@ import {
   MAX_CONTROLLERS,
   MAX_EVENT_NAME_CHARS,
   MAX_JSON_FRAME_BYTES,
+  MAX_LAYOUT_JSON_FRAME_BYTES,
   MAX_PLAYER_NAME_CHARS,
   ROOM_CODE_LENGTH,
   ROOM_PIN_LENGTH,
@@ -193,6 +194,19 @@ export function assertJsonWithinLimit(text: string): void {
   if (bytes > MAX_JSON_FRAME_BYTES) {
     bad("tooLarge", `JSON frame is ${bytes} bytes; max ${MAX_JSON_FRAME_BYTES}`);
   }
+}
+
+/**
+ * Amendment A13: only a `setLayout` frame may carry up to 16 KB. Every other
+ * message type keeps the SR-6 4 KB cap, enforced after the type is known.
+ */
+function frameLimitForType(messageType: string): number {
+  return messageType === "setLayout" ? MAX_LAYOUT_JSON_FRAME_BYTES : MAX_JSON_FRAME_BYTES;
+}
+
+/** Message for a frame that exceeds the cap applying to its type (A13). */
+function overLimitMessage(bytes: number): string {
+  return `JSON frame is ${bytes} bytes; max ${MAX_JSON_FRAME_BYTES} (only setLayout may be up to ${MAX_LAYOUT_JSON_FRAME_BYTES})`;
 }
 
 function parseJoin(record: UnknownRecord): Extract<ClientToServerMessage, { t: "join" }> {
@@ -408,19 +422,33 @@ function parseStats(record: UnknownRecord): Extract<ServerToClientMessage, { t: 
  * Layout, panel and event bodies are passed through as opaque JsonValue.
  */
 export function parseJsonMessage(text: string): JsonControlMessage {
-  assertJsonWithinLimit(text);
+  // A13: the hard ceiling is the layout cap. Nothing larger reaches
+  // JSON.parse, so a hostile frame cannot make the parser do unbounded work.
+  const bytes = jsonByteLength(text);
+  if (bytes > MAX_LAYOUT_JSON_FRAME_BYTES) {
+    bad("tooLarge", `JSON frame is ${bytes} bytes; max ${MAX_LAYOUT_JSON_FRAME_BYTES}`);
+  }
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
   } catch {
+    // An unparseable frame cannot be a setLayout, so the default cap applies.
+    if (bytes > MAX_JSON_FRAME_BYTES) {
+      bad("tooLarge", overLimitMessage(bytes));
+    }
     bad("badType", "invalid JSON");
   }
 
+  const t = isRecord(parsed) ? parsed["t"] : undefined;
+  // A13: only a setLayout frame earns the 16 KB cap; everything else keeps
+  // SR-6's 4 KB cap, including frames whose type is missing or not a string.
+  if (t !== "setLayout" && bytes > MAX_JSON_FRAME_BYTES) {
+    bad("tooLarge", overLimitMessage(bytes));
+  }
   if (!isRecord(parsed)) {
     bad("badType", "JSON message root must be an object");
   }
-  const t = parsed["t"];
   if (typeof t !== "string") {
     bad("badType", `missing string field "t"`);
   }
@@ -472,12 +500,16 @@ export function parseJsonMessage(text: string): JsonControlMessage {
 }
 
 /**
- * Serializes a control message and enforces the 4096-byte UTF-8 cap so the
- * caller can never emit a frame the peer must reject (SR-6).
+ * Serializes a control message and enforces the per-message UTF-8 cap so the
+ * caller can never emit a frame the peer must reject (SR-6, A13).
  */
 export function stringifyJsonMessage(message: JsonControlMessage): string {
   const text = JSON.stringify(message);
-  assertJsonWithinLimit(text);
+  const limit = frameLimitForType(message.t);
+  const bytes = jsonByteLength(text);
+  if (bytes > limit) {
+    bad("tooLarge", `JSON frame is ${bytes} bytes; max ${limit}`);
+  }
   return text;
 }
 

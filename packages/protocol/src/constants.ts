@@ -20,6 +20,14 @@ export const MAX_BINARY_FRAME_BYTES = 64;
 /** JSON frames larger than this many UTF-8 bytes are rejected (SR-6). */
 export const MAX_JSON_FRAME_BYTES = 4096;
 
+/**
+ * Amendment A13: a `setLayout` JSON frame may be up to 16 KB because the SDK
+ * accepts layout documents of up to 16 KB. Every other JSON message type
+ * remains capped at `MAX_JSON_FRAME_BYTES` (SR-6); the broker enforces the
+ * per-message cap, not just the transport maximum.
+ */
+export const MAX_LAYOUT_JSON_FRAME_BYTES = 16_384;
+
 /** A haptic pattern carries at most eight durations (spec §7.1). */
 export const MAX_HAPTIC_STEPS = 8;
 

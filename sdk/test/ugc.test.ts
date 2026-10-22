@@ -1,8 +1,11 @@
 import { describe, expect, test } from "vitest";
 import {
+  MAX_PLAYER_NAME_CHARS,
+  isAllowedColor,
   isAllowedImageSrc,
   isValidEventName,
   normalizeStrokePoint,
+  sanitizePlayerName,
   sanitizeText,
 } from "../src/ugc";
 
@@ -46,6 +49,28 @@ describe("sanitizeText (D5-SDK-01)", () => {
     expect(sanitizeText("abc", Number.NaN)).toBe("");
     expect(sanitizeText("abc", Number.POSITIVE_INFINITY)).toBe("");
     expect(sanitizeText("abc", 1_000)).toBe("abc");
+  });
+
+  test("[SR-13] hostile markup and URL payloads stay plain text", () => {
+    const payloads = [
+      '<img src=x onerror=alert(1)>',
+      '"><script>alert(1)</script>',
+      "<script>alert(document.cookie)</script>",
+      "javascript:alert(1)",
+      "data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==",
+      '<iframe srcdoc="<script>alert(1)</script>"></iframe>',
+      "expression(alert(1))",
+      "#fff; background: url(//evil.example/x)",
+    ];
+
+    for (const payload of payloads) {
+      expect(sanitizeText(payload, 1_000), payload).toBe(payload);
+    }
+
+    // Oversized input is truncated, never returned whole.
+    expect(sanitizeText("a".repeat(10_000), 64)).toHaveLength(64);
+    // Embedded controls are removed wherever they appear.
+    expect(sanitizeText("<\u0000script\u0007>", 100)).toBe("<script>");
   });
 });
 
@@ -151,6 +176,54 @@ describe("normalizeStrokePoint (D5-SDK-01)", () => {
   });
 });
 
+describe("isAllowedColor (D5-SEC-01)", () => {
+  test("[SR-13] accepts only #rgb and #rrggbb hex colours", () => {
+    for (const color of ["#fff", "#FFF", "#000", "#a1b2c3", "#AABBCC"]) {
+      expect(isAllowedColor(color), color).toBe(true);
+    }
+
+    for (const value of [
+      "#ff",
+      "#ffff",
+      "#fffff",
+      "#fffffff",
+      "#ggg",
+      "fff",
+      "red",
+      "rgb(0, 0, 0)",
+      "rgba(0, 0, 0, 0.5)",
+      "var(--accent)",
+      "expression(alert(1))",
+      "url(javascript:alert(1))",
+      "#fff; background: url(//evil.example/x)",
+      "#fff\n",
+      " #fff",
+      "#fff ",
+      7,
+      null,
+      undefined,
+      {},
+      ["#fff"],
+    ]) {
+      expect(isAllowedColor(value), String(value)).toBe(false);
+    }
+  });
+});
+
+describe("sanitizePlayerName (D5-SEC-01)", () => {
+  test("[SR-13] is plain text, control-free and at most 24 characters", () => {
+    expect(MAX_PLAYER_NAME_CHARS).toBe(24);
+    expect(sanitizePlayerName("Alice")).toBe("Alice");
+    expect(sanitizePlayerName("  Alice  ")).toBe("Alice");
+    expect(sanitizePlayerName("a\u0000b\u0007c\u007fd")).toBe("abcd");
+    expect(sanitizePlayerName("<b>Alice</b>")).toBe("<b>Alice</b>");
+    expect(sanitizePlayerName("x".repeat(100))).toHaveLength(MAX_PLAYER_NAME_CHARS);
+    expect(sanitizePlayerName("😀".repeat(30))).toBe("😀".repeat(MAX_PLAYER_NAME_CHARS));
+    expect(sanitizePlayerName(42)).toBe("");
+    expect(sanitizePlayerName(undefined)).toBe("");
+  });
+});
+
 describe("UGC helper purity", () => {
   test("[SR-13] helpers are DOM-free and return plain values", () => {
     const throwOnDomAccess = (): never => {
@@ -168,6 +241,8 @@ describe("UGC helper purity", () => {
     try {
       expect(sanitizeText("<b>plain</b>", 100)).toBe("<b>plain</b>");
       expect(isAllowedImageSrc("assets/card.png")).toBe(true);
+      expect(isAllowedColor("#abc")).toBe(true);
+      expect(sanitizePlayerName("  Alice  ")).toBe("Alice");
       expect(isValidEventName("answer")).toBe(true);
       expect(normalizeStrokePoint(0.5, 0.5, 1)).toEqual({ x: 0.5, y: 0.5, t: 1 });
     } finally {

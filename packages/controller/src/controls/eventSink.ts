@@ -49,6 +49,8 @@ export type StrokeEventData = {
   color: string;
   width: number;
   phase: "start" | "move" | "end";
+  /** Total points sampled for the stroke; present on `end` only (additive). */
+  count?: number;
 };
 
 /**

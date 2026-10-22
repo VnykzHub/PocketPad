@@ -12,7 +12,8 @@
   },
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "typecheck": "tsc -b",
+    "typecheck": "tsc -b && npm run typecheck:games",
+    "typecheck:games": "tsc -p packages/games/reaction-duel/tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "size": "node tools/size-budget/dist/cli.js",
