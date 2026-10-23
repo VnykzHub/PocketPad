@@ -1,0 +1,22 @@
+{
+  "name": "@lanpad/asset-curate",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b && tsc -p tsconfig.test.json",
+    "test": "vitest run",
+    "curate": "node dist/cli.js --out ../../assets",
+    "curate:check": "node dist/cli.js --out ../../assets --check"
+  },
+  "dependencies": {}
+}
