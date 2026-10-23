@@ -152,7 +152,7 @@ describe("[ER-25-04] launcher layout sync", () => {
     expect(layoutFrames(hidden.sender)).toEqual([]);
   });
 
-  test("[ER-25-04] a launch replaces the launcher layout and the guard never overrides it", () => {
+  test("[ER-25-04] a launch (including Engine Cube) replaces the launcher layout and the guard never overrides it", () => {
     const h = createSyncHarness();
     h.sync.sync();
 
@@ -168,6 +168,17 @@ describe("[ER-25-04] launcher layout sync", () => {
       { slot: "all", id: GAME_LAYOUT.id },
     ]);
     expect(h.api.current(1)?.id).toBe(GAME_LAYOUT.id);
+
+    // Engine Cube (`?debug=1`) is still a stage game: starting it destroys the
+    // console shell, and no room event may put the launcher remote back.
+    const techDemo = createSyncHarness();
+    techDemo.gates.launcherShown = false;
+    techDemo.gates.gameRunning = true;
+    techDemo.api.set("all", GAME_LAYOUT);
+    techDemo.sync.sync();
+    expect(layoutFrames(techDemo.sender)).toEqual([
+      { slot: "all", id: GAME_LAYOUT.id },
+    ]);
   });
 
   test("[ER-25-04] returning to / restores the launcher layout after a game", () => {
