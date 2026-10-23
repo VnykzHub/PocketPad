@@ -17,7 +17,7 @@
  * schema error. Duplicate slugs also throw, so a new game cannot silently
  * shadow another.
  */
-import type { GameManifest } from "@lanpad/sdk";
+import type { GameManifest, GamePresentation } from "@lanpad/sdk";
 import { validateManifest } from "@lanpad/sdk";
 
 /** One game as the hub lists it (frozen shape from D7-SDK-01). */
@@ -33,6 +33,8 @@ export interface GameEntry {
   readonly needsGyro: boolean;
   /** Root-absolute manifest URL the host's `loadGame` fetches. */
   readonly manifestUrl: string;
+  /** Additive spec-25 launcher metadata; absent when the manifest omits it. */
+  readonly presentation?: GamePresentation;
 }
 
 /** A manifest discovered on disk, with the path used in error messages. */
@@ -122,6 +124,7 @@ export function createGameRegistry(
     const rawDescription = (manifest as { description?: unknown }).description;
     const description =
       typeof rawDescription === "string" ? rawDescription.trim() : "";
+    const presentation = manifest.presentation;
     bySlug.set(
       source.slug,
       Object.freeze({
@@ -132,6 +135,7 @@ export function createGameRegistry(
         maxPlayers: manifest.maxPlayers,
         needsGyro: manifest.needsGyro,
         manifestUrl: manifestUrlFor(source.slug),
+        ...(presentation === undefined ? {} : { presentation }),
       }),
     );
   }

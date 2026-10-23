@@ -13,6 +13,7 @@ import { createCanvas2DDevice } from "@lanpad/engine-renderer-webgl2/canvas2d";
 import type {
   AssetDeclaration,
   AssetLibrary,
+  AssetProgress as LoadedAssetProgress,
   GameManifest,
   GameWorld3D,
 } from "@lanpad/sdk";
@@ -77,6 +78,17 @@ const NO_ASSETS_PROGRESS: AssetProgress = {
   done: true,
 };
 
+/** The same "ready at once" signal in the loader's own progress shape. */
+const NO_ASSETS_LOADED_PROGRESS: LoadedAssetProgress = {
+  fetched: 0,
+  declared: 0,
+  determinate: true,
+  state: "ready",
+  loadedCount: 0,
+  totalCount: 0,
+  currentId: null,
+};
+
 /**
  * Benchmark affordance: `?debug=1&babylon-backend=webgl2` forces the WebGL2
  * path so the fallback can be measured on a machine whose WebGPU works. It is
@@ -120,6 +132,12 @@ export interface StageDeps {
   readonly closeOverlays: () => void;
   /** HP-07 "Back to games" action on the unknown-game notice. */
   readonly onBackToGames: () => void;
+  /**
+   * Eager-load progress for a host-level loading screen (spec 25 §2.4). The
+   * launcher forwards it via `setLoadingProgress`; the stage start screen is
+   * still updated independently.
+   */
+  readonly onAssetProgress?: (progress: LoadedAssetProgress) => void;
   /** Test seam: shared audio bus; production creates its own (Web Audio). */
   readonly audio?: AudioBus;
   /** Test seam: renderer selection, so stage tests need no GPU. */
@@ -681,10 +699,12 @@ export function createStage(deps: StageDeps): HostStage {
         // Spec 23 §3.3-3: eager bytes load on the start screen with exact
         // byte progress; lazy assets wait for the game's `ctx.assets.load`.
         await assetLibrary.loadEager((progress) => {
+          deps.onAssetProgress?.(progress);
           startScreen?.updateProgress(toLoadProgress(progress));
         });
       } else {
         // No assets.json: nothing to fetch, so the screen is ready at once.
+        deps.onAssetProgress?.(NO_ASSETS_LOADED_PROGRESS);
         startScreen?.updateProgress(NO_ASSETS_PROGRESS);
       }
     } catch (error) {

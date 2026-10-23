@@ -25,12 +25,14 @@
  * notices, navigation opens games and closes modals). None of them runs before
  * the room boots at the end of this function.
  */
+import { toLoadProgress } from "../assets/gameAssets.js";
 import { isDebugEnabled } from "../debug/Overlay.js";
 import { createBundledGames } from "../demo/bundledGames.js";
 import { createDebugCounters } from "../game/GameContext.js";
 import { InputMapper } from "../input/InputMapper.js";
 import { HostClient } from "../net/hostClient.js";
 import { RoomPanel } from "../ui/RoomPanel.js";
+import { renderJoinQr } from "../ui/QrCode.js";
 import { createHostCapabilities } from "./capabilities.js";
 import { createChrome, setupFullscreenToggle } from "./chrome.js";
 import { element } from "./dom.js";
@@ -155,6 +157,18 @@ export function bootstrapHost(): void {
     isRoomReady: () => (roomController?.getRoomCode() ?? null) !== null,
     getPathname: () => window.location.pathname,
     onLaunch: (slug) => navigation?.navigateToGame(slug),
+    // Spec 25 additive wiring. Each getter is late-bound because the room and
+    // the stage boot after the launcher is constructed.
+    presentationFor: (slug) =>
+      bundledGames.games.find((game) => game.slug === slug)?.presentation,
+    roomCode: () => roomController?.getRoomCode() ?? null,
+    roomPin: () => roomController?.getRoomPin() ?? null,
+    joinUrl: () => roomController?.getJoinUrl() ?? null,
+    renderQr: renderJoinQr,
+    unlockAudio: () => stage?.unlockAudio() ?? Promise.resolve(),
+    players: () => roster.playerInputs(),
+    connection: () => roomController?.getConnection(),
+    onCancelLaunch: () => navigation?.returnToLauncher(),
   });
 
   stage = createStage({
@@ -175,6 +189,9 @@ export function bootstrapHost(): void {
     hideLauncher: () => launcher?.destroy(),
     closeOverlays: () => modals?.closeAll(),
     onBackToGames: () => navigation?.returnToLauncher(),
+    // Spec 25 §2.4: the console loading screen mirrors eager asset bytes.
+    onAssetProgress: (progress) =>
+      launcher?.setLoadingProgress(toLoadProgress(progress)),
   });
 
   navigation = createNavigation({
@@ -199,10 +216,26 @@ export function bootstrapHost(): void {
     hintEl,
     notices,
     syncPause,
-    maybeShowLauncher: () => launcher?.maybeShow(),
+    maybeShowLauncher: () => {
+      launcher?.maybeShow();
+      launcher?.syncCounts();
+    },
     destroyLauncher: () => launcher?.destroy(),
     resetRouteToLauncher: () => navigation?.resetRouteToLauncher(),
+    syncLauncher: () => launcher?.syncCounts(),
+    handleRemote: (button) => launcher?.handleRemote(button) ?? false,
   });
+
+  // Spec 25: the console shell owns no frame loop. The host polls gamepads
+  // once per frame while the launcher exists; `pollGamepad` emits its own
+  // actions through the shell, so nothing is forwarded twice.
+  if (typeof window.requestAnimationFrame === "function") {
+    const pumpLauncherInput = (): void => {
+      launcher?.pollGamepad();
+      window.requestAnimationFrame(pumpLauncherInput);
+    };
+    window.requestAnimationFrame(pumpLauncherInput);
+  }
 
   installHostEvents({
     window,

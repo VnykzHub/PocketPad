@@ -9,6 +9,7 @@
  */
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { getGames } from "../src/game/registry.js";
+import { ENGINE_CUBE_SLUG } from "../src/host/launcher.js";
 
 const ROOM_TOKEN = "r".repeat(22);
 const HOST_TOKEN = "h".repeat(22);
@@ -144,8 +145,8 @@ beforeAll(async () => {
   await import("../src/main.js");
 
   await waitFor(
-    () => document.querySelector(".lanpad-launcher") !== null,
-    "launcher after room creation",
+    () => document.querySelector(".console-shell") !== null,
+    "console launcher after room creation",
   );
   await waitFor(
     () => document.getElementById("connection")?.textContent === "Connected",
@@ -160,36 +161,60 @@ afterAll(() => {
 });
 
 describe("host shell", () => {
-  test("[FR-10.3] mounts the launcher at / after a room exists and no stage canvas", () => {
-    const launcher = document.querySelector(".lanpad-launcher");
+  test("[FR-10.3] mounts the console launcher at / after a room exists and no stage canvas", () => {
+    const launcher = document.querySelector(".console-shell");
     expect(launcher).not.toBeNull();
-    expect(launcher?.querySelector("h1")?.textContent).toBe("Games");
-    expect(document.querySelectorAll(".lanpad-launcher__card")).toHaveLength(
-      getGames().length,
+    expect(document.querySelector(".console-row__title")?.textContent).toBe(
+      "Games",
     );
+    // Engine Cube is a debug-only tile; it appears with ?debug=1 only.
+    const visibleGames = getGames().filter(
+      (game) => game.slug !== ENGINE_CUBE_SLUG,
+    );
+    expect(document.querySelectorAll(".console-tile")).toHaveLength(
+      visibleGames.length,
+    );
+    expect(
+      document.querySelector('.console-tile[data-slug="reaction-duel"]'),
+    ).not.toBeNull();
     expect(document.querySelector(".lanpad-canvas")).toBeNull();
-    // HP-02: the lobby hero is the only place the code/PIN are rendered.
+    // The console top bar is the visible code/PIN; the legacy ids stay inert.
+    expect(
+      document.querySelector('[data-role="room-code"]')?.textContent,
+    ).toBe("ABCD");
+    expect(document.querySelector(".console-top__pin")?.textContent).toBe(
+      "PIN 1234",
+    );
     expect(document.getElementById("room-code")?.textContent).toBe("----");
     expect(document.getElementById("room-pin")?.textContent).toBe("PIN ----");
     expect(document.querySelector(".lanpad-stage-bar")?.hasAttribute("hidden")).toBe(true);
+    // hostJoined reached the console connection pill, not just the top bar.
+    expect(document.querySelector(".console-status__text")?.textContent).toBe(
+      "Connected",
+    );
   });
 
   test("[FR-5.4] updates connected counts in place and keeps the roster truthful", () => {
-    const launcherBefore = document.querySelector(".lanpad-launcher");
+    const launcherBefore = document.querySelector(".console-shell");
     socket().emit({ t: "playerJoined", slot: 1 });
 
-    const labels = Array.from(
-      document.querySelectorAll(".lanpad-launcher__card-connected"),
-    );
-    expect(labels).toHaveLength(getGames().length);
-    for (const label of labels) {
-      expect(label.textContent).toBe("1 connected");
-    }
-    // Same element: a count change never rebuilds the shelf or loses focus.
-    expect(document.querySelector(".lanpad-launcher")).toBe(launcherBefore);
+    // Same shell element: a count change never rebuilds the shelf or focus.
+    expect(document.querySelector(".console-shell")).toBe(launcherBefore);
 
-    const row = document.querySelector('.slot-row[data-slot="1"]');
+    const row = document.querySelector('.console-lobby__row[data-slot="1"]');
     expect(row?.getAttribute("data-state")).toBe("connected");
+    expect(
+      row?.querySelector(".console-lobby__state")?.textContent,
+    ).toBe("Connected");
+    expect(document.querySelector(".console-lobby__count")?.textContent).toBe(
+      "1 of 8",
+    );
+    expect(
+      document.querySelectorAll('.console-chip[data-slot="1"]'),
+    ).toHaveLength(1);
+
+    const rosterRow = document.querySelector('.slot-row[data-slot="1"]');
+    expect(rosterRow?.getAttribute("data-state")).toBe("connected");
     expect(
       document.querySelector(".lanpad-stage-bar__players")?.textContent,
     ).toBe("1 player");
@@ -197,9 +222,16 @@ describe("host shell", () => {
     socket().emit({ t: "playerSuspended", slot: 1 });
     expect(row?.getAttribute("data-state")).toBe("reconnecting");
     expect(
+      row?.querySelector(".console-lobby__state")?.textContent,
+    ).toBe("Reconnecting");
+    expect(document.querySelector(".console-lobby__count")?.textContent).toBe(
+      "0 of 8",
+    );
+    expect(document.querySelectorAll(".console-chip")).toHaveLength(0);
+    expect(rosterRow?.getAttribute("data-state")).toBe("reconnecting");
+    expect(
       document.querySelector('.slot-row[data-slot="1"] .slot-row__state')?.textContent,
     ).toBe("Reconnecting");
-    expect(document.querySelectorAll(".lanpad-launcher__card-connected")).toHaveLength(0);
   });
 
   test("[FR-5.1] a kick shows HP-07 with one focused action and never renders the token", () => {
@@ -215,6 +247,8 @@ describe("host shell", () => {
     expect(action?.textContent).toBe("Create a new room");
     expect(document.activeElement).toBe(action);
     expect(window.location.pathname).toBe("/");
+    // The route reset tears the console shell down; the notice owns the page.
+    expect(document.querySelector(".console-shell")).toBeNull();
 
     // The room token exists only inside RoomPanel's QR path, never as text.
     expect(document.body.innerHTML.includes(ROOM_TOKEN)).toBe(false);

@@ -33,23 +33,54 @@ export interface HostNavigation {
 }
 
 export function createNavigation(deps: NavigationDeps): HostNavigation {
+  /** Guards the shell's `onLaunch` re-entry into `navigateToGame`. */
+  let launching = false;
+
+  async function openLaunchedGame(slug: string): Promise<void> {
+    try {
+      await deps.stage.openGame(slug, { autoStart: true });
+    } catch {
+      // `openGame` reports its own errors through notices and resolves.
+    }
+    // Success: `startGame` made the stage interactive and destroyed the
+    // launcher shell. Anything else (unknown game, load failure) returns to
+    // the console home instead of leaving a stuck loading screen.
+    if (deps.stage.isStageActive()) return;
+    if (deps.window.location.pathname !== "/") {
+      deps.window.history.replaceState({}, "", "/");
+    }
+    deps.launcher.returnToLauncher(slug);
+  }
+
   function navigateToGame(slug: string): void {
+    // The console shell calls this from `onLaunch` while beginning its own
+    // loading phase; that inner call must not launch twice.
+    if (launching) return;
     const path = gamePathFor(slug);
     if (deps.window.location.pathname !== path) {
       deps.window.history.pushState({}, "", path);
     }
     deps.notices.clear();
-    deps.launcher.destroy();
+    // Keep the shell alive through the launch so it can show asset progress.
+    // It is a no-op when the shell is absent or already loading, and it is
+    // destroyed by the stage only once the game is interactive.
+    launching = true;
+    try {
+      deps.launcher.beginLaunch(slug);
+    } finally {
+      launching = false;
+    }
     // The launcher activation is the user gesture: unlock audio, request
     // fullscreen, and start the selected game directly. The direct
     // /games/<slug>/ route keeps the explicit start screen.
     void deps.stage.unlockAudio();
     requestFullscreen(deps.doc);
-    void deps.stage.openGame(slug, { autoStart: true });
+    void openLaunchedGame(slug);
   }
 
   /** Rebuilds the `/` route without touching the live room (Phones stay). */
   function returnToLauncher(pushHistory = true): void {
+    const slug = deps.stage.getCurrentSlug();
     if (pushHistory && deps.window.location.pathname !== "/") {
       deps.window.history.pushState({}, "", "/");
     }
@@ -57,8 +88,7 @@ export function createNavigation(deps: NavigationDeps): HostNavigation {
     deps.modals.closeAll();
     deps.stage.teardownGame();
     deps.stage.clearCurrentSlug();
-    deps.launcher.maybeShow();
-    deps.launcher.focus();
+    deps.launcher.returnToLauncher(slug);
   }
 
   function resetRouteToLauncher(): void {
