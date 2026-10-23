@@ -6,9 +6,12 @@
  *    manifest fails before any code is imported;
  * 2. resolves `entry` relative to the manifest URL and rejects anything that
  *    escapes the manifest's directory (other origins, schemes, `..`);
- * 3. dynamic-imports the entry, checks the `GameModule` shape and calls the
+ * 3. discovers `assets.json` + `LICENSES.csv` next to the manifest and
+ *    validates them against the manifest budget (spec 23); a missing
+ *    `assets.json` is allowed, a missing ledger is not;
+ * 4. dynamic-imports the entry, checks the `GameModule` shape and calls the
  *    default factory with the manifest;
- * 4. checks the returned object implements `Game`.
+ * 5. checks the returned object implements `Game`.
  *
  * Every failure is a `GameLoadError` with a readable message so the host can
  * show an error screen instead of wedging.
@@ -17,13 +20,25 @@
  * `importModule` that maps the resolved entry URL to a bundler chunk; any URL
  * not in that map falls through to a real dynamic import.
  */
-import { validateManifest, type Game, type GameManifest } from "@lanpad/sdk";
+import {
+  validateAssetManifest,
+  validateManifest,
+  type AssetBudgetLimits,
+  type Game,
+  type GameManifest,
+} from "@lanpad/sdk";
 import type { AssetEntry } from "../assets/AssetLoader.js";
+import {
+  describeAssetManifestErrors,
+  parseLicenseLedger,
+  type LoadedGameAssets,
+} from "../assets/gameAssets.js";
 
 export type GameLoadErrorCode =
   | "fetch"
   | "invalidManifest"
   | "badEntry"
+  | "assets"
   | "import"
   | "badModule"
   | "factory"
@@ -44,6 +59,11 @@ export class GameLoadError extends Error {
 export interface LoadGameDeps {
   /** Fetches and parses the manifest JSON. Defaults to `fetch`. */
   readonly fetchJson?: (url: string) => Promise<unknown>;
+  /**
+   * Fetches a text file next to the manifest. `null` means the file does not
+   * exist (HTTP 404). Defaults to `fetch` + `response.text()`.
+   */
+  readonly fetchText?: (url: string) => Promise<string | null>;
   /** Imports the resolved entry. Defaults to native dynamic `import()`. */
   readonly importModule?: (url: string) => Promise<unknown>;
   /** Base for a relative `manifestUrl`. Defaults to `document.baseURI`. */
@@ -55,6 +75,8 @@ export interface LoadedGame {
   readonly manifest: GameManifest;
   readonly manifestUrl: string;
   readonly entryUrl: string;
+  /** Validated spec-23 asset manifest, or null when the game has none. */
+  readonly assets: LoadedGameAssets | null;
 }
 
 async function defaultFetchJson(url: string): Promise<unknown> {
@@ -63,6 +85,15 @@ async function defaultFetchJson(url: string): Promise<unknown> {
     throw new Error(`HTTP ${response.status}`);
   }
   return response.json() as Promise<unknown>;
+}
+
+async function defaultFetchText(url: string): Promise<string | null> {
+  const response = await fetch(url, { credentials: "same-origin" });
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  return response.text();
 }
 
 function defaultImportModule(url: string): Promise<unknown> {
@@ -140,6 +171,86 @@ function missingGameMethods(value: unknown): string[] {
   return missing;
 }
 
+/**
+ * Discovers `assets.json` next to the manifest (spec 23). A 404 from
+ * `fetchText` means the game ships without assets. When `assets.json` exists,
+ * `LICENSES.csv` is required and every declaration is validated against it and
+ * against the manifest's `assetBudget` before any game code is imported.
+ */
+async function discoverGameAssets(
+  manifestUrl: string,
+  manifest: GameManifest,
+  fetchText: (url: string) => Promise<string | null>,
+): Promise<LoadedGameAssets | null> {
+  const directory = new URL(".", manifestUrl);
+  const assetsUrl = new URL("assets.json", directory).href;
+  const ledgerUrl = new URL("LICENSES.csv", directory).href;
+
+  let assetsText: string | null;
+  try {
+    assetsText = await fetchText(assetsUrl);
+  } catch (error) {
+    throw new GameLoadError(
+      "assets",
+      `Could not load the asset manifest ${assetsUrl}: ${message(error)}.`,
+    );
+  }
+  if (assetsText === null) return null;
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(assetsText) as unknown;
+  } catch (error) {
+    throw new GameLoadError(
+      "assets",
+      `${assetsUrl} is not valid JSON: ${message(error)}.`,
+    );
+  }
+
+  let ledgerText: string | null;
+  try {
+    ledgerText = await fetchText(ledgerUrl);
+  } catch (error) {
+    throw new GameLoadError(
+      "assets",
+      `Could not load the asset ledger ${ledgerUrl}: ${message(error)}.`,
+    );
+  }
+  if (ledgerText === null) {
+    throw new GameLoadError(
+      "assets",
+      `"${manifest.name}" declares assets.json but has no LICENSES.csv.`,
+      ["E_ASSET_LEDGER: every game with assets.json needs a LICENSES.csv ledger"],
+    );
+  }
+
+  const budget: AssetBudgetLimits = {
+    initialBytes: manifest.assetBudget.initialBytes,
+    totalBytes: manifest.assetBudget.totalBytes,
+  };
+  const validation = validateAssetManifest(
+    raw,
+    parseLicenseLedger(ledgerText),
+    budget,
+  );
+  if (!validation.ok) {
+    const details = describeAssetManifestErrors(validation.errors);
+    throw new GameLoadError(
+      "assets",
+      `"${manifest.name}" has an invalid assets.json: ${details.join("; ")}.`,
+      details,
+    );
+  }
+
+  return {
+    manifest: validation.manifest,
+    assetsUrl,
+    ledgerUrl,
+    baseUrl: directory.href,
+    budget,
+  };
+}
+
 export async function loadGame(
   manifestUrl: string,
   deps: LoadGameDeps = {},
@@ -165,6 +276,8 @@ export async function loadGame(
   }
   const manifest = validation.manifest;
   const entryUrl = resolveGameEntry(url, manifest.entry);
+  const fetchText = deps.fetchText ?? defaultFetchText;
+  const assets = await discoverGameAssets(url, manifest, fetchText);
 
   let module: unknown;
   try {
@@ -200,7 +313,7 @@ export async function loadGame(
     );
   }
 
-  return { game: game as Game, manifest, manifestUrl: url, entryUrl };
+  return { game: game as Game, manifest, manifestUrl: url, entryUrl, assets };
 }
 
 /**

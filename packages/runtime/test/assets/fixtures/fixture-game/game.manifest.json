@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "name": "Fixture Game",
+  "description": "Runtime asset and audio fixture for spec 23.",
+  "entry": "game.js",
+  "layouts": [
+    "layout.json"
+  ],
+  "assetBudget": {
+    "initialBytes": 65536,
+    "totalBytes": 131072
+  },
+  "minPlayers": 1,
+  "maxPlayers": 2,
+  "needsGyro": false
+}

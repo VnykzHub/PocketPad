@@ -1,0 +1,4 @@
+file,source,author,licence,date,attribution
+triangle.glb,synthetic,fixture generator,CC0,2026-10-23,Minimal test triangle
+hit.ogg,ffmpeg sine,fixture generator,CC0,2026-10-23,0.25 s 440 Hz test tone
+arena.json,synthetic,fixture generator,CC0,2026-10-23,Test JSON payload
