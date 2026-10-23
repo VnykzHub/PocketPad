@@ -254,7 +254,7 @@ describe("[CP-13] gyro visual states", () => {
   });
 
   it("[CP-13] swaps the fallback copy for the level and recenter once granted", async () => {
-    const { renderer } = makeHarness({
+    const { renderer, target, interval, setNow } = makeHarness({
       environment: {
         isSecureContext: true,
         hasDeviceMotionEvent: true,
@@ -269,10 +269,26 @@ describe("[CP-13] gyro visual states", () => {
 
     expect(renderer.element.dataset["motionState"]).toBe("granted");
     expect(part(renderer, "reason").hidden).toBe(true);
+
+    // The auto-zero window is visible and takes the place of the level and
+    // recenter target until a post-window sample arrives (FR-7.6).
+    expect(part(renderer, "calibration").hidden).toBe(false);
+    expect(part(renderer, "calibration").textContent).toContain("Hold still");
+    expect(part(renderer, "level").hidden).toBe(true);
+    expect(part(renderer, "recenter").hidden).toBe(true);
+    expect(renderer.element.classList.contains("is-calibrating")).toBe(true);
+
+    target.emit(ZERO_RATE);
+    setNow(600);
+    target.emit(ZERO_RATE);
+    interval.tick();
+
+    expect(part(renderer, "calibration").hidden).toBe(true);
     expect(part(renderer, "level").hidden).toBe(false);
     const recenter = part(renderer, "recenter");
     expect(recenter.hidden).toBe(false);
     expect(recenter.textContent).toBe("Recenter");
+    expect(renderer.element.classList.contains("is-calibrating")).toBe(false);
     expect(renderer.element.classList.contains("is-unavailable")).toBe(false);
     expect(renderer.element.classList.contains("is-disabled")).toBe(false);
     // The D5 label contract is preserved even though the level is the face.
@@ -285,6 +301,7 @@ describe("[CP-13] gyro visual states", () => {
     h.renderer.onTouchEnd(binding());
     await settle();
 
+    expect(part(h.renderer, "calibration").hidden).toBe(false);
     h.target.emit(ZERO_RATE);
     h.setNow(600);
     h.target.emit(ZERO_RATE);
@@ -292,6 +309,8 @@ describe("[CP-13] gyro visual states", () => {
     h.target.emit({ alpha: 0, beta: 400, gamma: 0 });
     h.interval.tick();
     h.interval.tick();
+    expect(part(h.renderer, "calibration").hidden).toBe(true);
+    expect(part(h.renderer, "level").hidden).toBe(false);
 
     const bubble = part(h.renderer, "bubble");
     expect(bubble.style.transform).toContain("translate3d(9px, 0px, 0)");
@@ -302,6 +321,9 @@ describe("[CP-13] gyro visual states", () => {
     h.renderer.onTouchEnd(binding(2));
     h.interval.tick();
     expect(bubble.style.transform).toContain("translate3d(0px, 0px, 0)");
+    // Recenter re-opens the visible calibration step until the window closes.
+    expect(part(h.renderer, "calibration").hidden).toBe(false);
+    expect(h.renderer.element.classList.contains("is-calibrating")).toBe(true);
   });
 });
 

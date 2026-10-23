@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "id": "recipe-tilt-maze-v1",
+  "orientation": "any",
+  "background": "#07090c",
+  "sensors": { "gyro": "tilt", "smoothing": 0.25 },
+  "controls": [
+    {
+      "type": "panel",
+      "id": "timer",
+      "x": "50%",
+      "y": "10%",
+      "w": "70%",
+      "h": "12%",
+      "z": 10
+    },
+    {
+      "type": "gyro",
+      "id": "tilt-motion",
+      "x": "50%",
+      "y": "80%",
+      "smoothing": 0.25
+    },
+    {
+      "type": "dpad",
+      "id": "tilt-fallback",
+      "x": "24%",
+      "y": "64%",
+      "size": "38%",
+      "bits": { "up": 8, "down": 9, "left": 10, "right": 11 }
+    },
+    {
+      "type": "button",
+      "id": "restart",
+      "label": "Restart",
+      "shape": "circle",
+      "x": "82%",
+      "y": "70%",
+      "r": "11%",
+      "bit": 2,
+      "haptic": [18]
+    }
+  ]
+}

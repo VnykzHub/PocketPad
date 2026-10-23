@@ -1,0 +1,193 @@
+/* Controller QA probe (stream E). Static page, no external assets. */
+:root {
+  --bg: #0b0e14;
+  --panel: #141a24;
+  --panel-edge: #2a3444;
+  --text: #e8eef8;
+  --muted: #9aa8bc;
+  --pass: #3ddc84;
+  --fail: #ff5d5d;
+  --accent: #5ac8fa;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+main {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+}
+
+h1 { font-size: 1.7rem; margin: 0 0 8px; }
+h2 { font-size: 1.15rem; margin: 28px 0 10px; }
+p { margin: 0 0 12px; }
+code { color: var(--accent); }
+.qa-note, .qa-placeholder { color: var(--muted); }
+
+.qa-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+button, select {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 10px;
+  padding: 10px 16px;
+  min-height: 44px;
+}
+
+button:not(:disabled) { cursor: pointer; }
+button:disabled { opacity: 0.5; }
+
+.qa-select { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); }
+
+#status[data-tone="pass"] { color: var(--pass); font-weight: 600; }
+#status[data-tone="fail"] { color: var(--fail); font-weight: 600; }
+
+.qa-phones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.qa-phone { margin: 0; }
+.qa-phone figcaption {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+}
+
+.qa-surface {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--panel-edge);
+  border-radius: 18px;
+  touch-action: none;
+  user-select: none;
+}
+
+.qa-control {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text);
+  background: #1d2634;
+  border: 1px solid #3a475c;
+  font-size: 0.8rem;
+  font-weight: 600;
+  overflow: hidden;
+}
+
+.qa-panel {
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 10px;
+  color: var(--muted);
+  background: #10151e;
+  border-style: dashed;
+}
+
+.qa-button { border-radius: 999px; }
+.qa-button[data-shape="rounded"] { border-radius: 12px; }
+.qa-button[data-shape="square"] { border-radius: 4px; }
+
+.qa-dpad { border-radius: 12px; background: #18202c; }
+.qa-dpad span { position: absolute; font-size: 1rem; color: var(--muted); }
+.qa-dpad span:nth-child(1) { top: 2px; left: 50%; transform: translateX(-50%); }
+.qa-dpad span:nth-child(2) { bottom: 2px; left: 50%; transform: translateX(-50%); }
+.qa-dpad span:nth-child(3) { left: 4px; top: 50%; transform: translateY(-50%); }
+.qa-dpad span:nth-child(4) { right: 4px; top: 50%; transform: translateY(-50%); }
+
+.qa-stick { border-radius: 50%; background: #18202c; }
+.qa-stick span {
+  width: 42%;
+  height: 42%;
+  border-radius: 50%;
+  background: #263244;
+  border: 1px solid #3a475c;
+}
+
+.qa-gyro { border-radius: 999px; color: var(--accent); border-color: var(--accent); }
+.qa-trigger { border-radius: 999px; }
+.qa-touchpad { border-radius: 18px; }
+.qa-slider { padding: 0 8px; }
+.qa-slider span { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); }
+.qa-canvas { color: var(--muted); background: #0d1118; border-style: dashed; }
+.qa-text, .qa-choice { align-items: stretch; justify-content: flex-start; }
+
+.qa-text input {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0 10px;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+}
+
+.qa-choice { flex-direction: column; }
+.qa-choice span {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border-bottom: 1px solid #2a3444;
+}
+.qa-choice span:last-child { border-bottom: 0; }
+
+.qa-measure-host {
+  position: fixed;
+  left: -20000px;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+#results {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+#results th, #results td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--panel-edge);
+}
+
+#results th { color: var(--muted); font-weight: 600; }
+#results tr[data-ok="false"] td { color: var(--fail); }
+#results tr[data-ok="true"] td:last-child { color: var(--pass); }
+
+#json {
+  max-height: 420px;
+  overflow: auto;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .qa-surface { max-width: 100%; }
+}

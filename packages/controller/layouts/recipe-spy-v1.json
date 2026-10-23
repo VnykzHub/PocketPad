@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "recipe-spy-v1",
+  "orientation": "portrait",
+  "background": "#04070a",
+  "controls": [
+    {
+      "type": "panel",
+      "id": "secret",
+      "x": "50%",
+      "y": "22%",
+      "w": "88%",
+      "h": "30%",
+      "z": 10
+    },
+    {
+      "type": "button",
+      "id": "reveal",
+      "label": "Hold to reveal",
+      "shape": "circle",
+      "x": "50%",
+      "y": "58%",
+      "r": "24%",
+      "bit": 0,
+      "haptic": [12]
+    },
+    {
+      "type": "button",
+      "id": "done",
+      "label": "Done",
+      "shape": "rounded",
+      "x": "82%",
+      "y": "88%",
+      "r": "12%",
+      "bit": 1,
+      "haptic": [18]
+    }
+  ]
+}

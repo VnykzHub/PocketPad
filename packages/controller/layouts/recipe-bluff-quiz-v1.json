@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "recipe-bluff-quiz-v1",
+  "orientation": "portrait",
+  "background": "#0b0810",
+  "controls": [
+    {
+      "type": "panel",
+      "id": "question",
+      "x": "50%",
+      "y": "9%",
+      "w": "90%",
+      "h": "12%",
+      "z": 10
+    },
+    {
+      "type": "choice",
+      "id": "answers",
+      "x": "50%",
+      "y": "38%",
+      "w": "90%",
+      "h": "40%",
+      "event": "quiz.pick",
+      "options": [
+        { "value": "a", "label": "Answer A" },
+        { "value": "b", "label": "Answer B" },
+        { "value": "c", "label": "Answer C" },
+        { "value": "d", "label": "Answer D" }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "bluff",
+      "x": "50%",
+      "y": "69%",
+      "w": "90%",
+      "h": "12%",
+      "event": "quiz.bluff",
+      "maxLen": 120
+    },
+    {
+      "type": "button",
+      "id": "lock",
+      "label": "Lock",
+      "shape": "rounded",
+      "x": "82%",
+      "y": "88%",
+      "r": "12%",
+      "bit": 4,
+      "haptic": [18]
+    }
+  ]
+}

@@ -327,7 +327,8 @@ function scheduleFrame(callback: () => void): number {
   if (typeof requestAnimationFrame === "function") {
     return requestAnimationFrame(callback);
   }
-  return setTimeout(callback, 0);
+  // The handle is opaque; the browser returns a number, Node a Timeout.
+  return setTimeout(callback, 0) as unknown as number;
 }
 
 function cancelFrame(id: number): void {

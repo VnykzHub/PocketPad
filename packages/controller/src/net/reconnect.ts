@@ -86,8 +86,13 @@ export interface ReconnectDeps {
   onStop?: (reason: ReconnectStopReason) => void;
 }
 
+// Handles are opaque; the browser returns numbers, Node returns Timeout
+// objects. The cast keeps the reconnect timer surface browser-typed.
+const asTimerHandle = (handle: unknown): number => handle as number;
+
 const defaultTimers: ReconnectTimers = {
-  setTimeout: (handler, timeoutMs) => globalThis.setTimeout(handler, timeoutMs),
+  setTimeout: (handler, timeoutMs) =>
+    asTimerHandle(globalThis.setTimeout(handler, timeoutMs)),
   clearTimeout: (handle) => globalThis.clearTimeout(handle),
 };
 

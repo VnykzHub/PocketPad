@@ -195,7 +195,8 @@ const noopHistory: ReplaceStateHistory = {
 };
 
 const defaultReconnectTimers: ReconnectTimers = {
-  setTimeout: (handler, timeoutMs) => globalThis.setTimeout(handler, timeoutMs),
+  setTimeout: (handler, timeoutMs) =>
+    globalThis.setTimeout(handler, timeoutMs) as unknown as number,
   clearTimeout: (handle) => globalThis.clearTimeout(handle),
 };
 
@@ -297,13 +298,19 @@ export interface ControllerClientStats {
   swapMs: number | null;
 }
 
+// Handles are opaque to the client; the browser returns numbers, Node returns
+// Timeout objects. The cast keeps the public timer surface browser-typed.
+const asTimerHandle = (handle: unknown): number => handle as number;
+
 const defaultTimers: ControllerTimers = {
-  setInterval: (handler, timeoutMs) => globalThis.setInterval(handler, timeoutMs),
+  setInterval: (handler, timeoutMs) =>
+    asTimerHandle(globalThis.setInterval(handler, timeoutMs)),
   clearInterval: (handle) => globalThis.clearInterval(handle),
 };
 
 const defaultSendTimers: ControllerSendTimers = {
-  setTimeout: (handler, timeoutMs) => globalThis.setTimeout(handler, timeoutMs),
+  setTimeout: (handler, timeoutMs) =>
+    asTimerHandle(globalThis.setTimeout(handler, timeoutMs)),
   clearTimeout: (handle) => globalThis.clearTimeout(handle),
 };
 

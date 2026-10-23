@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "launcher-remote-v1",
+  "orientation": "any",
+  "background": "#000000",
+  "controls": [
+    {
+      "type": "panel",
+      "id": "status",
+      "x": "50%",
+      "y": "10%",
+      "w": "88%",
+      "h": "12%",
+      "z": 10
+    },
+    {
+      "type": "dpad",
+      "id": "nav",
+      "x": "24%",
+      "y": "66%",
+      "size": "34%",
+      "bits": { "up": 8, "down": 9, "left": 10, "right": 11 }
+    },
+    {
+      "type": "button",
+      "id": "back",
+      "label": "Back",
+      "shape": "circle",
+      "x": "78%",
+      "y": "40%",
+      "r": "9%",
+      "bit": 1,
+      "haptic": [18]
+    },
+    {
+      "type": "button",
+      "id": "select",
+      "label": "Select",
+      "shape": "circle",
+      "x": "78%",
+      "y": "72%",
+      "r": "12%",
+      "bit": 0,
+      "haptic": [18]
+    }
+  ]
+}

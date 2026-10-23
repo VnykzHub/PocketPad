@@ -1150,6 +1150,14 @@ body.playing .shell {
   font-weight: 500;
 }
 
+.control-gyro [data-part="calibration"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--phone-meta);
+  line-height: 1.15;
+  color: var(--accent);
+}
+
 .control-gyro [data-part="reason"],
 .control-gyro [data-part="motion-status"] {
   font-size: var(--phone-meta);

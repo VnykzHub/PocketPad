@@ -334,6 +334,13 @@ export function createGyroControl(
   const bubble = createPart("div", "bubble");
   level.append(bubble);
 
+  // Calibration face: the 500 ms auto-zero window is visible, not silent, so a
+  // player holding a tilted phone knows to hold still (FR-7.6, CP-13).
+  const calibration = createPart("span", "calibration");
+  calibration.textContent = "Hold still — calibrating";
+  calibration.setAttribute("aria-hidden", "true");
+  calibration.hidden = true;
+
   // Fallback face: the state copy the plan defines for every non-granted state.
   const reason = createPart("span", "reason");
   reason.setAttribute("aria-hidden", "true");
@@ -363,7 +370,7 @@ export function createGyroControl(
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
 
-  element.append(level, reason, recenter, label, status);
+  element.append(level, calibration, reason, recenter, label, status);
 
   const source = effectiveRuntime.source;
   const binding = new GyroSampleBinding(ctx.input, source, effectiveRuntime.sampleScheduler);
@@ -391,7 +398,20 @@ export function createGyroControl(
     applyBubble();
   };
 
+  let granted = false;
+
+  // The level and recenter target give way to the calibration copy for the
+  // duration of the auto-zero window; the next post-window sample restores them.
+  const updateCalibration = (): void => {
+    const calibrating = granted && source.isCalibrating;
+    element.classList.toggle("is-calibrating", calibrating);
+    calibration.hidden = !calibrating;
+    level.hidden = !granted || calibrating;
+    recenter.hidden = !granted || calibrating;
+  };
+
   binding.onSample = (sample, recentered): void => {
+    updateCalibration();
     if (recentered) {
       resetLevel();
       return;
@@ -422,12 +442,11 @@ export function createGyroControl(
     const reasonText = MOTION_REASON_TEXT[state];
     reason.textContent = reasonText;
     reason.hidden = reasonText.length === 0;
-    const granted = state === "granted";
-    level.hidden = !granted;
-    recenter.hidden = !granted;
+    granted = state === "granted";
     if (!granted) {
       resetLevel();
     }
+    updateCalibration();
   };
 
   const motionEnable = new MotionEnable(

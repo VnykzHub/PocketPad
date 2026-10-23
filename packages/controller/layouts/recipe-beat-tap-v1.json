@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "id": "recipe-beat-tap-v1",
+  "orientation": "landscape",
+  "background": "#08080c",
+  "controls": [
+    {
+      "type": "panel",
+      "id": "beat",
+      "x": "50%",
+      "y": "10%",
+      "w": "80%",
+      "h": "12%",
+      "z": 10
+    },
+    {
+      "type": "button",
+      "id": "lane-1",
+      "label": "Lane 1",
+      "shape": "circle",
+      "x": "15%",
+      "y": "70%",
+      "r": "12%",
+      "bit": 0,
+      "haptic": [12]
+    },
+    {
+      "type": "button",
+      "id": "lane-2",
+      "label": "Lane 2",
+      "shape": "circle",
+      "x": "38%",
+      "y": "70%",
+      "r": "12%",
+      "bit": 1,
+      "haptic": [12]
+    },
+    {
+      "type": "button",
+      "id": "lane-3",
+      "label": "Lane 3",
+      "shape": "circle",
+      "x": "62%",
+      "y": "70%",
+      "r": "12%",
+      "bit": 2,
+      "haptic": [12]
+    },
+    {
+      "type": "button",
+      "id": "lane-4",
+      "label": "Lane 4",
+      "shape": "circle",
+      "x": "85%",
+      "y": "70%",
+      "r": "12%",
+      "bit": 3,
+      "haptic": [12]
+    },
+    {
+      "type": "button",
+      "id": "cancel",
+      "label": "Cancel",
+      "shape": "circle",
+      "x": "88%",
+      "y": "18%",
+      "r": "8%",
+      "bit": 15,
+      "haptic": [18]
+    }
+  ]
+}

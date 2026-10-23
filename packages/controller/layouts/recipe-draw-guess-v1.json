@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "id": "recipe-draw-guess-v1",
+  "orientation": "portrait",
+  "background": "#0a0a10",
+  "controls": [
+    {
+      "type": "panel",
+      "id": "prompt",
+      "x": "50%",
+      "y": "8%",
+      "w": "88%",
+      "h": "10%",
+      "z": 10
+    },
+    {
+      "type": "canvas",
+      "id": "board",
+      "x": "50%",
+      "y": "32%",
+      "w": "90%",
+      "h": "34%",
+      "event": "guess.draw",
+      "maxStrokePoints": 2048
+    },
+    {
+      "type": "text",
+      "id": "guess",
+      "x": "50%",
+      "y": "66%",
+      "w": "88%",
+      "h": "12%",
+      "event": "guess.submit",
+      "maxLen": 80
+    },
+    {
+      "type": "choice",
+      "id": "pick",
+      "x": "50%",
+      "y": "86%",
+      "w": "88%",
+      "h": "18%",
+      "event": "guess.pick",
+      "options": [
+        { "value": "a", "label": "It is a cat" },
+        { "value": "b", "label": "It is a house" },
+        { "value": "c", "label": "It is a rocket" }
+      ]
+    }
+  ]
+}

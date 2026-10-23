@@ -271,7 +271,7 @@ describe("[FR-8.3] cached rects and layout notifications", () => {
 
   it("[FR-8.3] a ResizeObserver on the surface invalidates the cache", async () => {
     const observed: Element[] = [];
-    let notify: (() => void) | null = null;
+    let notify!: () => void;
 
     class FakeResizeObserver {
       constructor(callback: () => void) {

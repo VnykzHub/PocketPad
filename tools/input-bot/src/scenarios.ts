@@ -43,7 +43,15 @@ export function loadMacroFile(name: string): MacroAction[] {
   return actions;
 }
 
-export const SCENARIO_NAMES = ["steady", "taps", "sticks", "churn", "full-room"] as const;
+export const SCENARIO_NAMES = [
+  "steady",
+  "taps",
+  "sticks",
+  "churn",
+  "full-room",
+  "four-players",
+  "eight-players",
+] as const;
 
 export type ScenarioName = (typeof SCENARIO_NAMES)[number];
 
@@ -191,6 +199,34 @@ const SCENARIOS: Record<ScenarioName, ScenarioDefinition> = {
     watchdogMs: 0,
     expectRoomFull: true,
   },
+  // Game e2e scenarios: every bot moves and presses every face button, so a
+  // game test can assert 4 or 8 distinct slots all producing input.
+  "four-players": {
+    clients: 4,
+    durationMs: 10_000,
+    macroFiles: ["move", "tap"],
+    macroLoopMs: 4000,
+    jitterMs: 0,
+    loss: 0,
+    reconnectEveryMs: null,
+    suspendEveryMs: null,
+    churnEveryMs: null,
+    watchdogMs: 0,
+    expectRoomFull: false,
+  },
+  "eight-players": {
+    clients: MAX_CONTROLLERS,
+    durationMs: 10_000,
+    macroFiles: ["move", "tap"],
+    macroLoopMs: 4000,
+    jitterMs: 0,
+    loss: 0,
+    reconnectEveryMs: null,
+    suspendEveryMs: null,
+    churnEveryMs: null,
+    watchdogMs: 0,
+    expectRoomFull: false,
+  },
 };
 
 /** CLI-level overrides applied on top of a scenario's defaults. */
@@ -289,7 +325,12 @@ export function resolveScenario(
     jitterMs,
     loss,
     macroFiles: definition.macroFiles,
-    macros: definition.macroFiles.flatMap((file) => loadMacroFile(file)),
+    // Bot.applyDueMacros breaks on the first future action, so actions merged
+    // from several macro files must be in time order (stable sort keeps
+    // same-tick composition intact).
+    macros: definition.macroFiles
+      .flatMap((file) => loadMacroFile(file))
+      .sort((a, b) => a.atMs - b.atMs),
     macroLoopMs: optionalInterval(
       overrides.macroLoopMs,
       definition.macroLoopMs,

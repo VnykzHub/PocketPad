@@ -681,7 +681,9 @@ describe("[FR-8.1] layout render and touch mapping", () => {
 
     expect(client.layout?.controls).toHaveLength(2);
     expect(surface.querySelectorAll(".control")).toHaveLength(2);
-    expect(surface.querySelector('[data-control-id="score"]')?.dataset["controlType"]).toBe(
+    expect(
+      surface.querySelector<HTMLElement>('[data-control-id="score"]')?.dataset["controlType"],
+    ).toBe(
       "panel",
     );
     expect(surface.querySelector('[data-control-id="fire"]')).not.toBeNull();

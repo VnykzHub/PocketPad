@@ -132,7 +132,7 @@ describe("[FR-7.1] idle keepalive is 10 Hz", () => {
     // Steady state: exactly ten packets in one second (100..1000 ms).
     expect(sent).toHaveLength(10);
     for (let index = 1; index < sendTimes.length; index += 1) {
-      expect(sendTimes[index] - sendTimes[index - 1]).toBeCloseTo(
+      expect(sendTimes[index]! - sendTimes[index - 1]!).toBeCloseTo(
         IDLE_SEND_INTERVAL_MS,
         6,
       );
@@ -159,7 +159,7 @@ describe("[FR-7.1] active input sends at 60 Hz", () => {
     expect(sent.length).toBeLessThanOrEqual(62);
 
     for (let index = 2; index < sendTimes.length; index += 1) {
-      const delta = sendTimes[index] - sendTimes[index - 1];
+      const delta = sendTimes[index]! - sendTimes[index - 1]!;
       expect(delta).toBeCloseTo(ACTIVE_SEND_INTERVAL_MS, 6);
     }
 
@@ -177,14 +177,14 @@ describe("[FR-7.1] changes send immediately and coalesce within 4 ms", () => {
 
     store.setButton(0, true);
     expect(sent).toHaveLength(1);
-    expect(sent[0].buttons).toBe(1);
-    expect(sent[0].edges).toBe(1);
+    expect(sent[0]!.buttons).toBe(1);
+    expect(sent[0]!.edges).toBe(1);
 
     timers.advance(10);
     store.setButton(0, false);
     expect(sent).toHaveLength(2);
-    expect(sent[1].buttons).toBe(0);
-    expect(sent[1].edges).toBe(0);
+    expect(sent[1]!.buttons).toBe(0);
+    expect(sent[1]!.edges).toBe(0);
 
     loop.stop();
   });
@@ -205,9 +205,9 @@ describe("[FR-7.1] changes send immediately and coalesce within 4 ms", () => {
 
     timers.advance(MIN_SEND_INTERVAL_MS - 1);
     expect(sent).toHaveLength(2);
-    expect(sent[1].buttons).toBe(1);
+    expect(sent[1]!.buttons).toBe(1);
     // Only the button pressed inside the window contributes a new edge.
-    expect(sent[1].edges).toBe(1 << 7);
+    expect(sent[1]!.edges).toBe(1 << 7);
     expect(store.snapshot(0).edges).toBe(0);
 
     loop.stop();
@@ -222,7 +222,7 @@ describe("[FR-7.1] changes send immediately and coalesce within 4 ms", () => {
     store.setButton(1, true);
     loop.notifyChange();
     expect(sent).toHaveLength(2);
-    expect(sent[1].edges).toBe(1 << 1);
+    expect(sent[1]!.edges).toBe(1 << 1);
     loop.stop();
   });
 });
@@ -244,8 +244,8 @@ describe("[FR-7.3] edges survive a sub-tick tap", () => {
 
     timers.advance(MIN_SEND_INTERVAL_MS - 1);
     expect(sent).toHaveLength(2);
-    expect(sent[1].buttons).toBe(0);
-    expect(sent[1].edges).toBe(1 << 5);
+    expect(sent[1]!.buttons).toBe(0);
+    expect(sent[1]!.edges).toBe(1 << 5);
 
     loop.stop();
   });
@@ -257,7 +257,7 @@ describe("[FR-7.3] edges survive a sub-tick tap", () => {
     loop.notifyChange();
 
     expect(sent).toHaveLength(1);
-    expect(sent[0].edges).toBe(1 << 2);
+    expect(sent[0]!.edges).toBe(1 << 2);
     // The store still held the edge while send() was running.
     expect(storeEdgesDuringSend).toEqual([1 << 2]);
     // ...and cleared it only afterwards.
@@ -301,8 +301,8 @@ describe("[FR-7.3] edges survive a sub-tick tap", () => {
     timers.advance(ACTIVE_SEND_INTERVAL_MS + 1);
     expect(attempts).toBe(2);
     expect(sent).toHaveLength(1);
-    expect(sent[0].buttons).toBe(1 << 4);
-    expect(sent[0].edges).toBe(1 << 4);
+    expect(sent[0]!.buttons).toBe(1 << 4);
+    expect(sent[0]!.edges).toBe(1 << 4);
 
     loop.stop();
   });
@@ -314,7 +314,7 @@ describe("[A3] tick is a u32 server-time estimate", () => {
     loop.start();
     store.setButton(0, true);
     loop.notifyChange();
-    expect(sent[0].tick).toBe(0);
+    expect(sent[0]!.tick).toBe(0);
     loop.stop();
   });
 
@@ -329,11 +329,11 @@ describe("[A3] tick is a u32 server-time estimate", () => {
     loop.start();
     store.setButton(0, true);
     loop.notifyChange();
-    expect(sent[0].tick).toBe(1500);
+    expect(sent[0]!.tick).toBe(1500);
 
     timers.advance(ACTIVE_SEND_INTERVAL_MS);
-    expect(sent[1].tick).toBe(Math.trunc(1000 + 500 + ACTIVE_SEND_INTERVAL_MS));
-    expect(sent[1].tick).toBeGreaterThan(sent[0].tick);
+    expect(sent[1]!.tick).toBe(Math.trunc(1000 + 500 + ACTIVE_SEND_INTERVAL_MS));
+    expect(sent[1]!.tick).toBeGreaterThan(sent[0]!.tick);
 
     loop.stop();
   });
@@ -348,7 +348,7 @@ describe("[A3] tick is a u32 server-time estimate", () => {
     loop.start();
     store.setButton(0, true);
     loop.notifyChange();
-    expect(sent[0].tick).toBe(704); // (2^32 + 704) truncated to u32
+    expect(sent[0]!.tick).toBe(704); // (2^32 + 704) truncated to u32
     loop.stop();
   });
 });
