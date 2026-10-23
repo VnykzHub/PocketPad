@@ -35,6 +35,7 @@ export default defineConfig({
       nodeProject("packages/dev-server"),
       ...gameProjects,
       nodeProject("packages/runtime"),
+      nodeProject("packages/game-kit"),
       {
         root: "packages/engine/core",
         test: {

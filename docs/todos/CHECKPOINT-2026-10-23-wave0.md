@@ -42,3 +42,9 @@
 ## Next
 
 Wave 1: streams A (Babylon world), B (assets/audio), C (curation), F (game kit) start in parallel; G (host integration) after A and B; D/E/H next. Merge order per the brief.
+
+## Wave 1 merges
+
+| Stream | Branch / commit | Evidence |
+|---|---|---|
+| F — `@lanpad/game-kit` | `ws/f-game-kit` → merged; integration wires `tsconfig`, Vitest and the lockfile | 79 package tests; sample 184 lines; whole gate 278 files / 3,074 tests, 0 unknown |

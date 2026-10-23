@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createScoreboard } from "../src/index.js";
 
-describe("scoreboard (ER-24-02)", () => {
+describe("scoreboard [ER-24-02]", () => {
   it("starts every slot at zero", () => {
     const board = createScoreboard();
     expect(board.get(1)).toBe(0);

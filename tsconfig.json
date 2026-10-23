@@ -5,6 +5,7 @@
     { "path": "./packages/broker" },
     { "path": "./packages/dev-server" },
     { "path": "./packages/runtime" },
+    { "path": "./packages/game-kit" },
     { "path": "./packages/controller" },
     { "path": "./packages/engine/core" },
     { "path": "./packages/engine/renderer-webgpu" },

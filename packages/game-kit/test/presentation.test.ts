@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { countdownLabel, createScoreboard, resultsRows } from "../src/index.js";
 
-describe("countdown label (ER-24-01)", () => {
+describe("countdown label [ER-24-01]", () => {
   it("maps remaining milliseconds to the three steps and GO", () => {
     expect(countdownLabel(3000)).toBe("3");
     expect(countdownLabel(2999)).toBe("3");
@@ -21,7 +21,7 @@ describe("countdown label (ER-24-01)", () => {
   });
 });
 
-describe("results rows (ER-24-02)", () => {
+describe("results rows [ER-24-02]", () => {
   it("sorts by score descending then slot ascending", () => {
     const scores = new Map<number, number>([
       [2, 1],

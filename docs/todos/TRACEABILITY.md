@@ -395,6 +395,14 @@ Engine acceptance IDs are Gate-audited, not owned by a phone-platform stage. A r
 | ER-25-01 | `presentation` is optional; a fully-populated manifest validates | Engine/QA | W0-CONTRACTS | Wave 0 |
 | ER-25-02 | Invalid presentation fields fail with their JSON path | Engine/QA | W0-CONTRACTS | Wave 0 |
 | ER-25-03 | A game folder with a manifest, layout, entry and tsconfig registers without any root-file edit | Engine/QA | W0-CONTRACTS | Wave 0 |
+| ER-24-01 | Match transitions lobby→countdown→playing→results→next are legal and illegal transitions throw | Engine/QA | W1-GAMEKIT | Wave 1 |
+| ER-24-02 | Scoreboard ordering, ties and reset are deterministic | Engine/QA | W1-GAMEKIT | Wave 1 |
+| ER-24-03 | Player colours match DESIGN tokens and always pair with label + shape | Engine/QA | W1-GAMEKIT | Wave 1 |
+| ER-24-04 | Pack draws are deterministic for a seed and wrap without replacement until reset | Engine/QA | W1-GAMEKIT | Wave 1 |
+| ER-24-05 | Pool acquire/release never allocates after warm-up; exhaustion throws the named error | Engine/QA | W1-GAMEKIT | Wave 1 |
+| ER-24-06 | Choice/text/canvas helpers ignore malformed payloads without throwing | Engine/QA | W1-GAMEKIT | Wave 1 |
+| ER-24-07 | The package imports only `@lanpad/sdk` (source scan) | Engine/QA | W1-GAMEKIT | Wave 1 |
+| ER-24-08 | The sample game is playable headlessly through the kit in under 200 lines | Engine/QA | W1-GAMEKIT | Wave 1 |
 
 ---
 

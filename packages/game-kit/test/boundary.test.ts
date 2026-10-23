@@ -47,7 +47,7 @@ const FORBIDDEN_APIS: ReadonlyArray<readonly [RegExp, string]> = [
   [/\bperformance\.now\s*\(/, "performance.now"],
 ];
 
-describe("package boundary (ER-24-07)", () => {
+describe("package boundary [ER-24-07]", () => {
   it("finds every source module", () => {
     expect(SOURCE_FILES).toContain("index.ts");
     expect(SOURCE_FILES.length).toBeGreaterThanOrEqual(8);

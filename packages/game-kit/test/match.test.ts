@@ -17,7 +17,7 @@ function playing(): ReturnType<typeof createMatch> {
   return match;
 }
 
-describe("match lifecycle (ER-24-01)", () => {
+describe("match lifecycle [ER-24-01]", () => {
   it("starts in the lobby with empty scores and no winner", () => {
     const match = createMatch(OPTIONS);
     expect(match.phase).toBe("lobby");

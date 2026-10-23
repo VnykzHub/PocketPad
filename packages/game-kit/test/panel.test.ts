@@ -83,7 +83,7 @@ function choiceLayout(call: unknown[]): LayoutDocument {
   return layout;
 }
 
-describe("panel and choice helpers (ER-24-06)", () => {
+describe("panel and choice helpers [ER-24-06]", () => {
   it("hot-swaps a valid choice layout with the prompt", () => {
     const { ctx, panelsSet, layoutsSet } = makeContext();
     showChoice(

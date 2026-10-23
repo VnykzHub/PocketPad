@@ -8,7 +8,7 @@ function order(seed: number): string[] {
   return ITEMS.map(() => pack.draw());
 }
 
-describe("content pack (ER-24-04)", () => {
+describe("content pack [ER-24-04]", () => {
   it("is deterministic for a seed", () => {
     expect(order(123)).toEqual(order(123));
     expect(order(123)).not.toEqual(order(999));

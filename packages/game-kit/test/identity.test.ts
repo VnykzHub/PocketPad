@@ -13,7 +13,7 @@ const DESIGN_HUES = [
   "#ff6b6b",
 ] as const;
 
-describe("player identity (ER-24-03)", () => {
+describe("player identity [ER-24-03]", () => {
   it("maps every slot to the DESIGN hue", () => {
     for (let slot = 1; slot <= 8; slot += 1) {
       expect(playerColor(slot)).toBe(DESIGN_HUES[slot - 1]);

@@ -57,7 +57,7 @@ function nextQuestion(deck: Pack<QuizQuestion>): QuizQuestion {
   return deck.draw();
 }
 
-describe("kit sample game (ER-24-08)", () => {
+describe("kit sample game [ER-24-08]", () => {
   it("plays headlessly through the kit", () => {
     const emitter = createEmitter();
     const layoutsSet = vi.fn();

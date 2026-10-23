@@ -24,7 +24,7 @@ function trackingPool(capacity: number): {
   return { pool, created: () => createdCount };
 }
 
-describe("object pool (ER-24-05)", () => {
+describe("object pool [ER-24-05]", () => {
   it("prewarms exactly capacity items and never creates again", () => {
     const { pool, created } = trackingPool(3);
     expect(created()).toBe(3);
