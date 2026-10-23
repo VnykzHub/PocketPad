@@ -1,0 +1,490 @@
+/**
+ * HP-04 stage and canvas lifecycle (D3/D7).
+ *
+ * Owns everything between a slug and a running game: the canvas, renderer,
+ * context-loss recovery, dynamic resolution, `GameHost`, the start screen and
+ * the asset load. The room, roster and socket belong to `room.ts`; tearing a
+ * stage down never touches them.
+ *
+ * `GameHost` is built here and receives the shared `InputMapper`, `AudioBus`
+ * and debug counters. Games only ever see the `GameContext` (FR-7.17).
+ */
+import { createCanvas2DDevice } from "@lanpad/engine-renderer-webgl2/canvas2d";
+import type { GameManifest } from "@lanpad/sdk";
+import { AssetLoader, type AssetEntry } from "../assets/AssetLoader.js";
+import { AudioBus } from "../audio/AudioBus.js";
+import type { BundledGames } from "../demo/bundledGames.js";
+import { createEngineCanvas2DRenderer } from "../engine/canvas2DRenderer.js";
+import { EngineGameRenderer } from "../engine/engine3DRenderer.js";
+import type { EventRouter } from "../game/EventRouter.js";
+import type { GameDebugCounters } from "../game/GameContext.js";
+import { GameHost } from "../game/GameHost.js";
+import type { LayoutApi } from "../game/LayoutApi.js";
+import { assertAssetBudget, loadGame, type LoadedGame } from "../game/loadGame.js";
+import { registerManifestLayouts } from "../game/manifestLayouts.js";
+import type { InputMapper } from "../input/InputMapper.js";
+import type { FrameStats } from "../loop/types.js";
+import type { HostClient } from "../net/hostClient.js";
+import {
+  applyResolutionScale,
+  attachContextLossRecovery,
+  ContextLossRecovery,
+  readViewportEnvironment,
+  ResolutionController,
+  resolveTvProfile,
+} from "../profile/index.js";
+import {
+  createFallbackNotice,
+  RendererUnavailableError,
+  type Renderer3D,
+  type RendererBackend,
+} from "../render/Renderer.js";
+import {
+  selectRenderer,
+  type RendererSelectionFactories,
+} from "../render/selectRenderer.js";
+import { StartScreen } from "../ui/StartScreen.js";
+import type { HostChrome } from "./chrome.js";
+import { BACK_TO_GAMES_LABEL, GAME_NOT_FOUND_TITLE } from "./copy.js";
+import type { HostNotices } from "./notices.js";
+import type { HostOverlay, OverlayRuntimeStats } from "./overlay.js";
+import type { HostRoster } from "./roster.js";
+
+/** The cube demo has no downloadable assets; real games list theirs here. */
+const GAME_ASSETS: readonly AssetEntry[] = [];
+
+export interface OpenGameOptions {
+  /** Rematch: reload and start without a second start-screen gesture. */
+  readonly autoStart?: boolean;
+}
+
+export interface StageDeps {
+  readonly doc: Document;
+  readonly window: Window;
+  readonly gameRoot: HTMLElement;
+  readonly games: BundledGames;
+  readonly mapper: InputMapper;
+  readonly client: HostClient;
+  readonly debugCounters: GameDebugCounters;
+  readonly layouts: LayoutApi;
+  readonly eventRouter: EventRouter;
+  readonly chrome: HostChrome;
+  readonly roster: HostRoster;
+  readonly notices: HostNotices;
+  readonly overlay: HostOverlay;
+  readonly syncPause: () => void;
+  /** Starting a game leaves the launcher route. */
+  readonly hideLauncher: () => void;
+  /** HP-04b/HP-05 close when the stage tears down. */
+  readonly closeOverlays: () => void;
+  /** HP-07 "Back to games" action on the unknown-game notice. */
+  readonly onBackToGames: () => void;
+}
+
+export interface GameRendererChoiceOptions {
+  readonly canvas: HTMLCanvasElement;
+  readonly manifest: GameManifest;
+  readonly maxRenderHeight?: number;
+  readonly tvProfile?: boolean;
+  readonly factories?: Partial<RendererSelectionFactories>;
+  readonly createCanvas2D?: typeof createCanvas2DDevice;
+}
+
+export type GameRendererChoice =
+  | {
+      readonly ok: true;
+      readonly renderer: Renderer3D;
+      readonly backend: RendererBackend;
+      /** May differ from `options.canvas`; the caller must mount it. */
+      readonly canvas: HTMLCanvasElement;
+      readonly usedFallback: boolean;
+    }
+  | {
+      readonly ok: false;
+      readonly reason: "3d-unavailable";
+      /** Fixed selector copy; safe to display. */
+      readonly message: string;
+      readonly canvas: HTMLCanvasElement;
+    };
+
+/**
+ * Selects and initializes the renderer a manifest asks for.
+ *
+ * `canvas2d` (the default) keeps the pre-engine path exactly: engine Canvas2D
+ * device plus `createEngineCanvas2DRenderer`, and a Canvas2D failure rejects
+ * with the friendly `RendererUnavailableError`.
+ *
+ * `engine` calls `selectRenderer({ require3D: true })`, so Canvas2D is refused
+ * instead of silently flattening a 3D game. The selected device is wrapped in
+ * `EngineGameRenderer`. The selector may replace the canvas after a failed
+ * WebGPU init; the result reports the canvas that must be mounted.
+ */
+export async function createGameRenderer(
+  options: GameRendererChoiceOptions,
+): Promise<GameRendererChoice> {
+  if (options.manifest.renderer !== "engine") {
+    const createCanvas2D = options.createCanvas2D ?? createCanvas2DDevice;
+    const device = await createCanvas2D({
+      canvas: options.canvas,
+      ...(options.maxRenderHeight !== undefined
+        ? { maxRenderHeight: options.maxRenderHeight }
+        : {}),
+    }).catch((cause: unknown) => {
+      throw new RendererUnavailableError(
+        createFallbackNotice("canvas2d-unavailable"),
+        cause,
+      );
+    });
+    const renderer = createEngineCanvas2DRenderer(device, options.canvas);
+    try {
+      await renderer.init(options.canvas);
+    } catch (error) {
+      renderer.dispose();
+      throw error;
+    }
+    return {
+      ok: true,
+      renderer,
+      backend: "canvas2d",
+      canvas: options.canvas,
+      usedFallback: false,
+    };
+  }
+
+  const selection = await selectRenderer({
+    canvas: options.canvas,
+    require3D: true,
+    ...(options.maxRenderHeight !== undefined
+      ? { maxRenderHeight: options.maxRenderHeight }
+      : {}),
+    ...(options.tvProfile !== undefined ? { tvProfile: options.tvProfile } : {}),
+    ...(options.factories !== undefined ? { factories: options.factories } : {}),
+  });
+  if (!selection.ok) {
+    return {
+      ok: false,
+      reason: "3d-unavailable",
+      message: selection.message,
+      canvas: options.canvas,
+    };
+  }
+
+  let renderer: EngineGameRenderer | null = null;
+  try {
+    renderer = new EngineGameRenderer(selection.device, selection.canvas);
+    await renderer.init(selection.canvas);
+  } catch (error) {
+    // The adapter disposes the device when its own init fails; this covers a
+    // constructor failure before the adapter exists. Both are idempotent.
+    if (renderer === null) selection.device.dispose();
+    else renderer.dispose();
+    throw error;
+  }
+  return {
+    ok: true,
+    renderer,
+    backend: selection.backend,
+    canvas: selection.canvas,
+    usedFallback: selection.usedFallback,
+  };
+}
+
+export interface HostStage {
+  openGame(slug: string, options?: OpenGameOptions): Promise<void>;
+  /** Stops the current game but keeps the room, roster and socket (HP-04). */
+  teardownGame(): void;
+  unlockAudio(): Promise<void>;
+  pauseGame(): void;
+  resumeGame(): void;
+  isStageActive(): boolean;
+  hasStartScreen(): boolean;
+  getCurrentSlug(): string | null;
+  clearCurrentSlug(): void;
+  /** Renderer/canvas numbers for the 4 Hz debug overlay. */
+  getDisplayStats(): OverlayRuntimeStats;
+}
+
+export function createStage(deps: StageDeps): HostStage {
+  const audio = new AudioBus();
+  const profile = resolveTvProfile(
+    readViewportEnvironment(deps.window),
+    deps.window.location.search,
+  );
+  const resolution = new ResolutionController();
+
+  let startScreen: StartScreen | null = null;
+  let gameHost: GameHost | null = null;
+  let renderer: Renderer3D | null = null;
+  let backend: RendererBackend | null = null;
+  let canvas: HTMLCanvasElement | null = null;
+  let detachContextLoss: (() => void) | null = null;
+  /** True from the start gesture until the stage is left. */
+  let stageActive = false;
+  let currentSlug: string | null = null;
+  /** Bumped by teardown so an in-flight game load cannot mount into a new route. */
+  let gameGeneration = 0;
+
+  function setStageActive(value: boolean): void {
+    stageActive = value;
+    deps.chrome.setStageActive(value);
+  }
+
+  function applySize(): void {
+    if (renderer === null || canvas === null) return;
+    // Every renderer writes inline CSS sizes when it resizes. Clear them first
+    // so the stage stylesheet computes the presentation box; otherwise the
+    // canvas freezes at its intrinsic 300×150 on first mount and ignores the
+    // stage layout.
+    canvas.style.removeProperty("width");
+    canvas.style.removeProperty("height");
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    if (width <= 0 || height <= 0) return;
+    applyResolutionScale(renderer, width, height, profile.dpr, resolution.scale);
+  }
+
+  function onFrameStats(stats: FrameStats): void {
+    deps.overlay.recordFrame(stats);
+    if (resolution.sample(stats.frameMs)) {
+      applySize();
+    }
+  }
+
+  function teardownGame(): void {
+    gameGeneration += 1;
+    setStageActive(false);
+    deps.closeOverlays();
+    gameHost?.dispose();
+    gameHost = null;
+    startScreen?.destroy();
+    startScreen = null;
+    detachContextLoss?.();
+    detachContextLoss = null;
+    deps.window.removeEventListener("resize", applySize);
+    renderer?.dispose();
+    renderer = null;
+    backend = null;
+    canvas?.remove();
+    canvas = null;
+    deps.chrome.stageBar.hidden = true;
+    // The HP-06 banner belongs to the room, not the stage: a reconnecting
+    // host keeps it while moving between the launcher and a game.
+  }
+
+  async function startGame(): Promise<void> {
+    const host = gameHost;
+    if (host === null || canvas === null) return;
+    startScreen?.destroy();
+    startScreen = null;
+    setStageActive(true);
+    deps.hideLauncher();
+    canvas.hidden = false;
+    deps.chrome.stageBar.hidden = false;
+    deps.roster.updateStageBar();
+    applySize();
+    try {
+      await host.start();
+    } catch (error) {
+      deps.notices.showError(error);
+      return;
+    }
+    deps.syncPause();
+  }
+
+  async function openGame(
+    slug: string,
+    options: OpenGameOptions = {},
+  ): Promise<void> {
+    const entry = deps.games.games.find((game) => game.slug === slug) ?? null;
+    teardownGame();
+    if (entry === null) {
+      currentSlug = null;
+      deps.notices.show({
+        title: GAME_NOT_FOUND_TITLE,
+        message: `Unknown game "${slug}" at /games/${slug}/.`,
+        actionLabel: BACK_TO_GAMES_LABEL,
+        onAction: () => deps.onBackToGames(),
+        tone: "error",
+      });
+      return;
+    }
+
+    const generation = gameGeneration;
+    currentSlug = slug;
+    deps.notices.clear();
+
+    const surface = deps.doc.createElement("canvas");
+    surface.className = "lanpad-canvas";
+    surface.hidden = true;
+    deps.gameRoot.append(surface);
+    canvas = surface;
+
+    let loaded: LoadedGame;
+    try {
+      // The manifest decides the renderer, so it must load before selection.
+      loaded = await loadGame(entry.manifestUrl, {
+        importModule: deps.games.importModule,
+      });
+      if (generation !== gameGeneration) return;
+      assertAssetBudget(loaded.manifest, GAME_ASSETS);
+    } catch (error) {
+      if (generation !== gameGeneration) return;
+      deps.notices.showError(error);
+      return;
+    }
+
+    let active: Renderer3D | null = null;
+    try {
+      const choice = await createGameRenderer({
+        canvas: surface,
+        manifest: loaded.manifest,
+        maxRenderHeight: profile.maxRenderHeight,
+        tvProfile: profile.mode === "tv",
+      });
+      if (generation !== gameGeneration) {
+        if (choice.ok) choice.renderer.dispose();
+        if (choice.canvas !== surface) choice.canvas.remove();
+        return;
+      }
+      if (!choice.ok) {
+        surface.remove();
+        canvas = null;
+        deps.notices.show({
+          title: "3D is not available",
+          message: choice.message,
+          actionLabel: BACK_TO_GAMES_LABEL,
+          onAction: () => deps.onBackToGames(),
+          tone: "error",
+        });
+        return;
+      }
+      active = choice.renderer;
+      renderer = choice.renderer;
+      backend = choice.backend;
+      // A failed WebGPU init can claim the original canvas, so the selector
+      // may hand back a fresh one. It must be mounted before the first frame.
+      if (choice.canvas !== surface) {
+        surface.remove();
+        choice.canvas.className = "lanpad-canvas";
+        choice.canvas.hidden = true;
+        deps.gameRoot.append(choice.canvas);
+        canvas = choice.canvas;
+      }
+    } catch (error) {
+      if (generation !== gameGeneration) return;
+      surface.remove();
+      canvas?.remove();
+      canvas = null;
+      if (error instanceof RendererUnavailableError) {
+        deps.notices.showRenderer(error.notice, true);
+      } else {
+        deps.notices.showError(error);
+      }
+      return;
+    }
+
+    if (active === null || canvas === null) return;
+
+    const contextRecovery = new ContextLossRecovery({
+      controller: resolution,
+      onRestored: applySize,
+    });
+    detachContextLoss = attachContextLossRecovery(canvas, contextRecovery);
+    deps.window.addEventListener("resize", applySize);
+
+    try {
+      // D5/D7 seam: games call `ctx.layouts.set(slot, "<layout id>")`, and the
+      // host registers the manifest's layout files before the game starts.
+      await registerManifestLayouts(deps.layouts, loaded);
+      if (generation !== gameGeneration) return;
+    } catch (error) {
+      if (generation !== gameGeneration) return;
+      deps.notices.showError(error);
+      return;
+    }
+
+    const host = new GameHost({
+      game: loaded.game,
+      gameId: slug,
+      renderer: active,
+      audio,
+      mapper: deps.mapper,
+      now: () => performance.now(),
+      raf: (callback) => deps.window.requestAnimationFrame(callback),
+      cancel: (id) => deps.window.cancelAnimationFrame(id),
+      serverNow: () => deps.client.serverNow(),
+      debug: deps.debugCounters,
+      onFrameStats,
+      onError: (error) => deps.notices.showError(error),
+    });
+    gameHost = host;
+    // Events forwarded by the server enter the game's own `onEvent` queue.
+    deps.eventRouter.setSink({
+      push: (slot, name, data) => {
+        host.pushEvent(slot, name, data);
+      },
+    });
+    // Named `ctx.events.on` handlers run at the start of each simulate tick,
+    // before GameHost drains its queue for `game.onEvent` (D5-RT-01).
+    host.input.setTickHook(() => {
+      deps.eventRouter.dispatch();
+    });
+
+    if (options.autoStart !== true) {
+      const screen = new StartScreen(deps.doc, {
+        audio,
+        title: loaded.manifest.name,
+        onStart: () => void startGame(),
+      });
+      startScreen = screen;
+      deps.gameRoot.prepend(screen.element);
+      screen.focus();
+    }
+
+    try {
+      await new AssetLoader().load(GAME_ASSETS, (progress) => {
+        startScreen?.updateProgress(progress);
+      });
+    } catch (error) {
+      deps.notices.showError(error);
+      return;
+    }
+
+    if (generation !== gameGeneration) return;
+    if (options.autoStart === true) {
+      await startGame();
+    }
+  }
+
+  function getDisplayStats(): OverlayRuntimeStats {
+    return {
+      backend,
+      drawCalls: renderer?.drawCalls ?? 0,
+      textureMemoryMB: renderer?.textureMemoryMB ?? 0,
+      resolution:
+        canvas === null
+          ? null
+          : {
+              scale: resolution.scale,
+              dpr: profile.dpr,
+              width: canvas.width,
+              height: canvas.height,
+            },
+    };
+  }
+
+  return {
+    openGame,
+    teardownGame,
+    unlockAudio: () => audio.unlock(),
+    pauseGame: () => gameHost?.pause(),
+    resumeGame: () => gameHost?.resume(),
+    isStageActive: () => stageActive,
+    hasStartScreen: () => startScreen !== null,
+    getCurrentSlug: () => currentSlug,
+    clearCurrentSlug: () => {
+      currentSlug = null;
+    },
+    getDisplayStats,
+  };
+}

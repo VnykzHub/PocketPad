@@ -1,0 +1,21 @@
+{
+  "$fixture": {
+    "expect": "reject",
+    "code": "E_ASSET_FORMAT",
+    "rule": "kind must be one of the eight AssetKind values"
+  },
+  "formatVersion": 1,
+  "id": "example-game",
+  "budget": {
+    "initialBytes": 1024,
+    "totalBytes": 2048
+  },
+  "assets": [
+    {
+      "id": "shaders/basic",
+      "kind": "shader",
+      "url": "assets/basic.wgsl",
+      "bytes": 1024
+    }
+  ]
+}

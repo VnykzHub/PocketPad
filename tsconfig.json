@@ -6,9 +6,19 @@
     { "path": "./packages/dev-server" },
     { "path": "./packages/runtime" },
     { "path": "./packages/controller" },
+    { "path": "./packages/engine/core" },
+    { "path": "./packages/engine/renderer-webgpu" },
+    { "path": "./packages/engine/renderer-webgl2" },
+    { "path": "./packages/engine/assets" },
+    { "path": "./packages/engine/input" },
+    { "path": "./packages/engine/audio" },
+    { "path": "./packages/engine/physics" },
+    { "path": "./packages/engine/animation" },
+    { "path": "./packages/engine/streaming" },
     { "path": "./sdk" },
     { "path": "./tools/input-bot" },
     { "path": "./tools/size-budget" },
-    { "path": "./tools/trace-check" }
+    { "path": "./tools/trace-check" },
+    { "path": "./tools/engine-test" }
   ]
 }

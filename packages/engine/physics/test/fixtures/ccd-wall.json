@@ -1,0 +1,29 @@
+{
+  "id": "ER-07-06",
+  "source": "docs/engine/07-physics3d.md ER-07-06",
+  "world": {
+    "gravity": [0, 0, 0],
+    "fixedDt": 0.016666666666666666
+  },
+  "wall": {
+    "position": [0, 0, 0],
+    "halfExtents": [0.05, 2, 2]
+  },
+  "sphere": {
+    "radius": 0.1,
+    "start": [-1, 0, 0],
+    "velocity": [250, 0, 0],
+    "ccd": true
+  },
+  "attempts": 10000,
+  "ticksPerAttempt": 2,
+  "recorded": {
+    "tunnelled": 0,
+    "maxCenterX": -0.12852300703525543,
+    "noCcdEndX": -0.12852300703525543,
+    "ccdFlagObservable": false,
+    "nodeResult": "PASS (2/2) on Node 20 Windows, 2026-10-23; Rapier 0.21.0",
+    "browser": "PENDING — Desktop Chrome 155 M1 run",
+    "specConflict": "ER-07-06 expects ccd:false to document a pass-through. Rapier 0.21 applies CCD through the world-level maxCcdSubsteps (adapter sets 4) and the per-body ccd flag has no observable effect (both end at the same x), so the fixture records a blocked sphere for both flags. Reported, not weakened; needs a spec amendment or a different backend control."
+  }
+}

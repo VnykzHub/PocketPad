@@ -20,6 +20,9 @@ The host page is authoritative: it runs the simulation and renders the game. Pho
 - **Benchmark:** GTA Vice City is the north star. A vertical slice proves the architecture; full parity is a multi-year program.
 - **Platform:** browser-only. No native app, no Electron requirement for players.
 - **Display:** any browser; TV is one target, not the product boundary.
+- **Physics:** **Rapier** behind a `Physics3D` interface; custom physics only if a measured need appears.
+- **Engine gating:** the D0–P6 stage waterfall is retired for the engine track. Engine work uses the T0–T4 tiers and W0–W5 waves in `docs/engine/README.md`; the phone/room platform stays frozen and maintained on its own plan.
+- **Isolation:** the dev server enables **COOP/COEP** (`same-origin` / `require-corp`) and CORP `same-origin`; production must keep them once the engine uses workers.
 
 ## Operating mode: spec-first, parallel, evidence-gated
 
@@ -90,7 +93,7 @@ engine-core      loop, time, math (Vec3/Mat4/Quat), ECS/scene, jobs, memory
 renderer-webgpu  WebGPU pipeline, PBR, shadows, post, LOD, GPU resources
 renderer-webgl2  fallback backend behind the same interface
 assets           glTF, KTX2, WebP, Opus/AAC, WOFF2, streaming, hot reload
-physics          3D collision, vehicles, character, raycasts (custom or Rapier if justified)
+physics          3D collision, vehicles, character, raycasts (Rapier behind Physics3D)
 animation        skeletal, blend trees, root motion
 audio            positional, mixer, streaming music, radio
 input            phones + keyboard/mouse/gamepad, action mapping
@@ -114,7 +117,8 @@ npm run lint              # eslint (includes layer-boundary rules)
 npm test                  # every Vitest project once
 npm run build             # every workspace
 npm run size              # controller + host gzip budgets
-npm run trace             # trace check, hard-coded to --stage D0
+npm run trace             # trace check for every stage D0–D7
+npm run trace:gate        # full-matrix Gate audit (red until the engine IDs exist)
 ```
 
 Useful scoped commands:
@@ -165,7 +169,7 @@ Live status is `docs/todos/IMPLEMENTATION-ORDER.md` §6/§8 plus the newest `doc
 ## Testing and definition of done
 
 - Every test title carries its requirement ID: `test("[FR-7.3] sub-tick tap keeps its edge bit", ...)` or a leading `// @req FR-7.3`. A tag must resolve to a row in `TRACEABILITY.md`.
-- `npm run trace` is D0-scoped; for other stages use `node tools/trace-check/dist/cli.js --stage D<n>`.
+- `npm run trace` runs stages D0–D7. `npm run trace:gate` is the full-matrix Gate audit; it stays red until the engine capability IDs are implemented.
 - Test layers: unit, property (`fast-check`), golden wire fixtures, integration (real dev server + broker + WebSocket), manual (`docs/RESULTS.md`).
 - Integration tests bind `127.0.0.1:0`; wait on messages, never fixed sleeps.
 - A work item is done only when `npm run check` is green, budgets are measured, docs/checklists are updated, and no secret/token appears in logs, fixtures or commits.
@@ -176,7 +180,7 @@ Live status is `docs/todos/IMPLEMENTATION-ORDER.md` §6/§8 plus the newest `doc
 - `sdk/dist` is generated. Never patch it; change `sdk/src/**` and rebuild.
 - `packages/games/reaction-duel` and `packages/games/platformer` have no workspace `package.json`; they are discovered by Vite globs and covered by `typecheck:games` and explicit Vitest projects. A new game needs both.
 - The root Vitest config defines projects explicitly. A new workspace/tool needs a project entry or its tests will not run.
-- `GAME_ASSETS` in `packages/runtime/src/main.ts` is currently an empty array; the asset pipeline is a stub. Do not document asset loading as working until it is wired.
+- `GAME_ASSETS` in `packages/runtime/src/host/stage.ts` is currently an empty array; the asset pipeline is a stub. Do not document asset loading as working until it is wired. `packages/runtime/src/main.ts` is now a 47-line composition root; host wiring lives in `src/host/*`.
 - Games are currently forced onto Canvas2D; the custom WebGL2 renderer is used by the cube demo. A 3D game cannot ship on the Canvas2D fallback.
 - The controller bundle has very little headroom (40,794 / 40,960 gz dev at the last gate). Any controller feature needs a size pass.
 - Host reconnect uses 250 ms → 4 s with no jitter; controller reconnect uses ±20%. Confirm before changing either.

@@ -1,0 +1,57 @@
+{
+  "formatVersion": 1,
+  "synthetic": true,
+  "source": "docs/engine/02-math.md §3.7",
+  "convention": "quatMultiply(out,a,b) = a*b. Rotating by a then b is b*a.",
+  "note": "Hand-derived unit quaternions and vector images; no implementation was run. s = sqrt(1/2) = 0.7071067811865476.",
+  "quaternions": {
+    "a": {
+      "label": "rotate +90 degrees about +Z",
+      "x": 0,
+      "y": 0,
+      "z": 0.7071067811865476,
+      "w": 0.7071067811865476
+    },
+    "b": {
+      "label": "rotate +90 degrees about +X",
+      "x": 0.7071067811865476,
+      "y": 0,
+      "z": 0,
+      "w": 0.7071067811865476
+    }
+  },
+  "products": [
+    {
+      "id": "a-times-b",
+      "expression": "a*b",
+      "applies": "b first, then a",
+      "expected": [0.5, 0.5, 0.5, 0.5],
+      "vectors": [
+        {
+          "input": [1, 0, 0],
+          "expect": [0, 1, 0]
+        },
+        {
+          "input": [0, 1, 0],
+          "expect": [0, 0, 1]
+        }
+      ]
+    },
+    {
+      "id": "b-times-a",
+      "expression": "b*a",
+      "applies": "a first, then b",
+      "expected": [0.5, -0.5, 0.5, 0.5],
+      "vectors": [
+        {
+          "input": [1, 0, 0],
+          "expect": [0, 0, 1]
+        },
+        {
+          "input": [0, 1, 0],
+          "expect": [-1, 0, 0]
+        }
+      ]
+    }
+  ]
+}

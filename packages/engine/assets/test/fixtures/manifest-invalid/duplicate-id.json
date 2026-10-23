@@ -1,0 +1,27 @@
+{
+  "$fixture": {
+    "expect": "reject",
+    "code": "E_ASSET_FORMAT",
+    "rule": "asset ids must be unique"
+  },
+  "formatVersion": 1,
+  "id": "example-game",
+  "budget": {
+    "initialBytes": 1024,
+    "totalBytes": 2048
+  },
+  "assets": [
+    {
+      "id": "textures/atlas",
+      "kind": "texture",
+      "url": "assets/atlas.webp",
+      "bytes": 512
+    },
+    {
+      "id": "textures/atlas",
+      "kind": "texture",
+      "url": "assets/atlas-2.webp",
+      "bytes": 512
+    }
+  ]
+}

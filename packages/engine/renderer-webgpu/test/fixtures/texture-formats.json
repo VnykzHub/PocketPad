@@ -1,0 +1,160 @@
+{
+  "formatVersion": 1,
+  "synthetic": true,
+  "source": "docs/engine/04-renderer-webgpu.md §4.5; feature names from §5.2 step 4",
+  "note": "Format and feature gate matrix for ABI 1. This file describes contract rules, not measurements. An EngineFeature value is the capability an application must request; a webgpuFeature value is the WebGPU adapter feature the backend must obtain before the format is usable.",
+  "formats": [
+    {
+      "token": "rgba8unorm",
+      "kind": "color",
+      "engineFeature": null,
+      "webgpuFeature": null,
+      "renderFeature": null,
+      "notes": "Required colour format in both tiers."
+    },
+    {
+      "token": "rgba8unorm-srgb",
+      "kind": "color",
+      "engineFeature": null,
+      "webgpuFeature": null,
+      "renderFeature": null,
+      "notes": "sRGB view of rgba8unorm; same storage, sampled as linear."
+    },
+    {
+      "token": "bgra8unorm",
+      "kind": "color",
+      "engineFeature": null,
+      "webgpuFeature": null,
+      "renderFeature": null,
+      "notes": "Preferred canvas format when the swapchain supports it. Not required as an upload or render-target format on the WebGL2 Tier B backend."
+    },
+    {
+      "token": "rgba16float",
+      "kind": "color",
+      "engineFeature": null,
+      "webgpuFeature": null,
+      "renderFeature": null,
+      "notes": "HDR intermediate target; optional, not required on Tier B."
+    },
+    {
+      "token": "rgba32float",
+      "kind": "color",
+      "engineFeature": "float-render-target",
+      "webgpuFeature": null,
+      "renderFeature": "float-render-target",
+      "notes": "Renderable only when float-render-target is supported. Filtering and blending of 32-bit floats are not assumed in ABI 1."
+    },
+    {
+      "token": "r8unorm",
+      "kind": "color",
+      "engineFeature": null,
+      "webgpuFeature": null,
+      "renderFeature": null,
+      "notes": "Single-channel mask target; optional, not required on Tier B."
+    },
+    {
+      "token": "rgb10a2unorm",
+      "kind": "color",
+      "engineFeature": null,
+      "webgpuFeature": null,
+      "renderFeature": null,
+      "notes": "Low-bandwidth HDR target; optional, not required on Tier B."
+    },
+    {
+      "token": "depth24plus",
+      "kind": "depth",
+      "engineFeature": null,
+      "webgpuFeature": null,
+      "renderFeature": null,
+      "notes": "Default depth attachment in ABI 1."
+    },
+    {
+      "token": "depth32float",
+      "kind": "depth",
+      "engineFeature": null,
+      "webgpuFeature": null,
+      "renderFeature": null,
+      "notes": "High-precision depth; optional, not required on Tier B."
+    },
+    {
+      "token": "depth24plus-stencil8",
+      "kind": "depth-stencil",
+      "engineFeature": null,
+      "webgpuFeature": null,
+      "renderFeature": null,
+      "notes": "Depth with stencil; optional, no ABI 1 pipeline uses stencil."
+    },
+    {
+      "token": "s3tc-dxt1",
+      "kind": "compressed",
+      "engineFeature": "compressed-s3tc",
+      "webgpuFeature": "texture-compression-bc",
+      "renderFeature": null,
+      "notes": "DXT1 / BC1, 4x4 block."
+    },
+    {
+      "token": "s3tc-dxt3",
+      "kind": "compressed",
+      "engineFeature": "compressed-s3tc",
+      "webgpuFeature": "texture-compression-bc",
+      "renderFeature": null,
+      "notes": "DXT3 / BC2, 4x4 block with explicit alpha."
+    },
+    {
+      "token": "s3tc-dxt5",
+      "kind": "compressed",
+      "engineFeature": "compressed-s3tc",
+      "webgpuFeature": "texture-compression-bc",
+      "renderFeature": null,
+      "notes": "DXT5 / BC3, 4x4 block with interpolated alpha."
+    },
+    {
+      "token": "etc2-rgb8",
+      "kind": "compressed",
+      "engineFeature": "compressed-etc2",
+      "webgpuFeature": "texture-compression-etc2",
+      "renderFeature": null,
+      "notes": "ETC2 RGB8, no alpha."
+    },
+    {
+      "token": "etc2-rgba8",
+      "kind": "compressed",
+      "engineFeature": "compressed-etc2",
+      "webgpuFeature": "texture-compression-etc2",
+      "renderFeature": null,
+      "notes": "ETC2 RGBA8, punch-through alpha."
+    },
+    {
+      "token": "astc-4x4",
+      "kind": "compressed",
+      "engineFeature": "compressed-astc",
+      "webgpuFeature": "texture-compression-astc",
+      "renderFeature": null,
+      "notes": "ASTC 4x4 block; highest quality of the three ASTC sizes."
+    },
+    {
+      "token": "astc-6x6",
+      "kind": "compressed",
+      "engineFeature": "compressed-astc",
+      "webgpuFeature": "texture-compression-astc",
+      "renderFeature": null,
+      "notes": "ASTC 6x6 block."
+    },
+    {
+      "token": "astc-8x8",
+      "kind": "compressed",
+      "engineFeature": "compressed-astc",
+      "webgpuFeature": "texture-compression-astc",
+      "renderFeature": null,
+      "notes": "ASTC 8x8 block; smallest of the three ASTC sizes."
+    },
+    {
+      "token": "bptc-rgba",
+      "kind": "compressed",
+      "engineFeature": null,
+      "webgpuFeature": "texture-compression-bc",
+      "renderFeature": null,
+      "notes": "BPTC / BC7 is desktop-only and gated by texture-compression-bc. 04 §4.5 gives it no EngineFeature token in ABI 1, so callers cannot request it through a capability flag; recorded as an ambiguity."
+    }
+  ]
+}

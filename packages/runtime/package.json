@@ -18,6 +18,12 @@
     "typecheck": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
+    "@lanpad/engine-assets": "0.1.0",
+    "@lanpad/engine-core": "0.1.0",
+    "@lanpad/engine-input": "0.1.0",
+    "@lanpad/engine-physics": "0.1.0",
+    "@lanpad/engine-renderer-webgl2": "0.1.0",
+    "@lanpad/engine-renderer-webgpu": "0.1.0",
     "@lanpad/protocol": "*",
     "@lanpad/sdk": "*"
   }

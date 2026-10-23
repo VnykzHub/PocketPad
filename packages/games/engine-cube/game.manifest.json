@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "name": "Engine Cube",
+  "description": "Three spinning cubes on the WebGPU/WebGL2 engine path.",
+  "entry": "index.js",
+  "layouts": ["layouts/ec-default-v1.json"],
+  "assetBudget": {
+    "initialBytes": 4096,
+    "totalBytes": 65536
+  },
+  "minPlayers": 1,
+  "maxPlayers": 2,
+  "needsGyro": false,
+  "renderer": "engine"
+}

@@ -1,0 +1,135 @@
+{
+  "formatVersion": 1,
+  "synthetic": true,
+  "source": "docs/engine/04-renderer-webgpu.md §4.8, Appendix C",
+  "note": "Descriptor cases for the pipeline cache. The exact canonical encoding (separator, escaping, canonical defines JSON) is NOT frozen by 04, so cases assert equality relations between descriptors, never literal key strings or hashes.",
+  "serializationStatus": "not-frozen",
+  "fieldOrder": [
+    "version",
+    "vertexShaderKey",
+    "fragmentShaderKey",
+    "vertexLayout",
+    "primitiveState",
+    "depthState",
+    "multisample",
+    "colorFormats",
+    "blendStates",
+    "layoutId",
+    "definesCanonical"
+  ],
+  "base": {
+    "version": 1,
+    "vertexShaderKey": "synthetic:pbr-vertex",
+    "fragmentShaderKey": "synthetic:pbr-fragment",
+    "vertexLayout": "static-pbr-v1",
+    "primitiveState": {
+      "topology": "triangle-list",
+      "cullMode": "back",
+      "frontFace": "ccw"
+    },
+    "depthState": {
+      "format": "depth24plus",
+      "compare": "less",
+      "writeEnabled": true
+    },
+    "multisample": 1,
+    "colorFormats": ["bgra8unorm"],
+    "blendStates": ["off"],
+    "layoutId": "builtin-pbr-v1",
+    "definesCanonical": "{\"ALPHA_MASK\":false,\"NORMAL_MAP\":false}"
+  },
+  "cases": [
+    {
+      "id": "base-first-create",
+      "overrides": {},
+      "expect": { "sameKeyAs": null, "cacheHit": false, "pipelinesCreated": 1 }
+    },
+    {
+      "id": "base-repeat",
+      "overrides": {},
+      "expect": { "sameKeyAs": "base", "cacheHit": true, "pipelinesCreated": 0 }
+    },
+    {
+      "id": "vertex-shader-change",
+      "overrides": { "vertexShaderKey": "synthetic:pbr-vertex-alt" },
+      "expect": { "sameKeyAs": null, "cacheHit": false, "pipelinesCreated": 1 }
+    },
+    {
+      "id": "fragment-shader-change",
+      "overrides": { "fragmentShaderKey": "synthetic:pbr-fragment-alt" },
+      "expect": { "sameKeyAs": null, "cacheHit": false, "pipelinesCreated": 1 }
+    },
+    {
+      "id": "vertex-layout-change",
+      "overrides": { "vertexLayout": "instanced-transform-v1" },
+      "expect": { "sameKeyAs": null, "cacheHit": false, "pipelinesCreated": 1 }
+    },
+    {
+      "id": "primitive-cull-change",
+      "overrides": {
+        "primitiveState": {
+          "topology": "triangle-list",
+          "cullMode": "none",
+          "frontFace": "ccw"
+        }
+      },
+      "expect": { "sameKeyAs": null, "cacheHit": false, "pipelinesCreated": 1 }
+    },
+    {
+      "id": "depth-write-change",
+      "overrides": {
+        "depthState": {
+          "format": "depth24plus",
+          "compare": "less",
+          "writeEnabled": false
+        }
+      },
+      "expect": { "sameKeyAs": null, "cacheHit": false, "pipelinesCreated": 1 }
+    },
+    {
+      "id": "multisample-change",
+      "overrides": { "multisample": 4 },
+      "expect": { "sameKeyAs": null, "cacheHit": false, "pipelinesCreated": 1 }
+    },
+    {
+      "id": "color-format-change",
+      "overrides": { "colorFormats": ["rgba16float"] },
+      "expect": { "sameKeyAs": null, "cacheHit": false, "pipelinesCreated": 1 }
+    },
+    {
+      "id": "blend-mode-change",
+      "overrides": { "blendStates": ["src-alpha-one-minus-src-alpha"] },
+      "expect": { "sameKeyAs": null, "cacheHit": false, "pipelinesCreated": 1 }
+    },
+    {
+      "id": "layout-id-change",
+      "overrides": { "layoutId": "builtin-shadow-v1" },
+      "expect": { "sameKeyAs": null, "cacheHit": false, "pipelinesCreated": 1 }
+    },
+    {
+      "id": "defines-canonical-change",
+      "overrides": {
+        "definesCanonical": "{\"ALPHA_MASK\":true,\"NORMAL_MAP\":false}"
+      },
+      "expect": { "sameKeyAs": null, "cacheHit": false, "pipelinesCreated": 1 }
+    }
+  ],
+  "equivalenceCases": [
+    {
+      "id": "defines-insertion-order-invariance",
+      "kind": "defines-object-order",
+      "definesInputs": [
+        { "ALPHA_MASK": false, "NORMAL_MAP": true },
+        { "NORMAL_MAP": true, "ALPHA_MASK": false }
+      ],
+      "expect": { "sameCanonicalDefines": true, "sameKey": true }
+    }
+  ],
+  "cacheRules": {
+    "maxPipelines": 256,
+    "maxShaderModules": 64,
+    "maxKeyBytes": 4096,
+    "eviction": "least-recently-used on insert; an evicted pipeline is recreated on its next request; shader modules live until device destruction",
+    "hashRole": "FNV-1a 32-bit over the canonical key is a stats label only; it is never used for equality"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "formatVersion": 1,
+  "synthetic": true,
+  "source": "docs/engine/10-input.md §5.2; docs/engine/01-core-loop-time.md §3.7",
+  "coreFixture": "packages/engine/core/test/conformance/tick-order.json",
+  "note": "Input placement on the seven-step host tick. Step numbers and ids are owned by the core fixture; this file adds input operations only and does not duplicate the core order. The core fixture names InputMapper.pollAll at step 2; the engine router replaces that call with InputRouter.poll at the same step.",
+  "inputOps": [
+    {
+      "step": 1,
+      "op": "setTilt",
+      "caller": "runtime adapter",
+      "description": "Copy each slot's pooled tilt state into the router before the poll."
+    },
+    {
+      "step": 2,
+      "op": "poll",
+      "caller": "host loop",
+      "count": 1,
+      "description": "InputRouter.poll(loop.tick) exactly once, before game.simulate."
+    },
+    {
+      "step": 3,
+      "op": "InputReader.update",
+      "caller": "runtime adapter",
+      "description": "Feed the synthesized InputSnapshot from the frame; legacy games keep reading it."
+    },
+    {
+      "step": 5,
+      "op": "read-frame",
+      "caller": "game.simulate",
+      "description": "Read-only access to frame actions, pointer and focus."
+    }
+  ],
+  "idempotentSameTick": true,
+  "decreasingTick": {
+    "dev": "E_INPUT_TICK",
+    "production": "ignored"
+  },
+  "forbidden": [
+    {
+      "step": 5,
+      "op": "poll",
+      "reason": "poll is a host operation and must run before simulate"
+    },
+    {
+      "step": "render",
+      "op": "poll",
+      "reason": "poll runs once per simulation tick, never per rendered frame"
+    },
+    {
+      "step": 5,
+      "op": "setBindings",
+      "reason": "binding changes are host/UI operations and apply from the next poll"
+    },
+    {
+      "step": 5,
+      "op": "reset",
+      "reason": "reset is a host lifecycle operation, never per-tick"
+    },
+    {
+      "step": 5,
+      "op": "beginCapture",
+      "reason": "capture is a UI operation outside simulate"
+    },
+    {
+      "step": 5,
+      "op": "saveBindings",
+      "reason": "persistence never runs inside simulate"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PocketPad M0 engine demo</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="bar">
+    <div class="titles">
+      <p class="eyebrow">PocketPad engine &middot; M0</p>
+      <h1>Textured cube</h1>
+    </div>
+    <nav class="backends" aria-label="Renderer backend">
+      <button type="button" data-backend="auto">Auto</button>
+      <button type="button" data-backend="webgpu">WebGPU</button>
+      <button type="button" data-backend="webgl2">WebGL2</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="Render output">
+      <canvas id="view" width="640" height="360" aria-label="Rendered 3D scene"></canvas>
+    </section>
+
+    <section class="panel" aria-live="polite">
+      <h2>Run status</h2>
+      <pre id="status">Starting&hellip;</pre>
+      <p class="hint">
+        Open with <code>?backend=webgpu</code>, <code>?backend=webgl2</code> or
+        <code>?backend=auto</code>. The M0 acceptance fixture is
+        <code>?scene=scene5000&amp;instances=5000&amp;size=1920x1080&amp;bench=1</code>.
+        The automated run uses <code>run.mjs</code>, which serves this page with
+        a nonce-based CSP.
+      </p>
+    </section>
+  </main>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "@lanpad/engine-core": "/packages/engine/core/dist/index.js",
+      "@lanpad/engine-assets": "/packages/engine/assets/dist/index.js",
+      "@lanpad/engine-renderer-webgpu/dev": "/packages/engine/renderer-webgpu/dist/dev.js"
+    }
+  }
+  </script>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

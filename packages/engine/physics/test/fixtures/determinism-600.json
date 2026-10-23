@@ -1,0 +1,158 @@
+{
+  "id": "ER-07-02",
+  "source": "docs/engine/07-physics3d.md ER-07-02",
+  "world": {
+    "gravity": [
+      0,
+      -9.81,
+      0
+    ],
+    "fixedDt": 0.016666666666666666,
+    "solver": {
+      "velocityIterations": 8,
+      "positionIterations": 3,
+      "warmStarting": true,
+      "substeps": 1
+    }
+  },
+  "ticks": 600,
+  "seed": 20261023,
+  "scene": {
+    "dynamic": {
+      "spheres": 84,
+      "boxes": 84,
+      "capsules": 84
+    },
+    "staticTrimeshes": 4,
+    "ground": {
+      "halfExtents": [
+        60,
+        0.5,
+        60
+      ],
+      "top": 0
+    },
+    "vehicle": {
+      "chassisHalfExtents": [
+        0.9,
+        0.35,
+        2
+      ],
+      "chassisMass": 1000,
+      "position": [
+        0,
+        1,
+        20
+      ],
+      "wheels": [
+        {
+          "localPosition": [
+            -0.85,
+            -0.35,
+            -1.35
+          ],
+          "radius": 0.35,
+          "width": 0.25,
+          "suspensionRestLength": 0.3,
+          "suspensionStiffness": 25000,
+          "suspensionDamping": 2500,
+          "maxTravel": 0.25,
+          "steerable": true,
+          "driven": false,
+          "friction": 1.5
+        },
+        {
+          "localPosition": [
+            0.85,
+            -0.35,
+            -1.35
+          ],
+          "radius": 0.35,
+          "width": 0.25,
+          "suspensionRestLength": 0.3,
+          "suspensionStiffness": 25000,
+          "suspensionDamping": 2500,
+          "maxTravel": 0.25,
+          "steerable": true,
+          "driven": false,
+          "friction": 1.5
+        },
+        {
+          "localPosition": [
+            -0.85,
+            -0.35,
+            1.35
+          ],
+          "radius": 0.35,
+          "width": 0.25,
+          "suspensionRestLength": 0.3,
+          "suspensionStiffness": 25000,
+          "suspensionDamping": 2500,
+          "maxTravel": 0.25,
+          "steerable": false,
+          "driven": true,
+          "friction": 1.5
+        },
+        {
+          "localPosition": [
+            0.85,
+            -0.35,
+            1.35
+          ],
+          "radius": 0.35,
+          "width": 0.25,
+          "suspensionRestLength": 0.3,
+          "suspensionStiffness": 25000,
+          "suspensionDamping": 2500,
+          "maxTravel": 0.25,
+          "steerable": false,
+          "driven": true,
+          "friction": 1.5
+        }
+      ],
+      "engineForce": 6000,
+      "reverseForce": 3000,
+      "brakeForce": 12000,
+      "maxSteerDegrees": 35,
+      "steerRateDegreesPerSecond": 180,
+      "topSpeed": 45,
+      "downforce": 0
+    },
+    "character": {
+      "radius": 0.35,
+      "halfHeight": 0.55,
+      "position": [
+        -6,
+        1.5,
+        20
+      ],
+      "slopeLimitDegrees": 45,
+      "stepOffset": 0.3,
+      "snapToGround": 0.1,
+      "gravity": 9.81,
+      "movePerTick": [
+        0.02,
+        0,
+        -0.01
+      ]
+    },
+    "input": {
+      "vehicleThrottle": 0.35,
+      "vehicleSteerAmplitude": 0.08,
+      "vehicleSteerPeriodTicks": 251
+    }
+  },
+  "recorded": {
+    "bodyCount": 259,
+    "colliderCount": 259,
+    "runAHash": 3733532183,
+    "runBHash": 3733532183,
+    "changedSolver": {
+      "velocityIterations": 4,
+      "hash": 3756658819
+    },
+    "nodeResult": "PASS (2/2) on Node 20 Windows, 2026-10-23; Rapier 0.21.0",
+    "browser": "PENDING — Desktop Chrome 155 M1 run",
+    "notes": "259 bodies = 256 scene bodies (84 spheres + 84 boxes + 84 capsules + 4 static trimeshes) + ground + vehicle chassis + character. Hashes are Node values; cross-engine equality is out of scope per 00 §5.8."
+  }
+}

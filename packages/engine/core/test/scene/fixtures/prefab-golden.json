@@ -1,0 +1,12 @@
+{
+  "formatVersion": 1,
+  "id": "props/crate",
+  "root": 0,
+  "entities": [
+    {"parent":null,"components":{"transform":{"position":[0,0,0],"rotation":[0,0,0,1],"scale":[1,1,1]},"renderable":{"mesh":"meshes/crate","material":"materials/wood","visible":true,"layer":0}}},
+    {"parent":0,"components":{"transform":{"position":[0,0.5,0],"rotation":[0,0,0,1],"scale":[1,1,1]},"renderable":{"mesh":"meshes/crate-lid","material":"materials/wood","visible":true,"layer":0}}},
+    {"parent":1,"components":{"transform":{"position":[0,0.25,0],"rotation":[0,0,0,1],"scale":[1,0.5,1]},"renderable":{"mesh":"meshes/crate-lid","material":"materials/brass","visible":false,"layer":2}}},
+    {"parent":0,"components":{"transform":{"position":[1,0,0],"rotation":[0,0,0,1],"scale":[1,1,1]},"renderable":{"mesh":"meshes/crate","material":"materials/wood","visible":true,"layer":0}}},
+    {"parent":0,"components":{"transform":{"position":[-1,0,0],"rotation":[0,0,0,1],"scale":[1,1,1]},"renderable":{"mesh":"meshes/crate","material":"materials/wood","visible":true,"layer":0}}}
+  ]
+}

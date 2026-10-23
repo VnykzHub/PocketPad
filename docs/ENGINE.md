@@ -7,19 +7,19 @@
 
 ## 1. What the engine is
 
-PocketPad is not a general-purpose game engine. It is a **TV-first, host-authoritative, fixed-timestep engine** for games that render on one big screen and take input from phones on the same LAN.
+PocketPad is a **browser-native, host-authoritative, fixed-timestep engine**. It renders on any browser display — desktop, laptop, TV, tablet — and takes input from phones, keyboard/mouse and gamepads. This guide describes the current implementation (2D-first, cube-only 3D); the target engine program is in [`docs/engine/`](engine/README.md).
 
 Three roles:
 
 | Role | Runs on | Owns |
 | --- | --- | --- |
-| **Host runtime** | TV / laptop browser | Simulation, rendering, audio, assets, game lifecycle, platform UI |
+| **Host runtime** | Any browser display | Simulation, rendering, audio, assets, game lifecycle, platform UI |
 | **Controller** | Each phone browser | Touch controls, input state, send loop, clock sync, haptics, sensors |
 | **Broker + dev server** | One Node process | Rooms, sessions, slots, relay, static serving, security headers |
 
 The host simulates. Phones never simulate, never see the game, and never receive game state beyond the layout and their private panel. A phone sends a 26-byte input frame; the host maps it and feeds the game.
 
-```
+```text
 ┌─────────────────────┐   Input 26 B (binary)   ┌──────────────────────────┐
 │ Phone controller    │ ──────────────────────▶ │ Broker                   │
 │ touch → InputStore  │                         │ rooms · sessions · slots │
@@ -35,7 +35,7 @@ The host simulates. Phones never simulate, never see the game, and never receive
                                                    └──────────────────────────┘
 ```
 
-**Design invariants**
+### Design invariants
 
 1. **Host-authoritative.** Only the host runs `simulate` and owns game state.
 2. **Fixed timestep.** Simulation is 60 Hz; rendering interpolates. No wall-clock time inside a game.
@@ -52,7 +52,7 @@ The host simulates. Phones never simulate, never see the game, and never receive
 ### 2.1 Boot sequence
 
 1. `packages/runtime/index.html` mounts the host shell (`#app`, top bar, room section, `#game-root`, roster).
-2. `src/main.ts` resolves the TV profile, chooses the renderer, and creates or resumes the room.
+2. `src/main.ts` is a 47-line composition root; `src/host/bootstrap.ts` resolves the TV profile, chooses the renderer, and creates or resumes the room.
 3. The shell joins the broker as host, then either shows the launcher (`/`) or loads a game (`/games/<slug>/`).
 4. `openGame()` validates the manifest, registers its layouts, creates a `GameHost`, loads assets, and either shows the start screen or auto-starts after a launcher gesture.
 5. `GameHost.start()` calls `game.init(ctx)` once, then starts the fixed loop.
@@ -123,7 +123,7 @@ The context object is frozen. The default RNG seed is `1`, so a trace replays de
 
 ### 2.5 Input pipeline
 
-```
+```text
 phone Input (26 B)
   → broker InputFwd (27 B, slot added)
   → InputMapper.apply(slot, input)
@@ -176,7 +176,7 @@ Interfaces:
 
 ### 2.7 Physics
 
-Source: `packages/runtime/src/physics/`.
+Source: `packages/engine/physics/src/two-d/` (compatibility re-export from `packages/runtime/src/physics/`).
 
 - `Vec2 { x, y }`, `Aabb { x, y, w, h }`, `Arena { minX, maxX, minY, maxY }`.
 - `CircleBody`: position, velocity, radius, mass, restitution, friction, active flag, id. `Contact { nx, ny, depth }` is caller-owned.
@@ -271,7 +271,7 @@ The controller clears the URL fragment before any network call. A hidden tab sus
 | `/x/*` | Experiment pages |
 | `/ws` | WebSocket upgrade only |
 
-Every response sets `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and a strict CSP (`default-src 'self'; connect-src 'self' ws:; img-src 'self' data:; script-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'`). No CORS headers. The WebSocket Origin must match the LAN/localhost allowlist; the dev server alone permits a missing Origin for bots.
+Every response sets `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp`, `Cross-Origin-Resource-Policy: same-origin`, and a strict CSP (`default-src 'self'; connect-src 'self' ws:; img-src 'self' data:; script-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'`). COOP/COEP provide cross-origin isolation for `SharedArrayBuffer` and the engine's worker model (A18). No CORS headers. The WebSocket Origin must match the LAN/localhost allowlist; the dev server alone permits a missing Origin for bots.
 
 Close codes: 1002 protocol, 1008 policy, 1009 oversized.
 
@@ -419,7 +419,7 @@ Create `experiments/eNN/` with `index.html`, `page.js`, optional `page.css`; the
 
 ```bash
 npm ci
-npm run check          # typecheck, lint, tests, build, size, trace D0
+npm run check          # typecheck, lint, tests, build, size, trace D0–D7
 npm run typecheck
 npm run lint
 npm test
@@ -434,13 +434,13 @@ node tools/input-bot/dist/cli.js --server http://<lan-ip>:8080 --code ABCD --pin
 
 ## 7. Current status and known gaps
 
-**Verified on this tree**
+### Verified on this tree
 
-- `npm run check` exit 0: 134 test files / 1,571 tests, typecheck, lint, build, size, D0 trace 0 missing.
+- `npm run check` exit 0: 222 test files / 2,525 tests, typecheck, lint, build, size, trace D0–D7, 0 missing per stage.
 - Controller bundle: 40,794 gz / 40,960 dev (166 bytes headroom). Host: 75,752 gz / 3,145,728.
-- D7 trace: 0 missing (requires a separate `--stage D7` run; the root `trace` script is pinned to D0).
+- Full Gate matrix (`npm run trace:gate`) is red on unimplemented capability IDs C3–C10; that is expected until the engine exists. The per-stage trace (D0–D7) is green.
 
-**Open**
+### Open
 
 1. **Three proof games are missing** for D7: Sumo Bumpers, Draw and Guess, Tilt Maze Race. Coin Run is an extra game, not one of the four.
 2. **No TV/Android hardware evidence.** Every device row in `docs/RESULTS.md` is PENDING. Desktop Chrome 155 is only the provisional target.
@@ -455,7 +455,7 @@ node tools/input-bot/dist/cli.js --server http://<lan-ip>:8080 --code ABCD --pin
 
 ## 8. File map
 
-**Host runtime**
+### Host runtime
 
 - `packages/runtime/src/loop/FixedLoop.ts` — fixed 60 Hz loop, clamp, alpha, pause.
 - `packages/runtime/src/game/GameHost.ts` — lifecycle, tick order, error/pause/dispose.
@@ -469,10 +469,11 @@ node tools/input-bot/dist/cli.js --server http://<lan-ip>:8080 --code ABCD --pin
 - `packages/runtime/src/profile/resolutionController.ts` — dynamic resolution.
 - `packages/runtime/src/assets/AssetLoader.ts` — byte-accurate loading.
 - `packages/runtime/src/audio/AudioBus.ts` — gesture unlock, voices, fades.
-- `packages/runtime/src/physics/collide.ts` — circle/AABB/circle physics.
-- `packages/runtime/src/main.ts` — host shell wiring.
+- `packages/engine/physics/src/two-d/collide.ts` — circle/AABB/circle physics (runtime re-exports it).
+- `packages/runtime/src/main.ts` — 47-line composition root.
+- `packages/runtime/src/host/*` — room/session, stage/canvas, launcher, navigation, events, overlay, modals, pause, chrome and roster wiring.
 
-**Protocol / broker / server**
+### Protocol / broker / server
 
 - `packages/protocol/src/constants.ts` — version, caps, limits.
 - `packages/protocol/src/binary.ts` — 26/27-byte codecs.
@@ -485,7 +486,7 @@ node tools/input-bot/dist/cli.js --server http://<lan-ip>:8080 --code ABCD --pin
 - `packages/dev-server/src/main.ts` — routes and LAN URLs.
 - `packages/dev-server/src/static.ts` — security headers and CSP.
 
-**Controller**
+### Controller
 
 - `packages/controller/src/touch/touchEngine.ts`, `hitTest.ts` — touch ownership and 44 px floor.
 - `packages/controller/src/input/InputStore.ts`, `sendLoop.ts` — state and cadence.
@@ -493,10 +494,9 @@ node tools/input-bot/dist/cli.js --server http://<lan-ip>:8080 --code ABCD --pin
 - `packages/controller/src/controls/*` — the 11 renderers.
 - `packages/controller/src/controls/strokeBatcher.ts`, `eventSink.ts` — events and strokes.
 
-**SDK / games**
+### SDK / games
 
 - `sdk/src/game-api.ts` — the frozen game-facing surface.
 - `sdk/src/manifest.ts`, `layout.ts`, `layout-validate.ts`, `panel.ts`, `ugc.ts` — schemas and validators.
 - `packages/games/platformer/src/*` — Coin Run reference game.
 - `packages/games/reaction-duel/src/*` — Reaction Duel reference game.
-

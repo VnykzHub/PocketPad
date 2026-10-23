@@ -1,0 +1,10 @@
+{
+  "formatVersion": 1,
+  "actions": [
+    {
+      "name": "Move",
+      "kind": "axis",
+      "bindings": [{ "device": "keyboard", "code": "KeyW" }]
+    }
+  ]
+}

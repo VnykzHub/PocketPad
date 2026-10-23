@@ -1,0 +1,384 @@
+{
+  "$fixture": {
+    "kind": "format-matrix",
+    "note": "Synthetic contract data from docs/engine/06-assets.md. No value here is a measurement; sizes, counts and thresholds are contract limits."
+  },
+  "formatVersion": 1,
+  "kind": "asset-format-matrix",
+  "source": "docs/engine/06-assets.md",
+  "measured": false,
+  "versions": {
+    "ASSET_MANIFEST_VERSION": 1,
+    "MESH_FORMAT_VERSION": 1,
+    "TEXTURE_ASSET_FORMAT_VERSION": 1,
+    "MATERIAL_FORMAT_VERSION": 1,
+    "ASSET_CACHE_VERSION": 1
+  },
+  "manifest": {
+    "file": "asset-manifest.json",
+    "encoding": "UTF-8",
+    "formatVersion": 1,
+    "maxBytes": 262144,
+    "maxAssets": 4096,
+    "initialBudgetBytes": 5242880,
+    "defaultMaxTotalBytes": 268435456,
+    "url": {
+      "sameOrigin": true,
+      "relative": true,
+      "maxChars": 512,
+      "forbidden": [
+        "scheme",
+        "host",
+        "double-slash",
+        "dot-segment",
+        "dot-dot-segment",
+        "query",
+        "fragment",
+        "backslash",
+        "percent-encoded-dot"
+      ],
+      "extensionMustMatchKind": true
+    },
+    "budget": {
+      "initialBytes": "positive integer >= sum of every initial entry's default bytes",
+      "totalBytes": ">= initialBytes and >= sum of every entry's default bytes"
+    }
+  },
+  "categories": {
+    "mesh": {
+      "milestone": "M0",
+      "defaultContainer": "glb",
+      "containers": {
+        "glb": {
+          "accepted": true,
+          "header": {
+            "magic": "glTF",
+            "version": 2,
+            "length": "equals buffer byteLength"
+          },
+          "chunks": ["JSON", "BIN"],
+          "extraChunks": "ignored",
+          "buffers": "buffers[0] has no uri; every buffer view points inside BIN",
+          "meshes": 1,
+          "primitives": {
+            "min": 1,
+            "max": 8
+          },
+          "mode": "triangles",
+          "attributes": {
+            "required": ["POSITION", "NORMAL", "TEXCOORD_0"],
+            "componentType": "float32",
+            "acceptedAndDropped": ["TANGENT", "COLOR_0"],
+            "otherAttributes": "ignored",
+            "sparse": false,
+            "normalized": false,
+            "byteStride": {
+              "absent": true,
+              "orBytes": 32
+            }
+          },
+          "indices": {
+            "required": true,
+            "types": ["UNSIGNED_SHORT", "UNSIGNED_INT"],
+            "countMultipleOf": 3,
+            "maxIndexLessThanVertexCount": true
+          },
+          "vertexLayout": {
+            "id": "static-pbr-v1",
+            "strideBytes": 32,
+            "fields": [
+              {
+                "offset": 0,
+                "name": "position",
+                "type": "float32",
+                "components": 3
+              },
+              {
+                "offset": 12,
+                "name": "normal",
+                "type": "float32",
+                "components": 3
+              },
+              {
+                "offset": 24,
+                "name": "uv",
+                "type": "float32",
+                "components": 2
+              }
+            ]
+          },
+          "boundsCrossCheckTolerance": 0.0001
+        },
+        "gltf": {
+          "accepted": false,
+          "reason": "M0 mesh entries must be GLB with embedded BIN; external buffers and data URIs are rejected"
+        }
+      },
+      "rejectedInM0": [
+        "extensionsRequired",
+        "KHR_draco_mesh_compression",
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "sparse accessors",
+        "non-triangle primitive modes",
+        "second mesh",
+        "zero primitives",
+        "missing BIN chunk",
+        "accessor bounds inconsistent with data"
+      ],
+      "m1Additions": [
+        "EXT_meshopt_compression",
+        "KHR_draco_mesh_compression"
+      ]
+    },
+    "texture": {
+      "milestone": "M0",
+      "defaultContainers": ["webp", "png"],
+      "defaultDecode": {
+        "format": "rgba8unorm",
+        "mipLevels": 1,
+        "layers": 1,
+        "sourceColorSpace": "srgb",
+        "completeMipChain": false
+      },
+      "containers": {
+        "webp": {
+          "accepted": true,
+          "defaultVariant": true,
+          "maxWidth": 4096,
+          "maxHeight": 4096,
+          "animation": "frame 0 only",
+          "alpha": "preserved",
+          "iccProfiles": "ignored"
+        },
+        "png": {
+          "accepted": true,
+          "defaultVariant": true,
+          "maxWidth": 4096,
+          "maxHeight": 4096,
+          "animation": "not applicable",
+          "alpha": "preserved",
+          "iccProfiles": "ignored"
+        },
+        "ktx2": {
+          "accepted": true,
+          "milestone": "M0 pre-transcoded only",
+          "identifier": "«KTX 20»\\r\\n\\x1A\\n",
+          "supercompressionScheme": [0],
+          "typeSize": 1,
+          "pixelDepth": 0,
+          "faceCount": 1,
+          "layerCount": [0, 1],
+          "mipChain": "complete: levelCount === 1 + floor(log2(max(width, height)))",
+          "levelOffsetAlignmentBytes": 4,
+          "formats": [
+            {
+              "format": "rgba8unorm",
+              "vkFormat": 37,
+              "requires": []
+            },
+            {
+              "format": "rgba8unorm-srgb",
+              "vkFormat": 43,
+              "requires": []
+            },
+            {
+              "format": "bc1-rgba-unorm",
+              "vkFormat": 131,
+              "requires": ["compressed-s3tc"]
+            },
+            {
+              "format": "bc1-rgba-unorm-srgb",
+              "vkFormat": 132,
+              "requires": ["compressed-s3tc"]
+            },
+            {
+              "format": "bc3-rgba-unorm",
+              "vkFormat": 137,
+              "requires": ["compressed-s3tc"]
+            },
+            {
+              "format": "bc3-rgba-unorm-srgb",
+              "vkFormat": 138,
+              "requires": ["compressed-s3tc"]
+            },
+            {
+              "format": "bc7-rgba-unorm",
+              "vkFormat": 145,
+              "requires": ["compressed-s3tc"]
+            },
+            {
+              "format": "bc7-rgba-unorm-srgb",
+              "vkFormat": 146,
+              "requires": ["compressed-s3tc"]
+            },
+            {
+              "format": "etc2-rgba8unorm",
+              "vkFormat": 147,
+              "requires": ["compressed-etc2"]
+            },
+            {
+              "format": "etc2-rgba8unorm-srgb",
+              "vkFormat": 148,
+              "requires": ["compressed-etc2"]
+            },
+            {
+              "format": "astc-4x4-unorm",
+              "vkFormat": 157,
+              "requires": ["compressed-astc"]
+            },
+            {
+              "format": "astc-4x4-unorm-srgb",
+              "vkFormat": 158,
+              "requires": ["compressed-astc"]
+            }
+          ],
+          "m1Additions": {
+            "supercompressionScheme": [1, 2, 3],
+            "transcoder": "BasisU",
+            "targetOrder": ["bc7", "bc1-or-bc3", "etc2", "astc"]
+          }
+        }
+      },
+      "gpuBytesFormula": "sum over layers and levels of align256(block(max(1, w >> l), max(1, h >> l), format))",
+      "alignmentBytes": 256,
+      "blockSizes": {
+        "bc1": {
+          "block": [4, 4],
+          "bytes": 8
+        },
+        "bc3": {
+          "block": [4, 4],
+          "bytes": 16
+        },
+        "bc7": {
+          "block": [4, 4],
+          "bytes": 16
+        },
+        "etc2-rgba8": {
+          "block": [4, 4],
+          "bytes": 16
+        },
+        "astc-4x4": {
+          "block": [4, 4],
+          "bytes": 16
+        },
+        "rgba8": {
+          "block": [1, 1],
+          "bytes": 4
+        }
+      }
+    },
+    "audio": {
+      "milestone": "M0 transport only; decode is engine-audio (09)",
+      "codecDetection": "container signature only",
+      "containers": [
+        {
+          "container": "ogg",
+          "signature": "OggS",
+          "mimeType": "audio/ogg",
+          "expectedCodec": "opus",
+          "tierBDefault": true
+        },
+        {
+          "container": "webm",
+          "signature": "1A45DFA3",
+          "mimeType": "audio/webm",
+          "expectedCodec": "opus",
+          "tierBDefault": true
+        },
+        {
+          "container": "wav",
+          "signature": "RIFF....WAVE",
+          "mimeType": "audio/wav",
+          "expectedCodec": "pcm",
+          "tierBDefault": true
+        },
+        {
+          "container": "m4a",
+          "signature": "ftyp",
+          "mimeType": "audio/mp4",
+          "expectedCodec": "aac",
+          "tierBDefault": false,
+          "note": "accepted alternate when the browser supports it"
+        }
+      ],
+      "routing": {
+        "streamWhenDurationSecondsGreaterThan": 30,
+        "streamWhenBytesGreaterThan": 1048576,
+        "manifestOverride": "streaming",
+        "streamFetchesCountedInAssetProgress": false
+      }
+    },
+    "font": {
+      "milestone": "M0 bytes only",
+      "containers": [
+        {
+          "container": "woff2",
+          "signature": "wOF2",
+          "returns": {
+            "kind": "woff2",
+            "bytes": "ArrayBuffer"
+          }
+        },
+        {
+          "container": "json",
+          "returns": {
+            "kind": "atlas",
+            "json": "parsed JSON"
+          },
+          "maxBytes": 2097152,
+          "schemaOwner": "13-ui-text"
+        }
+      ],
+      "rejected": ["ttf", "otf"],
+      "glyphLayout": "owned by 13-ui-text"
+    },
+    "json": {
+      "container": "json",
+      "encoding": "UTF-8",
+      "maxBytes": 4194304,
+      "parseOn": "main thread",
+      "acceptedValues": "any JSON value",
+      "prototypeRule": "data only; never merged into a prototype"
+    },
+    "material": {
+      "container": "material.json",
+      "formatVersion": 1,
+      "fields": [
+        "formatVersion",
+        "id",
+        "baseColorFactor",
+        "metallic",
+        "roughness",
+        "emissiveFactor",
+        "baseColorTexture",
+        "metallicRoughnessTexture",
+        "normalTexture",
+        "normalScale",
+        "occlusionTexture",
+        "occlusionStrength",
+        "emissiveTexture",
+        "alphaMode",
+        "alphaCutoff",
+        "doubleSided",
+        "unlit"
+      ],
+      "textureReferences": "manifest texture ids; automatically added to the resolved dependency set",
+      "alphaModes": ["opaque", "mask", "blend"],
+      "immutable": true
+    },
+    "scene": {
+      "declared": true,
+      "milestone": "M0 manifest validation only",
+      "runtime": "E_ASSET_UNSUPPORTED",
+      "payloadSpecs": ["03-scene-ecs", "17-editor"]
+    },
+    "animation": {
+      "declared": true,
+      "milestone": "M0 manifest validation only",
+      "runtime": "E_ASSET_UNSUPPORTED",
+      "payloadSpec": "08-animation"
+    }
+  }
+}

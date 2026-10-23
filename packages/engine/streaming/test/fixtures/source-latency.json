@@ -1,0 +1,6 @@
+{
+  "name": "source-latency",
+  "p50Ms": 40,
+  "p95Ms": 120,
+  "seed": 123456789
+}

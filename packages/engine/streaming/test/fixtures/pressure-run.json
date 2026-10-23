@@ -1,0 +1,11 @@
+{
+  "name": "pressure-run",
+  "ticks": 10000,
+  "demandMultiplier": 5,
+  "focusStepMeters": 16,
+  "start": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  }
+}

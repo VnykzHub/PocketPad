@@ -1,0 +1,301 @@
+{
+  "version": 2,
+  "fixtures": {
+    "m0-textured-cube-v1|1|640x360": {
+      "scene": "m0-textured-cube-v1",
+      "sceneKey": "cube",
+      "instances": 1,
+      "width": 640,
+      "height": 360,
+      "specConformant": true,
+      "backends": {
+        "webgl2": {
+          "hash": "243224a8",
+          "nonClearPixels": 53970,
+          "brightPixels": 53970,
+          "distinctColors": 7,
+          "drawCalls": 1,
+          "triangles": 12,
+          "instances": 1,
+          "textureBytes": 256,
+          "gpuErrors": 0,
+          "adapter": "webgl2 | WebKit WebGL",
+          "chrome": "Chrome/155.0.8059.85",
+          "browser": {
+            "name": "Chrome",
+            "version": "155.0.0.0",
+            "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+          },
+          "dpr": 1,
+          "buildHash": "9b428497356e77fd433371f0b4e9b85118b3b518b8f05e4490cab134c690902d",
+          "engineBuildHash": "ec7533855f0712417a7c926cfd67dcc0dd25931ea0fa650fc7634f178a3541d1",
+          "captureFrame": 60,
+          "benchmark": {
+            "p50": 10,
+            "p95": 10.1,
+            "max": 11.1,
+            "count": 600,
+            "warmupFrames": 120,
+            "measuredFrames": 600,
+            "status": "target-met"
+          },
+          "recordedAt": "2026-10-23T03:58:39.768Z"
+        },
+        "webgpu": {
+          "hash": "243224a8",
+          "nonClearPixels": 53970,
+          "brightPixels": 53970,
+          "distinctColors": 7,
+          "drawCalls": 1,
+          "triangles": 12,
+          "instances": 1,
+          "textureBytes": 922880,
+          "gpuErrors": 0,
+          "adapter": "nvidia ampere",
+          "chrome": "Chrome/155.0.8059.85",
+          "browser": {
+            "name": "Chrome",
+            "version": "155.0.0.0",
+            "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+          },
+          "dpr": 1,
+          "buildHash": "f133e3b77908f4db47ab4daf964c762b3d99c7bf37baf9e82de8cd6a420e11bb",
+          "engineBuildHash": "ec7533855f0712417a7c926cfd67dcc0dd25931ea0fa650fc7634f178a3541d1",
+          "captureFrame": 60,
+          "benchmark": {
+            "p50": 10,
+            "p95": 10.1,
+            "max": 10.9,
+            "count": 600,
+            "warmupFrames": 120,
+            "measuredFrames": 600,
+            "status": "target-met"
+          },
+          "recordedAt": "2026-10-23T03:58:21.077Z"
+        }
+      }
+    },
+    "m0-scene5000-v1|5000|1920x1080": {
+      "scene": "m0-scene5000-v1",
+      "sceneKey": "scene5000",
+      "instances": 5000,
+      "width": 1920,
+      "height": 1080,
+      "specConformant": true,
+      "backends": {
+        "webgpu": {
+          "hash": "cb91b2b4",
+          "nonClearPixels": 241631,
+          "brightPixels": 126459,
+          "distinctColors": 348,
+          "drawCalls": 1,
+          "triangles": 60000,
+          "instances": 5000,
+          "textureBytes": 8295680,
+          "gpuErrors": 0,
+          "adapter": "nvidia ampere",
+          "chrome": "Chrome/155.0.8059.85",
+          "browser": {
+            "name": "Chrome",
+            "version": "155.0.0.0",
+            "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+          },
+          "dpr": 1,
+          "buildHash": "f133e3b77908f4db47ab4daf964c762b3d99c7bf37baf9e82de8cd6a420e11bb",
+          "engineBuildHash": "ec7533855f0712417a7c926cfd67dcc0dd25931ea0fa650fc7634f178a3541d1",
+          "captureFrame": 60,
+          "benchmark": {
+            "p50": 10,
+            "p95": 10.2,
+            "max": 10.6,
+            "count": 600,
+            "warmupFrames": 120,
+            "measuredFrames": 600,
+            "status": "target-met"
+          },
+          "recordedAt": "2026-10-23T04:00:14.993Z"
+        },
+        "webgl2": {
+          "hash": "0883832e",
+          "nonClearPixels": 241633,
+          "brightPixels": 126459,
+          "distinctColors": 347,
+          "drawCalls": 1,
+          "triangles": 60000,
+          "instances": 5000,
+          "textureBytes": 256,
+          "gpuErrors": 0,
+          "adapter": "webgl2 | WebKit WebGL",
+          "chrome": "Chrome/155.0.8059.85",
+          "browser": {
+            "name": "Chrome",
+            "version": "155.0.0.0",
+            "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+          },
+          "dpr": 1,
+          "buildHash": "9b428497356e77fd433371f0b4e9b85118b3b518b8f05e4490cab134c690902d",
+          "engineBuildHash": "ec7533855f0712417a7c926cfd67dcc0dd25931ea0fa650fc7634f178a3541d1",
+          "captureFrame": 60,
+          "benchmark": {
+            "p50": 10,
+            "p95": 10.1,
+            "max": 10.8,
+            "count": 600,
+            "warmupFrames": 120,
+            "measuredFrames": 600,
+            "status": "target-met"
+          },
+          "recordedAt": "2026-10-23T04:00:24.197Z"
+        }
+      }
+    },
+    "m0-textured-cube-v1|1|1920x1080": {
+      "scene": "m0-textured-cube-v1",
+      "sceneKey": "cube",
+      "instances": 1,
+      "width": 1920,
+      "height": 1080,
+      "specConformant": false,
+      "backends": {
+        "webgpu": {
+          "hash": "540a35fc",
+          "nonClearPixels": 485769,
+          "brightPixels": 485769,
+          "distinctColors": 7,
+          "drawCalls": 1,
+          "triangles": 12,
+          "instances": 1,
+          "textureBytes": 8295680,
+          "gpuErrors": 0,
+          "adapter": "nvidia ampere",
+          "chrome": "Chrome/155.0.8059.85",
+          "browser": {
+            "name": "Chrome",
+            "version": "155.0.0.0",
+            "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+          },
+          "dpr": 1,
+          "buildHash": "f133e3b77908f4db47ab4daf964c762b3d99c7bf37baf9e82de8cd6a420e11bb",
+          "engineBuildHash": "ec7533855f0712417a7c926cfd67dcc0dd25931ea0fa650fc7634f178a3541d1",
+          "captureFrame": 60,
+          "benchmark": {
+            "p50": 10,
+            "p95": 10.1,
+            "max": 10.5,
+            "count": 600,
+            "warmupFrames": 120,
+            "measuredFrames": 600,
+            "status": "target-met"
+          },
+          "recordedAt": "2026-10-23T03:59:46.015Z"
+        },
+        "webgl2": {
+          "hash": "540a35fc",
+          "nonClearPixels": 485769,
+          "brightPixels": 485769,
+          "distinctColors": 7,
+          "drawCalls": 1,
+          "triangles": 12,
+          "instances": 1,
+          "textureBytes": 256,
+          "gpuErrors": 0,
+          "adapter": "webgl2 | WebKit WebGL",
+          "chrome": "Chrome/155.0.8059.85",
+          "browser": {
+            "name": "Chrome",
+            "version": "155.0.0.0",
+            "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+          },
+          "dpr": 1,
+          "buildHash": "9b428497356e77fd433371f0b4e9b85118b3b518b8f05e4490cab134c690902d",
+          "engineBuildHash": "ec7533855f0712417a7c926cfd67dcc0dd25931ea0fa650fc7634f178a3541d1",
+          "captureFrame": 60,
+          "benchmark": {
+            "p50": 10,
+            "p95": 10.1,
+            "max": 10.6,
+            "count": 600,
+            "warmupFrames": 120,
+            "measuredFrames": 600,
+            "status": "target-met"
+          },
+          "recordedAt": "2026-10-23T03:59:55.097Z"
+        }
+      }
+    },
+    "m0-scene5000-v1|5000|640x360": {
+      "scene": "m0-scene5000-v1",
+      "sceneKey": "scene5000",
+      "instances": 5000,
+      "width": 640,
+      "height": 360,
+      "specConformant": false,
+      "backends": {
+        "webgpu": {
+          "hash": "e136aeda",
+          "nonClearPixels": 26953,
+          "brightPixels": 14084,
+          "distinctColors": 318,
+          "drawCalls": 1,
+          "triangles": 60000,
+          "instances": 5000,
+          "textureBytes": 922880,
+          "gpuErrors": 0,
+          "adapter": "nvidia ampere",
+          "chrome": "Chrome/155.0.8059.85",
+          "browser": {
+            "name": "Chrome",
+            "version": "155.0.0.0",
+            "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+          },
+          "dpr": 1,
+          "buildHash": "f133e3b77908f4db47ab4daf964c762b3d99c7bf37baf9e82de8cd6a420e11bb",
+          "engineBuildHash": "ec7533855f0712417a7c926cfd67dcc0dd25931ea0fa650fc7634f178a3541d1",
+          "captureFrame": 60,
+          "benchmark": {
+            "p50": 8.3,
+            "p95": 8.4,
+            "max": 16.6,
+            "count": 600,
+            "warmupFrames": 120,
+            "measuredFrames": 600,
+            "status": "target-met"
+          },
+          "recordedAt": "2026-10-23T04:00:33.218Z"
+        },
+        "webgl2": {
+          "hash": "e136aeda",
+          "nonClearPixels": 26953,
+          "brightPixels": 14084,
+          "distinctColors": 318,
+          "drawCalls": 1,
+          "triangles": 60000,
+          "instances": 5000,
+          "textureBytes": 256,
+          "gpuErrors": 0,
+          "adapter": "webgl2 | WebKit WebGL",
+          "chrome": "Chrome/155.0.8059.85",
+          "browser": {
+            "name": "Chrome",
+            "version": "155.0.0.0",
+            "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+          },
+          "dpr": 1,
+          "buildHash": "9b428497356e77fd433371f0b4e9b85118b3b518b8f05e4490cab134c690902d",
+          "engineBuildHash": "ec7533855f0712417a7c926cfd67dcc0dd25931ea0fa650fc7634f178a3541d1",
+          "captureFrame": 60,
+          "benchmark": {
+            "p50": 8.3,
+            "p95": 8.4,
+            "max": 8.7,
+            "count": 600,
+            "warmupFrames": 120,
+            "measuredFrames": 600,
+            "status": "target-met"
+          },
+          "recordedAt": "2026-10-23T04:00:41.230Z"
+        }
+      }
+    }
+  }
+}

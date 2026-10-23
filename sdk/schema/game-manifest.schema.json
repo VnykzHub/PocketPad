@@ -74,6 +74,18 @@
     "needsGyro": {
       "type": "boolean"
     },
+    "renderer": {
+      "type": "string",
+      "enum": ["canvas2d", "engine"],
+      "description": "Renderer family to select. Absent means \"canvas2d\". \"engine\" requires WebGPU or WebGL2 and is refused on the Canvas2D fallback."
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^[^\\u0000]+$",
+      "description": "Optional game content version recorded in saves. 1..32 UTF-8 bytes, no NUL, e.g. \"1.2.0\"."
+    },
     "chunkConfig": {
       "type": "object",
       "required": ["chunkSize", "loadRadius", "unloadRadius", "lodTiers"],

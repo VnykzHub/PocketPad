@@ -1,0 +1,90 @@
+{
+  "ok": true,
+  "scene": "m0-textured-cube-v1",
+  "requestedBackend": "webgpu",
+  "backend": "webgpu",
+  "chrome": "Chrome/155.0.8059.85",
+  "url": "http://127.0.0.1:41208/experiments/e-m0-engine/index.html?backend=webgpu",
+  "durationMs": 961,
+  "pageStatusText": "PASS  webgpu\nadapter  nvidia ampere\nhash     32312240\npixels   640x360, content=53970, colors=7\ndraw     1 call(s), 12 triangle(s), 1 instance(s)\ntexture  4x4 rgba8unorm-srgb usage=sample+copy-dst\nlight    built-in-directional (fixed M0 shader; no public light API)\nelapsed  476 ms",
+  "page": {
+    "schema": "m0-engine-demo/v1",
+    "ok": true,
+    "stage": "done",
+    "scene": "m0-textured-cube-v1",
+    "requestedBackend": "webgpu",
+    "backend": "webgpu",
+    "fallbackReason": null,
+    "adapter": "nvidia ampere",
+    "features": [
+      "texture-array",
+      "compressed-s3tc"
+    ],
+    "size": {
+      "cssWidth": 640,
+      "cssHeight": 360,
+      "dpr": 1,
+      "width": 640,
+      "height": 360
+    },
+    "texture": {
+      "created": true,
+      "label": "m0-checker-texture",
+      "width": 4,
+      "height": 4,
+      "format": "rgba8unorm-srgb",
+      "usage": [
+        "sample",
+        "copy-dst"
+      ],
+      "bytes": 64
+    },
+    "light": {
+      "kind": "built-in-directional",
+      "configurable": false
+    },
+    "framesRendered": 2,
+    "drawCalls": 1,
+    "triangles": 12,
+    "instances": 1,
+    "hash": "32312240",
+    "nonClearPixels": 53970,
+    "brightPixels": 26884,
+    "distinctColors": 7,
+    "capture": {
+      "method": "canvas-2d-drawImage+getImageData",
+      "width": 640,
+      "height": 360
+    },
+    "stats": {
+      "drawCalls": 1,
+      "triangles": 12,
+      "droppedDraws": 0,
+      "gpuErrors": 0
+    },
+    "notes": [
+      "The directional light is fixed inside the M0 shader; the built public API has no light object.",
+      "Texture usage is sample+copy-dst because the WebGPU validator requires copy-dst for supplied bytes."
+    ],
+    "elapsedMs": 476
+  },
+  "screenshot": {
+    "path": "E:\\PROJECTS 2026\\PocketPad\\experiments\\e-m0-engine\\artifacts\\webgpu.png",
+    "bytes": 3549,
+    "sha256": "77154c8ecab9a43a19406f310e684835f14d77119290a060930fc1f1de72e843",
+    "width": 640,
+    "height": 360,
+    "error": null
+  },
+  "golden": {
+    "path": "E:\\PROJECTS 2026\\PocketPad\\experiments\\e-m0-engine\\golden.json",
+    "status": "matched",
+    "expectedHash": "32312240",
+    "updated": false
+  },
+  "diagnostics": [
+    "log-warning: rendering The powerPreference option is currently ignored when calling requestAdapter() on Windows. See https://crbug.com/369219127"
+  ],
+  "blocker": null,
+  "error": null
+}

@@ -1,0 +1,103 @@
+{
+  "id": "ER-07-03",
+  "source": "docs/engine/07-physics3d.md ER-07-03, §5.7",
+  "world": {
+    "gravity": [0, -9.81, 0],
+    "fixedDt": 0.016666666666666666
+  },
+  "course": {
+    "groundTop": 0,
+    "groundHalfExtents": [400, 0.5, 400],
+    "slalomLengthM": 150,
+    "laneHalfWidthM": 5,
+    "kerbOffsetM": 6.5,
+    "kerbHalfExtents": [0.5, 0.075, 2],
+    "kerbSpacingM": 25
+  },
+  "vehicle": {
+    "chassisHalfExtents": [0.9, 0.35, 2],
+    "chassisMass": 1000,
+    "start": [0, 1, 0],
+    "wheels": [
+      {
+        "localPosition": [-0.85, -0.35, -1.35],
+        "radius": 0.35,
+        "width": 0.25,
+        "suspensionRestLength": 0.3,
+        "suspensionStiffness": 25000,
+        "suspensionDamping": 2500,
+        "maxTravel": 0.25,
+        "steerable": true,
+        "driven": false,
+        "friction": 1.5
+      },
+      {
+        "localPosition": [0.85, -0.35, -1.35],
+        "radius": 0.35,
+        "width": 0.25,
+        "suspensionRestLength": 0.3,
+        "suspensionStiffness": 25000,
+        "suspensionDamping": 2500,
+        "maxTravel": 0.25,
+        "steerable": true,
+        "driven": false,
+        "friction": 1.5
+      },
+      {
+        "localPosition": [-0.85, -0.35, 1.35],
+        "radius": 0.35,
+        "width": 0.25,
+        "suspensionRestLength": 0.3,
+        "suspensionStiffness": 25000,
+        "suspensionDamping": 2500,
+        "maxTravel": 0.25,
+        "steerable": false,
+        "driven": true,
+        "friction": 1.5
+      },
+      {
+        "localPosition": [0.85, -0.35, 1.35],
+        "radius": 0.35,
+        "width": 0.25,
+        "suspensionRestLength": 0.3,
+        "suspensionStiffness": 25000,
+        "suspensionDamping": 2500,
+        "maxTravel": 0.25,
+        "steerable": false,
+        "driven": true,
+        "friction": 1.5
+      }
+    ],
+    "engineForce": 8000,
+    "reverseForce": 3000,
+    "brakeForce": 12000,
+    "maxSteerDegrees": 35,
+    "steerRateDegreesPerSecond": 180,
+    "topSpeed": 45,
+    "downforce": 0
+  },
+  "control": {
+    "accelerateThrottle": 1,
+    "accelerateMaxTicks": 480,
+    "targetSpeed": 30,
+    "slalomThrottle": 0.2,
+    "slalomSteerAmplitude": 0.015,
+    "slalomWavelengthM": 50,
+    "brakeMaxTicks": 300
+  },
+  "recorded": {
+    "timeTo30Ticks": 373,
+    "timeTo30Seconds": 6.2167,
+    "maxSpeed": 32.38835956267104,
+    "slalomDistanceM": 150.53478203864285,
+    "slalomMaxAbsX": 4.0488786697387695,
+    "minUpY": 0.9986167232117061,
+    "maxWheelAirTicks": 0,
+    "stopSpeed": 0.15487248408569568,
+    "brakeTicks": 193,
+    "finalHash": 296752087,
+    "nodeResult": "PASS (1/1) on Node 20 Windows, 2026-10-23; Rapier 0.21.0",
+    "browser": "PENDING — Desktop Chrome 155 M1 run",
+    "notes": "timeTo30 6.22 s at engineForce 8000 N; slalom entry 30.2 m/s, exit 32.4 m/s; lane limit 5 m is met with 4.05 m; kerbs at ±6.5 m (inner face ±6.0 m) never contacted. Values are Node measurements, not targets."
+  }
+}

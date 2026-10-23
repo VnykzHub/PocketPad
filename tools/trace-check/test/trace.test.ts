@@ -21,6 +21,7 @@ const CANONICAL_ROWS = [
   "| SR-6 | fifth | Protocol |",
   "| AR-4 | sixth | Runtime |",
   "| TR-1 | seventh | Docs |",
+  "| ER-19-01 | engine acceptance row | - |",
   "| A9 | amendment | - |",
   "| G1 | goal | - |",
   "| E5 | experiment | - |",
@@ -36,6 +37,7 @@ const CANONICAL_IDS = [
   "SR-6",
   "AR-4",
   "TR-1",
+  "ER-19-01",
   "A9",
   "G1",
   "E5",
@@ -80,6 +82,7 @@ function makeFixture(options: FixtureOptions = {}): string {
     [
       `test("${tag("FR-1.1")} first", () => {});`,
       `test("${tag("G1")} ${tag("E5")} second", () => {});`,
+      `test("${tag("ER-19-01")} engine", () => {});`,
       req("PR-9.3, SR-6"),
       "",
     ].join("\n"),
@@ -141,7 +144,7 @@ describe("traceability parser (D0-QA-01)", () => {
     expect(ids).not.toContain("FR-99.9");
   });
 
-  test("[TR-1] recognizes the FR/NR/PR/SR/AR/TR/A/G/E/C prefix families", () => {
+  test("[TR-1] recognizes the FR/NR/PR/SR/AR/TR/ER/A/G/E/C prefix families", () => {
     const ids = parseCanonicalIds(CANONICAL_ROWS.join("\n"));
     for (const prefix of PREFIX_ORDER) {
       expect(ids.some((id) => id.startsWith(prefix))).toBe(true);

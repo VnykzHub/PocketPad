@@ -142,9 +142,12 @@ p {
  * ---------------------------------------------------------------------- */
 
 .host {
+  position: relative;
   min-height: 100vh;
   display: grid;
-  grid-template-rows: 64px minmax(0, 1fr);
+  /* Header, slim stage bar, then the screen: the stage bar must never take
+     the flexible row, or the game area is pushed off the bottom. */
+  grid-template-rows: 64px auto minmax(0, 1fr);
 }
 
 .top-bar {
@@ -156,6 +159,31 @@ p {
   gap: var(--space-5);
   border-bottom: 1px solid var(--rule);
   background: var(--ground);
+}
+
+/* Slim row under the header: room code and player count while a game runs. */
+.lanpad-stage-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: 40px;
+  padding: 0 var(--space-7);
+  border-bottom: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: var(--host-meta);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Overlay above the stage so a reconnect never shifts the game layout. */
+.lanpad-reconnect {
+  position: absolute;
+  inset: 64px 0 auto;
+  z-index: 20;
+  padding: var(--space-4) var(--space-7);
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--text);
+  text-align: center;
 }
 
 .top-bar__wordmark {
@@ -253,15 +281,29 @@ p {
 /* The stage owns the screen: no lobby chrome, no roster (HP-04). */
 .host.stage-active .host-body {
   grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   grid-template-areas: "game";
+  align-content: stretch;
   padding: 0 var(--space-2) var(--space-2);
-  place-items: center;
+  place-items: stretch;
 }
 
-/* Fit the 16:9 stage inside a 1080p TV without overflowing the viewport. */
+/*
+ * The game area must fill the stage row; otherwise the canvas's percentage
+ * width resolves against its intrinsic 300px and the game renders tiny at the
+ * bottom of the screen. The canvas itself stays centred at 16:9.
+ */
+.host.stage-active #game-root {
+  display: grid;
+  min-height: 0;
+  place-items: center;
+  align-content: center;
+}
+
+/* Fit the 16:9 stage inside the viewport: 64px header + 40px stage bar. */
 .host.stage-active .lanpad-canvas {
-  width: min(100%, calc((100dvh - 64px - 16px) * 16 / 9));
-  max-height: calc(100dvh - 64px - 16px);
+  width: min(100%, calc((100dvh - 104px - 16px) * 16 / 9));
+  max-height: calc(100dvh - 104px - 16px);
   aspect-ratio: 16 / 9;
 }
 

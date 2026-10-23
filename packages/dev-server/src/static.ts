@@ -56,10 +56,20 @@ export const NO_STORE_CACHE_CONTROL = "no-store";
 
 type CachePolicy = "spa" | "no-store" | "immutable";
 
-/** Applies the D0 security headers. No CORS headers are ever added. */
+/**
+ * Applies the security headers. No CORS headers are ever added.
+ *
+ * COOP/COEP enable cross-origin isolation (W0): SharedArrayBuffer and the
+ * worker/job model the engine needs for streaming. Every resource this server
+ * serves is same-origin, so `require-corp` is safe here. Production must keep
+ * the same pair once the engine uses workers.
+ */
 export function applySecurityHeaders(res: ServerResponse): void {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
   res.setHeader("Content-Security-Policy", DEV_CSP);
 }
 

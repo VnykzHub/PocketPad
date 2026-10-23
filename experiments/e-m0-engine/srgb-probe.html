@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>sRGB output probe</title>
+</head>
+<body>
+<pre id="out">running</pre>
+<script type="importmap">
+{
+  "imports": {
+    "@lanpad/engine-core": "/packages/engine/core/dist/index.js",
+    "@lanpad/engine-assets": "/packages/engine/assets/dist/index.js",
+    "@lanpad/engine-renderer-webgpu/dev": "/packages/engine/renderer-webgpu/dist/dev.js"
+  }
+}
+</script>
+<script type="module">
+const out = document.getElementById("out");
+const result = { webgpu: {}, webgl2: {}, engine: {} };
+
+const FACES = [
+  { normal: [1, 0, 0], u: [0, 0, -1], v: [0, 1, 0] },
+  { normal: [-1, 0, 0], u: [0, 0, 1], v: [0, 1, 0] },
+  { normal: [0, 1, 0], u: [1, 0, 0], v: [0, 0, -1] },
+  { normal: [0, -1, 0], u: [1, 0, 0], v: [0, 0, 1] },
+  { normal: [0, 0, 1], u: [1, 0, 0], v: [0, 1, 0] },
+  { normal: [0, 0, -1], u: [-1, 0, 0], v: [0, 1, 0] },
+];
+const CORNERS = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
+const UVS = [[0, 1], [1, 1], [1, 0], [0, 0]];
+
+function createCubeGeometry(halfExtent) {
+  const vertices = new Float32Array(FACES.length * 4 * 8);
+  const indices = new Uint16Array(FACES.length * 6);
+  let vertexIndex = 0;
+  let indexOffset = 0;
+  for (let faceIndex = 0; faceIndex < FACES.length; faceIndex += 1) {
+    const face = FACES[faceIndex];
+    for (let corner = 0; corner < 4; corner += 1) {
+      const su = CORNERS[corner][0];
+      const sv = CORNERS[corner][1];
+      const offset = vertexIndex * 8;
+      vertices[offset] = face.normal[0] * halfExtent + face.u[0] * su * halfExtent + face.v[0] * sv * halfExtent;
+      vertices[offset + 1] = face.normal[1] * halfExtent + face.u[1] * su * halfExtent + face.v[1] * sv * halfExtent;
+      vertices[offset + 2] = face.normal[2] * halfExtent + face.u[2] * su * halfExtent + face.v[2] * sv * halfExtent;
+      vertices[offset + 3] = face.normal[0];
+      vertices[offset + 4] = face.normal[1];
+      vertices[offset + 5] = face.normal[2];
+      vertices[offset + 6] = UVS[corner][0];
+      vertices[offset + 7] = UVS[corner][1];
+      vertexIndex += 1;
+    }
+    const base = faceIndex * 4;
+    indices[indexOffset] = base;
+    indices[indexOffset + 1] = base + 1;
+    indices[indexOffset + 2] = base + 2;
+    indices[indexOffset + 3] = base;
+    indices[indexOffset + 4] = base + 2;
+    indices[indexOffset + 5] = base + 3;
+    indexOffset += 6;
+  }
+  return { vertices, indices, radius: Math.sqrt(3) * halfExtent };
+}
+
+function nextFrame() {
+  return new Promise((resolve) => requestAnimationFrame(resolve));
+}
+
+async function capturePixels(canvas, samples) {
+  const scratch = document.createElement("canvas");
+  scratch.width = canvas.width;
+  scratch.height = canvas.height;
+  const context = scratch.getContext("2d", { alpha: false, willReadFrequently: true });
+  context.drawImage(canvas, 0, 0);
+  const values = {};
+  for (const [name, x, y] of samples) {
+    values[name] = Array.from(context.getImageData(x, y, 1, 1).data);
+  }
+  return values;
+}
+
+async function engineProbe() {
+  const { mat4Create, mat4Identity, mat4LookAt, mat4Multiply, mat4PerspectiveWebGPU, mat4PerspectiveWebGL2 } =
+    await import("/packages/engine/core/dist/index.js");
+  for (const backend of ["webgpu", "webgl2"]) {
+    const entry = { lit: null, unlit: null, error: null, canvasFormat: null };
+    let device = null;
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 128;
+      canvas.height = 128;
+      canvas.style.width = "128px";
+      canvas.style.height = "128px";
+      document.body.appendChild(canvas);
+      await nextFrame();
+      const surface = { kind: "canvas", native: canvas, cssWidth: 128, cssHeight: 128, dpr: 1 };
+      if (backend === "webgpu") {
+        const module = await import("/packages/engine/renderer-webgpu/dist/index.js");
+        const created = await module.createWebGpuDevice({ powerPreference: "high-performance" });
+        device = created.device;
+        await device.init(surface);
+        entry.canvasFormat = device.canvasFormat ?? null;
+      } else {
+        const module = await import("/packages/engine/renderer-webgl2/dist/index.js");
+        const created = await module.createWebGL2Device({
+          canvas,
+          antialias: false,
+          desynchronized: false,
+          powerPreference: "high-performance",
+        });
+        device = created.device;
+      }
+      const geometry = createCubeGeometry(0.55);
+      const mesh = device.createMesh({
+        label: "probe-cube",
+        layout: "static-pbr-v1",
+        vertices: [geometry.vertices],
+        indices: { data: geometry.indices, format: "uint16" },
+        bounds: { center: { x: 0, y: 0, z: 0 }, radius: geometry.radius },
+      });
+      const textureUsage = backend === "webgpu" ? ["sample", "copy-dst"] : ["sample"];
+      const texture = device.createTexture({
+        label: "probe-ffd166",
+        width: 1,
+        height: 1,
+        format: "rgba8unorm-srgb",
+        usage: textureUsage,
+        data: [{ mipLevel: 0, layer: 0, bytes: new Uint8Array([255, 209, 102, 255]), bytesPerRow: 4 }],
+        sampler: {
+          label: "probe-sampler",
+          magFilter: "nearest",
+          minFilter: "nearest",
+          mipmapFilter: "nearest",
+          addressU: "clamp-to-edge",
+          addressV: "clamp-to-edge",
+        },
+      });
+      const projection = mat4Create();
+      if (backend === "webgpu") {
+        mat4PerspectiveWebGPU(projection, Math.PI / 4, 1, 0.1, 100);
+      } else {
+        mat4PerspectiveWebGL2(projection, Math.PI / 4, 1, 0.1, 100);
+      }
+      const view = mat4LookAt(
+        mat4Create(),
+        { x: -1.15, y: -0.95, z: -2.2 },
+        { x: 0, y: 0, z: 0 },
+        { x: 0, y: 1, z: 0 },
+      );
+      const camera = mat4Multiply(mat4Create(), projection, view);
+      for (const mode of ["lit", "unlit"]) {
+        const material = device.createMaterial({
+          label: `probe-${mode}`,
+          baseColorFactor: [1, 1, 1, 1],
+          metallic: 0,
+          roughness: 0.62,
+          emissiveFactor: [0, 0, 0],
+          baseColorTexture: texture,
+          alphaMode: "opaque",
+          unlit: mode === "unlit",
+        });
+        for (let frameIndex = 0; frameIndex < 4; frameIndex += 1) {
+          const frame = device.beginFrame();
+          frame.setCamera(camera);
+          frame.draw(mesh, material, mat4Identity(mat4Create()));
+          device.endFrame();
+          if (frameIndex === 3) {
+            // Read in the same task as endFrame: the WebGL2 drawing buffer is
+            // cleared on present (preserveDrawingBuffer is false).
+            entry[mode] = await capturePixels(canvas, [
+              ["center", 64, 64],
+              ["below", 64, 88],
+              ["left", 40, 64],
+              ["corner", 40, 88],
+            ]);
+          } else {
+            await nextFrame();
+          }
+        }
+      }
+    } catch (error) {
+      entry.error = String(error);
+    } finally {
+      if (device && typeof device.dispose === "function") {
+        try {
+          device.dispose();
+        } catch {
+          // Ignore disposal failures during probing.
+        }
+      }
+    }
+    result.engine[backend] = entry;
+  }
+}
+
+async function readCanvasPixel(canvas) {
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const scratch = document.createElement("canvas");
+  scratch.width = canvas.width;
+  scratch.height = canvas.height;
+  const context = scratch.getContext("2d", { alpha: false, willReadFrequently: true });
+  context.drawImage(canvas, 0, 0);
+  return Array.from(context.getImageData(0, 0, 1, 1).data);
+}
+
+const FS_WGSL = `
+@vertex
+fn vs(@builtin(vertex_index) index: u32) -> @builtin(position) vec4<f32> {
+  var positions = array<vec2<f32>, 3>(
+    vec2<f32>(-1.0, -3.0),
+    vec2<f32>(3.0, 1.0),
+    vec2<f32>(-1.0, 1.0),
+  );
+  return vec4<f32>(positions[index], 0.0, 1.0);
+}
+@fragment
+fn fs() -> @location(0) vec4<f32> {
+  return vec4<f32>(0.5, 0.5, 0.5, 1.0);
+}
+`;
+
+async function webgpuProbe() {
+  const gpu = navigator.gpu;
+  result.webgpu.available = Boolean(gpu);
+  result.webgpu.preferred = gpu ? gpu.getPreferredCanvasFormat() : null;
+  if (!gpu) return;
+  const adapter = await gpu.requestAdapter({ powerPreference: "high-performance" });
+  result.webgpu.adapter = adapter ? "available" : null;
+  if (!adapter) return;
+  const device = await adapter.requestDevice();
+  const canvas = document.createElement("canvas");
+  canvas.width = 4;
+  canvas.height = 4;
+  document.body.appendChild(canvas);
+  const context = canvas.getContext("webgpu");
+  const formats = ["bgra8unorm-srgb", "rgba8unorm-srgb", "bgra8unorm", "rgba8unorm"];
+  for (const format of formats) {
+    const entry = { configureError: null, scopeError: null, textureFormat: null, pixel: null };
+    let texture = null;
+    device.pushErrorScope("validation");
+    try {
+      context.configure({
+        device,
+        format,
+        alphaMode: "opaque",
+        usage: GPUTextureUsage.RENDER_ATTACHMENT,
+      });
+      texture = context.getCurrentTexture();
+      entry.textureFormat = texture.format;
+    } catch (error) {
+      entry.configureError = String(error);
+    }
+    const scopeError = await device.popErrorScope();
+    entry.scopeError = scopeError ? scopeError.message : null;
+    if (texture) {
+      try {
+        const module = device.createShaderModule({ code: FS_WGSL });
+        const pipeline = device.createRenderPipeline({
+          layout: "auto",
+          vertex: { module, entryPoint: "vs" },
+          fragment: { module, entryPoint: "fs", targets: [{ format }] },
+          primitive: { topology: "triangle-list" },
+        });
+        const encoder = device.createCommandEncoder();
+        const pass = encoder.beginRenderPass({
+          colorAttachments: [
+            {
+              view: texture.createView(),
+              clearValue: { r: 0.5, g: 0.5, b: 0.5, a: 1 },
+              loadOp: "clear",
+              storeOp: "store",
+            },
+          ],
+        });
+        pass.setPipeline(pipeline);
+        pass.draw(3);
+        pass.end();
+        device.queue.submit([encoder.finish()]);
+        entry.pixel = await readCanvasPixel(canvas);
+      } catch (error) {
+        entry.renderError = String(error);
+      }
+    }
+    result.webgpu[format] = entry;
+  }
+}
+
+function webgl2Probe() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 4;
+  canvas.height = 4;
+  document.body.appendChild(canvas);
+  const gl = canvas.getContext("webgl2", { alpha: false, antialias: false, preserveDrawingBuffer: true });
+  result.webgl2.available = Boolean(gl);
+  if (!gl) return;
+  result.webgl2.extSrgbWriteControl = Boolean(gl.getExtension("EXT_sRGB_write_control"));
+  result.webgl2.version = gl.getParameter(gl.VERSION);
+  gl.viewport(0, 0, 4, 4);
+  gl.clearColor(0.5, 0.5, 0.5, 1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  const pixel = new Uint8Array(4);
+  gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+  result.webgl2.clearPixel = Array.from(pixel);
+  const ext = gl.getExtension("EXT_sRGB_write_control");
+  if (ext) {
+    gl.disable(gl.FRAMEBUFFER_SRGB_EXT);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+    result.webgl2.clearPixelSrgbDisabled = Array.from(pixel);
+  }
+  // Shader-written 0.5: catches any pipeline-side conversion independent of clear.
+  const vs = `#version 300 es
+  void main() {
+    vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
+    gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
+  }`;
+  const fs = `#version 300 es
+  precision highp float;
+  out vec4 color;
+  void main() { color = vec4(0.5, 0.5, 0.5, 1.0); }`;
+  const compile = (type, source) => {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      throw new Error(gl.getShaderInfoLog(shader));
+    }
+    return shader;
+  };
+  const program = gl.createProgram();
+  gl.attachShader(program, compile(gl.VERTEX_SHADER, vs));
+  gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    throw new Error(gl.getProgramInfoLog(program));
+  }
+  gl.useProgram(program);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+  result.webgl2.shaderPixel = Array.from(pixel);
+}
+
+try {
+  await webgpuProbe();
+} catch (error) {
+  result.webgpu.error = String(error);
+}
+try {
+  webgl2Probe();
+} catch (error) {
+  result.webgl2.error = String(error);
+}
+try {
+  await engineProbe();
+} catch (error) {
+  result.engine.error = String(error);
+}
+out.textContent = JSON.stringify(result, null, 2);
+window.__PROBE_DONE__ = true;
+</script>
+</body>
+</html>

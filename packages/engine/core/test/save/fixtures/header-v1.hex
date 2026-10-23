@@ -1,0 +1,20 @@
+# Synthetic PocketPad v1 save fixture — exactly 85 bytes.
+# Source: docs/engine/15-save-load.md §4.9 (hex dump verified byte-for-byte).
+# All integers are little-endian (u16/u32 via DataView). One pair per byte.
+# Comments (#) and whitespace are ignored by the documented generator.
+#
+# Offsets  0..39  40-byte prefix (magic "PPSV", version 1, lengths, FNV, engine 0.1.0,
+#                 gameId/gameVersion byte lengths, flags 0, createdAtUnixSeconds 1792627200)
+# Offsets 40..49  gameId       "harbor-run" (10 UTF-8 bytes)
+# Offsets 50..54  gameVersion  "1.2.0"      (5 UTF-8 bytes)
+# Offset  55      padding      0x00         (to the 8-byte boundary; headerBytes = 56)
+# Offsets 56..84  payload      "demo-payload:seed=1;tick=3600" (29 ASCII bytes)
+#
+# payloadHash (offset 12, LE u32) = 0x635F8BC4 = 1667206084 (FNV-1a 32 of the payload).
+# No player data, token, room code, IP or production value appears in this fixture.
+50 50 53 56 01 00 38 00 1d 00 00 00 c4 8b 5f 63
+00 00 01 00 00 00 0a 00 05 00 00 00 00 52 d9 6a
+00 00 00 00 00 00 00 00 68 61 72 62 6f 72 2d 72
+75 6e 31 2e 32 2e 30 00 64 65 6d 6f 2d 70 61 79
+6c 6f 61 64 3a 73 65 65 64 3d 31 3b 74 69 63 6b
+3d 33 36 30 30

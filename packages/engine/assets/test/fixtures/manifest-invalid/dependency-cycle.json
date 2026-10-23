@@ -1,0 +1,29 @@
+{
+  "$fixture": {
+    "expect": "reject",
+    "code": "E_ASSET_FORMAT",
+    "rule": "asset dependencies must be acyclic"
+  },
+  "formatVersion": 1,
+  "id": "example-game",
+  "budget": {
+    "initialBytes": 1024,
+    "totalBytes": 2048
+  },
+  "assets": [
+    {
+      "id": "meshes/a",
+      "kind": "mesh",
+      "url": "assets/a.glb",
+      "bytes": 512,
+      "dependencies": ["meshes/b"]
+    },
+    {
+      "id": "meshes/b",
+      "kind": "mesh",
+      "url": "assets/b.glb",
+      "bytes": 512,
+      "dependencies": ["meshes/a"]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "$fixture": {
+    "expect": "reject",
+    "code": "E_ASSET_FORMAT",
+    "rule": "asset URLs must not contain a parent-directory segment"
+  },
+  "formatVersion": 1,
+  "id": "example-game",
+  "budget": {
+    "initialBytes": 1024,
+    "totalBytes": 2048
+  },
+  "assets": [
+    {
+      "id": "textures/atlas",
+      "kind": "texture",
+      "url": "assets/../secret.webp",
+      "bytes": 1024
+    }
+  ]
+}

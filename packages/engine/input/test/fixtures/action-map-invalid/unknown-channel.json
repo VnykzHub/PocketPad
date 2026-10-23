@@ -1,0 +1,12 @@
+{
+  "formatVersion": 1,
+  "actions": [
+    {
+      "name": "brake",
+      "kind": "axis",
+      "bindings": [
+        { "device": "phone", "slot": "self", "channel": "trigger", "axis": "lt" }
+      ]
+    }
+  ]
+}

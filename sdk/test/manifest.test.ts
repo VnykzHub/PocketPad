@@ -33,6 +33,7 @@ interface SchemaNode {
   maximum?: number;
   exclusiveMinimum?: number;
   const?: unknown;
+  enum?: unknown[];
   pattern?: string;
   required?: string[];
   properties?: Record<string, SchemaNode>;
@@ -193,6 +194,28 @@ describe("validateManifest (D0-SDK-01)", () => {
     );
   });
 
+  test("[FR-10.3] accepts an absent renderer as the canvas2d default", () => {
+    const manifest = validManifest();
+    expect(validateManifest(manifest)).toEqual({ ok: true, manifest });
+    expect("renderer" in manifest).toBe(false);
+  });
+
+  test.each(["canvas2d", "engine"] as const)(
+    "[FR-10.3] accepts renderer %s",
+    (renderer) => {
+      expect(validateManifest(validManifest({ renderer })).ok).toBe(true);
+    },
+  );
+
+  test.each(["webgpu", "Canvas2D", "", 7, null])(
+    "[FR-10.3] rejects an invalid renderer (%j)",
+    (renderer) => {
+      expect(errorsFor(validManifest({ renderer }))).toEqual([
+        'renderer: must be "canvas2d" or "engine"',
+      ]);
+    },
+  );
+
   test("[FR-10.3] rejects chunkConfig with fewer than three LOD tiers", () => {
     const errors = errorsFor(
       validManifest({
@@ -283,6 +306,10 @@ describe("validateManifest (D0-SDK-01)", () => {
       maximum: 8,
     });
     expect(schema.properties?.needsGyro?.type).toBe("boolean");
+    expect(schema.properties?.renderer).toMatchObject({
+      type: "string",
+      enum: ["canvas2d", "engine"],
+    });
     expect(schema.properties?.chunkConfig?.properties?.lodTiers).toMatchObject({
       type: "array",
       minItems: 3,

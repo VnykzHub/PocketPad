@@ -1,0 +1,14 @@
+{
+  "name": "@lanpad/gpu-rig",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Headless WebGPU/WebGL2 determinism rig: one lit triangle, FNV-1a hash, golden comparison.",
+  "scripts": {
+    "start": "node run.mjs",
+    "check": "node --check probe.js && node --check run.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  }
+}

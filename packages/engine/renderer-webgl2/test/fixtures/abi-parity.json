@@ -1,0 +1,208 @@
+{
+  "schema": "pocketpad.renderer.abi-parity/1",
+  "abiVersion": 1,
+  "canonical": "docs/engine/04-renderer-webgpu.md §4.3",
+  "conformance": "docs/engine/05-renderer-webgl2.md §4.3",
+  "provenance": "Synthetic contract data. No value is a measurement.",
+  "layouts": {
+    "static-pbr-v1": {
+      "label": "static-pbr-v1",
+      "topology": "triangle-list",
+      "buffers": [
+        {
+          "slot": 0,
+          "stepMode": "vertex",
+          "stride": 32,
+          "attributes": [
+            {
+              "offset": 0,
+              "shaderLocation": 0,
+              "name": "position",
+              "format": "float32x3"
+            },
+            {
+              "offset": 12,
+              "shaderLocation": 1,
+              "name": "normal",
+              "format": "float32x3"
+            },
+            {
+              "offset": 24,
+              "shaderLocation": 2,
+              "name": "uv",
+              "format": "float32x2"
+            }
+          ]
+        }
+      ]
+    },
+    "instanced-transform-v1": {
+      "label": "instanced-transform-v1",
+      "topology": "triangle-list",
+      "buffers": [
+        {
+          "slot": 0,
+          "stepMode": "vertex",
+          "stride": 32,
+          "attributes": [
+            {
+              "offset": 0,
+              "shaderLocation": 0,
+              "name": "position",
+              "format": "float32x3"
+            },
+            {
+              "offset": 12,
+              "shaderLocation": 1,
+              "name": "normal",
+              "format": "float32x3"
+            },
+            {
+              "offset": 24,
+              "shaderLocation": 2,
+              "name": "uv",
+              "format": "float32x2"
+            }
+          ]
+        },
+        {
+          "slot": 1,
+          "stepMode": "instance",
+          "stride": 64,
+          "attributes": [
+            {
+              "offset": 0,
+              "shaderLocation": 3,
+              "name": "model0",
+              "format": "float32x4"
+            },
+            {
+              "offset": 16,
+              "shaderLocation": 4,
+              "name": "model1",
+              "format": "float32x4"
+            },
+            {
+              "offset": 32,
+              "shaderLocation": 5,
+              "name": "model2",
+              "format": "float32x4"
+            },
+            {
+              "offset": 48,
+              "shaderLocation": 6,
+              "name": "model3",
+              "format": "float32x4"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "id": "accept-static-pbr-v1",
+      "layout": "static-pbr-v1",
+      "expected": {
+        "result": "accept"
+      }
+    },
+    {
+      "id": "accept-instanced-transform-v1",
+      "layout": "instanced-transform-v1",
+      "expected": {
+        "result": "accept"
+      }
+    },
+    {
+      "id": "reject-tangent",
+      "baseLayout": "static-pbr-v1",
+      "extraAttribute": {
+        "offset": 32,
+        "shaderLocation": 3,
+        "name": "TANGENT",
+        "format": "float32x4"
+      },
+      "expected": {
+        "result": "reject",
+        "code": "E_CONTRACT"
+      }
+    },
+    {
+      "id": "reject-color-0",
+      "baseLayout": "static-pbr-v1",
+      "extraAttribute": {
+        "offset": 32,
+        "shaderLocation": 3,
+        "name": "COLOR_0",
+        "format": "float32x4"
+      },
+      "expected": {
+        "result": "reject",
+        "code": "E_CONTRACT"
+      }
+    },
+    {
+      "id": "reject-texcoord-1",
+      "baseLayout": "static-pbr-v1",
+      "extraAttribute": {
+        "offset": 32,
+        "shaderLocation": 3,
+        "name": "TEXCOORD_1",
+        "format": "float32x2"
+      },
+      "expected": {
+        "result": "reject",
+        "code": "E_CONTRACT"
+      }
+    },
+    {
+      "id": "reject-joints-0",
+      "baseLayout": "static-pbr-v1",
+      "extraAttribute": {
+        "offset": 32,
+        "shaderLocation": 3,
+        "name": "JOINTS_0",
+        "format": "uint16x4"
+      },
+      "expected": {
+        "result": "reject",
+        "code": "E_CONTRACT"
+      }
+    },
+    {
+      "id": "reject-weights-0",
+      "baseLayout": "static-pbr-v1",
+      "extraAttribute": {
+        "offset": 40,
+        "shaderLocation": 4,
+        "name": "WEIGHTS_0",
+        "format": "float32x4"
+      },
+      "expected": {
+        "result": "reject",
+        "code": "E_CONTRACT"
+      }
+    },
+    {
+      "id": "reject-skinned-layout-id",
+      "layout": "skinned-pbr-v1",
+      "expected": {
+        "result": "reject",
+        "code": "E_CONTRACT"
+      }
+    }
+  ],
+  "rejection": {
+    "code": "E_CONTRACT",
+    "timing": "creation",
+    "notDrawTime": true
+  },
+  "invariants": [
+    "ABI 1 fixes vertex locations 0, 1, 2 and instance matrix locations 3, 4, 5, 6.",
+    "TANGENT, COLOR_0, JOINTS_0, WEIGHTS_0 and TEXCOORD_1 are not part of ABI 1.",
+    "Normal mapping in ABI 1 uses the derivative tangent frame (04 §5.13).",
+    "Skinned and morph layouts must be new layout ids with a RENDERER_ABI_VERSION bump; they must never shift ABI-1 locations.",
+    "Index format is uint16 for at most 65535 vertices and uint32 otherwise."
+  ]
+}

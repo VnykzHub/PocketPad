@@ -25,12 +25,25 @@ export interface GameManifest {
   minPlayers: number;
   maxPlayers: number;
   needsGyro: boolean;
+  /**
+   * Renderer family the host must select (00 §5.12). Absent means
+   * `"canvas2d"`, which keeps every existing manifest on the 2D path.
+   * `"engine"` requires a WebGPU or WebGL2 device and is refused on the
+   * Canvas2D fallback; it never silently downgrades.
+   */
+  renderer?: "canvas2d" | "engine";
   chunkConfig?: {
     chunkSize: number;
     loadRadius: number;
     unloadRadius: number;
     lodTiers: number[];
   };
+  /**
+   * Optional game content version recorded in saves (18 §3.5). 1..32 UTF-8
+   * bytes, no NUL, e.g. "1.2.0". When absent, the save layer requires the
+   * game to supply `gameVersion` explicitly.
+   */
+  version?: string;
 }
 
 const NAME_MIN_CHARS = 1;
@@ -206,6 +219,14 @@ export function validateManifest(
     errors.push("needsGyro: required");
   } else if (typeof value.needsGyro !== "boolean") {
     errors.push("needsGyro: must be a boolean");
+  }
+
+  if (
+    value.renderer !== undefined &&
+    value.renderer !== "canvas2d" &&
+    value.renderer !== "engine"
+  ) {
+    errors.push('renderer: must be "canvas2d" or "engine"');
   }
 
   if (value.chunkConfig !== undefined) {

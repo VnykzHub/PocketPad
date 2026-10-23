@@ -1,0 +1,12 @@
+{
+  "formatVersion": 1,
+  "actions": [
+    {
+      "name": "move",
+      "kind": "vector2",
+      "bindings": [
+        { "device": "phone", "slot": "self", "channel": "axis", "axis": "lt" }
+      ]
+    }
+  ]
+}

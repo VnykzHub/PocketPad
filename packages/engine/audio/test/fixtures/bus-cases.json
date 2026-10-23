@@ -1,0 +1,256 @@
+{
+  "fixtureVersion": 1,
+  "source": "docs/engine/09-audio.md §3.1, §3.4, §4.1, §4.2, §5.2, §5.3, §5.4, §5.7, §5.13 and ER-09-01/ER-09-04/ER-09-09",
+  "kind": "audio-bus-contract-cases",
+  "cases": [
+    {
+      "id": "system-defaults",
+      "kind": "defaults",
+      "input": {},
+      "expected": {
+        "latencyHint": "interactive",
+        "masterVolume": 1,
+        "sfxVoices": 8,
+        "spatialVoices": 16,
+        "decodeBudgetBytes": 33554432,
+        "distanceModel": "inverse",
+        "panningModel": "equalpower",
+        "refDistance": 1,
+        "maxDistance": 100,
+        "rolloff": 1
+      }
+    },
+    {
+      "id": "master-volume-clamp-high",
+      "kind": "option-clamp",
+      "input": { "masterVolume": 4.5 },
+      "expected": { "masterVolume": 1 }
+    },
+    {
+      "id": "master-volume-clamp-low",
+      "kind": "option-clamp",
+      "input": { "masterVolume": -2 },
+      "expected": { "masterVolume": 0 }
+    },
+    {
+      "id": "sfx-voices-clamp-low",
+      "kind": "option-clamp",
+      "input": { "sfxVoices": 0 },
+      "expected": { "sfxVoices": 1 }
+    },
+    {
+      "id": "sfx-voices-clamp-high",
+      "kind": "option-clamp",
+      "input": { "sfxVoices": 100 },
+      "expected": { "sfxVoices": 32 }
+    },
+    {
+      "id": "sfx-voices-non-integer-floor",
+      "kind": "option-clamp",
+      "input": { "sfxVoices": 2.7 },
+      "expected": { "sfxVoices": 2 },
+      "note": "09 §3.1 says a non-integer is clamped; the M0 AudioBus floors it."
+    },
+    {
+      "id": "decode-budget-clamp-low",
+      "kind": "option-clamp",
+      "input": { "decodeBudgetBytes": -1 },
+      "expected": { "decodeBudgetBytes": 0 }
+    },
+    {
+      "id": "decode-budget-clamp-high",
+      "kind": "option-clamp",
+      "input": { "decodeBudgetBytes": 1000000000000 },
+      "expected": { "decodeBudgetBytes": 268435456 }
+    },
+    {
+      "id": "bus-volume-clamp-high",
+      "kind": "mixer-clamp",
+      "input": { "bus": "music", "volume": 5, "rampMs": 0 },
+      "expected": { "busVolume": 1 }
+    },
+    {
+      "id": "bus-volume-clamp-low",
+      "kind": "mixer-clamp",
+      "input": { "bus": "music", "volume": -5, "rampMs": 0 },
+      "expected": { "busVolume": 0 }
+    },
+    {
+      "id": "master-muted",
+      "kind": "mixer-mute",
+      "input": { "muted": true },
+      "expected": { "masterGain": 0, "muted": true }
+    },
+    {
+      "id": "master-unmuted",
+      "kind": "mixer-mute",
+      "input": { "muted": false, "previousVolume": 0.6 },
+      "expected": { "masterGain": 0.6, "muted": false }
+    },
+    {
+      "id": "no-context-before-unlock",
+      "kind": "state-machine",
+      "input": { "calls": ["playSfx", "playMusic", "tuneRadio"] },
+      "expected": {
+        "contextsCreated": 0,
+        "state": "locked",
+        "clockNow": 0,
+        "audible": false
+      }
+    },
+    {
+      "id": "one-context-for-concurrent-unlocks",
+      "kind": "state-machine",
+      "input": { "unlockCalls": 10 },
+      "expected": { "contextsCreated": 1, "state": "unlocked" }
+    },
+    {
+      "id": "unavailable-is-silent",
+      "kind": "state-machine",
+      "input": { "createContext": "missing-or-throws" },
+      "expected": {
+        "state": "unavailable",
+        "throws": false,
+        "audible": false,
+        "rejects": false
+      }
+    },
+    {
+      "id": "free-voice-first",
+      "kind": "voice-stealing",
+      "input": {
+        "poolSize": 8,
+        "voices": [
+          { "index": 0, "priority": 128, "startedAt": 1 },
+          { "index": 1, "priority": 128, "startedAt": 2 }
+        ],
+        "requestPriority": 128
+      },
+      "expected": { "index": 2, "steal": false, "droppedPlays": 0, "steals": 0 }
+    },
+    {
+      "id": "steal-lowest-priority",
+      "kind": "voice-stealing",
+      "input": {
+        "poolSize": 2,
+        "voices": [
+          { "index": 0, "priority": 128, "startedAt": 10 },
+          { "index": 1, "priority": 64, "startedAt": 5 }
+        ],
+        "requestPriority": 128
+      },
+      "expected": { "index": 1, "steal": true, "stealRampMs": 5 }
+    },
+    {
+      "id": "steal-oldest-on-priority-tie",
+      "kind": "voice-stealing",
+      "input": {
+        "poolSize": 2,
+        "voices": [
+          { "index": 0, "priority": 128, "startedAt": 2 },
+          { "index": 1, "priority": 128, "startedAt": 1 }
+        ],
+        "requestPriority": 128
+      },
+      "expected": { "index": 1, "steal": true, "stealRampMs": 5 }
+    },
+    {
+      "id": "steal-lowest-index-on-full-tie",
+      "kind": "voice-stealing",
+      "input": {
+        "poolSize": 2,
+        "voices": [
+          { "index": 0, "priority": 128, "startedAt": 1 },
+          { "index": 1, "priority": 128, "startedAt": 1 }
+        ],
+        "requestPriority": 128
+      },
+      "expected": { "index": 0, "steal": true, "stealRampMs": 5 }
+    },
+    {
+      "id": "never-steal-higher-priority",
+      "kind": "voice-stealing",
+      "input": {
+        "poolSize": 2,
+        "voices": [
+          { "index": 0, "priority": 200, "startedAt": 1 },
+          { "index": 1, "priority": 220, "startedAt": 2 }
+        ],
+        "requestPriority": 128
+      },
+      "expected": { "steal": false, "droppedPlays": 1, "steals": 0 }
+    },
+    {
+      "id": "equal-priority-steal-policy",
+      "kind": "voice-stealing",
+      "input": {
+        "poolSize": 2,
+        "voices": [
+          { "index": 0, "priority": 128, "startedAt": 2 },
+          { "index": 1, "priority": 128, "startedAt": 1 }
+        ],
+        "requestPriority": 128
+      },
+      "expected": { "index": 1, "steal": true, "droppedPlays": 0 }
+    },
+    {
+      "id": "er-09-04-64-plays-into-pool-of-8",
+      "kind": "acceptance-case",
+      "input": {
+        "playSfxCalls": 64,
+        "poolSize": 8,
+        "defaultPriority": 128
+      },
+      "expected": { "audible": 8, "droppedPlays": 56 },
+      "note": "ER-09-04 expectation; it conflicts with the equal-priority steal allowed by 09 §5.4. Recorded as an ambiguity, not resolved here."
+    },
+    {
+      "id": "one-shot-default-schedule",
+      "kind": "scheduling",
+      "input": { "now": 10, "at": null, "fadeMs": 0, "kind": "one-shot" },
+      "expected": { "startAt": 10.005 }
+    },
+    {
+      "id": "one-shot-past-clamps",
+      "kind": "scheduling",
+      "input": { "now": 10, "at": 9, "kind": "one-shot" },
+      "expected": { "startAt": 10.005 }
+    },
+    {
+      "id": "one-shot-far-future-clamps",
+      "kind": "scheduling",
+      "input": { "now": 10, "at": 30, "kind": "one-shot" },
+      "expected": { "startAt": 20 }
+    },
+    {
+      "id": "music-faded-start-anchor",
+      "kind": "scheduling",
+      "input": { "now": 10, "fadeMs": 500, "volume": 0.8, "kind": "music" },
+      "expected": { "startAt": 10.02, "gainEnd": 0.8, "rampEnd": 10.52 }
+    },
+    {
+      "id": "music-unfaded-start",
+      "kind": "scheduling",
+      "input": { "now": 10, "fadeMs": 0, "volume": 0.8, "kind": "music" },
+      "expected": { "startAt": 10, "gain": 0.8 }
+    },
+    {
+      "id": "music-stop-fade",
+      "kind": "scheduling",
+      "input": { "now": 10, "fadeMs": 1500, "kind": "music-stop" },
+      "expected": { "gainEnd": 0, "stopAt": 11.5 }
+    },
+    {
+      "id": "radio-default-crossfade",
+      "kind": "scheduling",
+      "input": { "now": 10, "fadeMs": 1500, "kind": "radio-crossfade" },
+      "expected": {
+        "startAt": 10,
+        "endAt": 11.5,
+        "curve": "equal-power cos/sin",
+        "tolerancePercent": 2,
+        "sampledTimes": 10
+      }
+    }
+  ]
+}

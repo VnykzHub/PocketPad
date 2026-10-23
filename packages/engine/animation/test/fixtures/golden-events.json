@@ -1,0 +1,26 @@
+{
+  "clip": "events-loop",
+  "loops": 3,
+  "events": [
+    {
+      "time": 0.1,
+      "name": "beat.one",
+      "payload": 1
+    },
+    {
+      "time": 0.4,
+      "name": "beat.two",
+      "payload": 2
+    },
+    {
+      "time": 0.7,
+      "name": "beat.three",
+      "payload": 3
+    },
+    {
+      "time": 0.95,
+      "name": "beat.four",
+      "payload": 4
+    }
+  ]
+}

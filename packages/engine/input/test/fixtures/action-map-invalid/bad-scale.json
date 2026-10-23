@@ -1,0 +1,12 @@
+{
+  "formatVersion": 1,
+  "actions": [
+    {
+      "name": "primary",
+      "kind": "button",
+      "bindings": [
+        { "device": "keyboard", "code": "Space", "scale": 5 }
+      ]
+    }
+  ]
+}

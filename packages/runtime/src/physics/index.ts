@@ -1,10 +1,8 @@
 /**
- * Physics primitives (D7-RT-01; C9, PR-9.3/9.4).
+ * Compatibility re-export of the frozen 2D solver (07 §5.15).
  *
- * Small, custom circle physics for Coin Run (platformer) and future Sumo
- * Bumpers / Tilt Maze. Games import these from `@lanpad/runtime`; they do not
- * carry a private collision implementation.
+ * The implementation moved to `@lanpad/engine-physics/two-d` at M0. This file
+ * keeps `@lanpad/runtime`'s public physics names stable for games and is
+ * deleted at M1; it contains no implementation and imports no Rapier code.
  */
-export * from "./Vec2.js";
-export * from "./Aabb.js";
-export * from "./collide.js";
+export * from "@lanpad/engine-physics/two-d";

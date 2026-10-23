@@ -829,7 +829,16 @@ describe("runtime rendering stack", () => {
       ),
     ) as { dependencies?: Record<string, string> };
     const dependencyNames = Object.keys(pkg.dependencies ?? {});
-    expect(dependencyNames.sort()).toEqual(["@lanpad/protocol", "@lanpad/sdk"]);
+    expect(dependencyNames.sort()).toEqual([
+      "@lanpad/engine-assets",
+      "@lanpad/engine-core",
+      "@lanpad/engine-input",
+      "@lanpad/engine-physics",
+      "@lanpad/engine-renderer-webgl2",
+      "@lanpad/engine-renderer-webgpu",
+      "@lanpad/protocol",
+      "@lanpad/sdk",
+    ]);
     for (const name of dependencyNames) {
       expect(name.startsWith("react")).toBe(false);
       expect(name.startsWith("vue")).toBe(false);

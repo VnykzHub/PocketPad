@@ -374,6 +374,11 @@ block. The run is a same-tab controller socket -> `/ws` -> host socket with one
 
 ### E12 — renderer decision
 
+> **Superseded (2026-10-22):** the browser-engine decision replaces this with a
+> custom **WebGPU-first** renderer and a **WebGL2 fallback**. See
+> [`docs/ADR-0002-webgpu-engine.md`](ADR-0002-webgpu-engine.md). The measured
+> rows below remain the E12 record; no number was changed.
+
 Decision: **custom WebGL2 renderer (`WebGL2Renderer`) with a
 `Canvas2DRenderer` fallback**, both behind the frozen `Renderer`,
 `Renderer2D` and `Renderer3D` interfaces. No Three.js dependency:
@@ -524,3 +529,278 @@ Delta from the wave-5 gate: controller 37,911 -> 40,723 gz (+2,812 B, +7.4%);
 host 55,754 -> 74,424 gz (+18,670 B, +33.5%). These are size-gate totals; no
 per-game frame, memory or latency number is claimed. See
 `docs/todos/CHECKPOINT-2026-10-22-ui.md` §3.2.
+
+---
+
+## Engine M0 — scene5000 acceptance (2026-10-23)
+
+> **Historical evidence.** The hashes and pixel counts in this section predate
+> the RV-76 sRGB output correction and are kept as history. Current goldens are
+> in "Engine M0 — sRGB output correction and golden re-record (RV-76)" below.
+
+> Real headless-Chrome runs of the engine's WebGPU and WebGL2 backends on the
+> 5,000-instance scene. Measured, not estimated. The machine matches the named
+> desktop OS/Chrome baseline; the exact GPU model is reported only as
+> `nvidia ampere` (WebGPU) / `WebKit WebGL` (WebGL2). Headless rAF was not
+> 60 Hz-vsynced, so the intervals below are frame pacing, not a 60 Hz-vsync
+> claim, and no GPU timestamp was available (`gpuFrameMs = null`).
+
+Environment: Windows 11 Home Single Language 10.0.26300, Chrome
+155.0.8059.85 headless (CDP), DPR 1, CSS/backing 1920×1080. Common engine
+build identity: SHA-256 `bed149c46487770bb4e977a05f57f6444ad0e50d5ce07b2c8d662f6776de9d4f`
+over 135 built engine JS files (959,937 bytes).
+
+Command:
+`node experiments/e-m0-engine/run.mjs --scene scene5000 --instances 5000 --size 1920x1080 --bench 1 --backend <webgpu|webgl2>`
+
+| Backend | p50 ms | p95 ms | max ms | draw calls | triangles | instances | textureBytes | gpuErrors | Budget | Golden |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|
+| WebGPU | 9.2 | 10.1 | 10.2 | 1 | 60,000 | 5,000 | 8,295,680 | 0 | target-met (14/20) | `83a995ef` |
+| WebGL2 | 9.3 | 10.2 | 10.7 | 1 | 60,000 | 5,000 | 256 | 0 | target-met (14/20) | `fc205f5d` |
+
+- 600 measured frames after 120 warm-up; capture at frame 60 after 30 warm-up.
+- Cross-backend diff: **4 / 2,073,600 pixels = 0.000193%** differ by more than
+  8/255 in any channel; max channel delta 37; allowance 2%.
+- Cube control: both backends hash `32312240`; 0 differing pixels.
+- Screenshots: `experiments/e-m0-engine/artifacts/scene5000-5000-1920x1080/`.
+
+**Caveats recorded with the numbers:** (1) WebGPU `textureBytes` includes the
+1080p `depth24plus` swapchain depth attachment (8,294,400 B), so it exceeds
+Appendix A.2's old "≤ 1 MiB" expected-stat line (now treated as a semantic and
+spec fix, not a renderer defect); the 128 MiB hard budget passes. (2) Headless
+rAF ran at roughly 108 Hz, so this is not 60 Hz-vsync evidence. (3) No GPU
+timing, device-loss, resize or TV/Android run. (4) ER-04-09/ER-05-04 specify a
+tick-300 golden; this run captures frame 60, so those rows remain PENDING even
+though the observed diff is far inside tolerance.
+
+### Re-run after the WebGL2 `copy-dst` fix (2026-10-23)
+
+Same scene, machine, Chrome and method as above, on engine build
+SHA-256 `2657192f89089d384063407045b91997a9f282f8ec00ecaa2f10d82fcb0be50c`
+(the build that accepts `copy-dst` as a WebGL2 upload no-op). The runner's
+texture ceiling was corrected from the stale 1 MiB to **12 MiB including the
+depth attachment**, matching 04 Appendix A.2.
+
+| Backend | p50 ms | p95 ms | max ms | textureBytes | Within 12 MiB | Goldens | GPU errors |
+|---|---:|---:|---:|---:|---|---|---:|
+| WebGPU | 9.5 | 10.3 | 10.9 | 8,295,680 | yes | `83a995ef` matched | 0 |
+| WebGL2 | 9.6 | 10.2 | 10.8 | 256 | yes | `fc205f5d` matched | 0 |
+
+- 600 measured frame intervals after 120 warm-up; nearest-rank percentiles.
+- Cross-backend diff remains **4 / 2,073,600 pixels (0.000193%)**, max delta 37.
+- Acceptance flags: `specConformant`, `goldenPass`, `crossBackendParityPass`,
+  `benchmarkTargetMet`, `benchmarkHardMet`, `textureBytesWithinSpecExpected`,
+  `gpuErrorsZero` are true on both backends.
+- Still frame pacing from headless rAF, not 60 Hz vsync; `gpuFrameMs = null`.
+
+### M0 browser edge cases (2026-10-23)
+
+Real headless Chrome 155.0.8059.85 on Windows 11, same engine build as the
+re-run above. Artifacts under `experiments/e-m0-engine/artifacts/<case>/`.
+These cases ran on the pre-RV-76 build; the `32312240` hashes here are
+historical and are superseded by the sRGB section below.
+
+| Case | Backend | Result | Exact evidence |
+|---|---|---|---|
+| Resize (10 CSS changes in one task) | WebGL2 | **PASS** | every `device.size` matched CSS; final 640×360 CSS @ DPR 2 → 1280×720 backing; 0 GPU errors; content present |
+| Resize (10 CSS changes in one task) | WebGPU | **PASS** | `device.size` matched CSS on every call; backing stayed 1280×720 during the synchronous calls and followed DPR by the next frame; 0 GPU errors |
+| WebGL2 context loss | WebGL2 | **PASS** | real lost/restored events; epoch 0→1; pre- and post-loss hash both `32312240`; recovery to content **29.2 ms / 3 frames**; 0 uncaught errors; 0 GPU errors |
+| Forced WebGPU device loss | WebGPU | **PASS** | dev-only hook destroys the real `GPUDevice`; real `device.lost` reason `destroyed`; states `running → lost → running → failed`; pre/post hash both `32312240`; recovery **63.6 ms / 1 frame**; 3 handles valid and reused; second loss terminal with one refused `restore()` (`E_DEVICE_LOST`) and no retry loop |
+| 5 MiB asset load | assets | **PASS (load), 8 ms bound not provable** | same-origin 5,242,880-byte WOFF2; transfer 5,243,180 B; decoded exact; 77.4 ms load; 0 long-task entries (the API only reports tasks > 50 ms, so it cannot prove an 8 ms bound) |
+
+**Recorded gaps:** the resize case cannot count `context.configure()` calls
+because the built contract exposes no swapchain counter, so ER-04-06's
+"at most one configure" half stays PENDING. The WebGPU loss page loads no
+assets and runs no game loop, so "no asset refetch" and "no game restart" are
+recorded `null`, not true; the page also never calls `resize()` outside the
+resize case, so `device.size` reads 0×0 pre- and post-loss while the canvas
+backing follows the surface metrics. The asset case proves byte-accurate
+loading, not the ≤ 8 ms main-thread bound. Handle staleness after WebGL2
+restore was not exercised, so ER-05-06 is PASS for recovery timing/hash/epoch
+and open on that clause. All of this is headless desktop Chrome; no TV/Android
+claim is made.
+
+## Engine M0 — sRGB output correction and golden re-record (RV-76) (2026-10-23)
+
+> RV-76. Both built-in backends stored linear light in a framebuffer the display
+> reads as sRGB, so the authored colour `#ffd166` displayed as `(255,162,34)`.
+> The shaders now encode linear→sRGB exactly once at fragment output; sRGB
+> textures remain hardware-decoded. All cube and scene5000 goldens were
+> re-recorded deliberately on the corrected build. The M0 rows above are kept
+> as historical evidence and are superseded by this section.
+
+### Probe: platform limit and displayed colour
+
+Command: `node experiments/e-m0-engine/srgb-probe.mjs` (page
+`experiments/e-m0-engine/srgb-probe.html`). Headless Chrome 155.0.8059.85 via
+CDP on Windows 11 Home Single Language 10.0.26300, DPR 1.
+
+| Probe | Result |
+|---|---|
+| `GPUCanvasContext.configure({ format: "bgra8unorm-srgb" })` | **rejected** — `TypeError: Failed to execute 'configure' on 'GPUCanvasContext': Unsupported canvas context format 'bgra8unorm-srgb'.` |
+| same with `"rgba8unorm-srgb"` | **rejected** — same `Unsupported canvas context format` error |
+| `navigator.gpu.getPreferredCanvasFormat()` | `bgra8unorm` |
+| WebGL2 `EXT_sRGB_write_control` | absent (`false`) |
+| WebGL2 clear and shader output of linear 0.5 | read back `(127,127,127,255)` both — the default framebuffer is not sRGB |
+| Engine, pre-fix, lit centre, both backends | `(137,87,18,255)` |
+| Engine, pre-fix, unlit centre, both backends | `(255,162,34,255)` |
+| Engine, post-fix, unlit centre/below/left/corner, both backends | `(255,209,102,255)` = `#ffd166` |
+| Engine, post-fix, lit centre, both backends | `(193,158,75,255)` |
+| Engine, post-fix, lit bottom edge, both backends | `(254,208,102,255)` |
+
+Both backends agreed with each other before the fix, which is why cross-backend
+parity passed while both displayed the wrong colour. The pre-fix unlit values
+are the decoded-linear contents of the `#ffd166` texture written directly as
+display bytes; the lit values apply the light term in linear space.
+
+### Mechanism
+
+A real sRGB swapchain cannot be used on this platform (probe above), so both
+backends take the fallback defined for this case: one linear→sRGB encode at
+fragment output.
+
+- `packages/engine/renderer-webgpu/src/shaders/lit.wgsl.ts`: `encodeSrgb()`
+  wraps the final lit colour and the unlit colour; alpha is untouched. Canvas
+  format stays `bgra8unorm`. Base-colour textures keep `rgba8unorm-srgb` and
+  are decoded by the sampler; there is no shader decode.
+- `packages/engine/renderer-webgl2/src/shaders/forwardLit.ts`: the same helper
+  wraps both `UNLIT` preprocessor branches. `rgba8unorm-srgb` maps to
+  `SRGB8_ALPHA8`, so the sampler decodes textures and the shader encodes only
+  the final colour.
+- The encode is IEC 61966-2-1: `12.92·x` at or below 0.0031308, otherwise
+  `1.055·x^(1/2.4) − 0.055`, with negative values clamped to 0.
+- No frozen contract changed. `WebGpuCanvasFormat` still accepts only
+  `bgra8unorm` / `rgba8unorm`; an sRGB preferred format is refused with
+  `E_BACKEND_INIT` rather than silently double-encoding.
+
+Unit coverage added (8 tests): shader output path and IEC constants in
+`packages/engine/renderer-webgpu/test/abi.test.ts` (ER-04-09, ER-04-11), canvas
+format selection and sRGB-format refusal in `factory.test.ts` (ER-04-09), and
+the WebGL2 encode plus `SRGB8_ALPHA8` texture path in
+`packages/engine/renderer-webgl2/test/abi.test.ts` (ER-05-01). Scoped checks:
+23 renderer test files / 358 tests pass; `tsc -b` and `eslint` pass for both
+packages; both built dists passed all browser runs below.
+
+### Build identity
+
+Engine build: SHA-256
+`ec7533855f0712417a7c926cfd67dcc0dd25931ea0fa650fc7634f178a3541d1` over 199
+built engine JS files (1,511,952 bytes). The superseded identity was
+`bed149c46487770bb4e977a05f57f6444ad0e50d5ce07b2c8d662f6776de9d4f` over 135
+files (959,937 bytes). Per-page builds in this re-record: WebGPU
+`f133e3b77908f4db47ab4daf964c762b3d99c7bf37baf9e82de8cd6a420e11bb` (71 modules,
+453,293 B) and WebGL2
+`9b428497356e77fd433371f0b4e9b85118b3b518b8f05e4490cab134c690902d` (88 modules,
+600,886 B).
+
+### Re-recorded goldens
+
+Golden runner v2: capture at frame 60 after 30 warm-up; benchmark 120 warm-up +
+600 measured frames, nearest-rank percentiles. Command pattern:
+`node experiments/e-m0-engine/run.mjs --scene <cube|scene5000> --instances <1|5000> --size <640x360|1920x1080> --bench 1 --backend <webgpu|webgl2> [--update-golden]`.
+The eight update runs were made
+with `--update-golden`; a second set of eight runs without the flag re-verified
+them. All eight verification runs exited 0 with `golden.status = "matched"` and
+`gpuErrors = 0`. Timings below are the values recorded in `golden.json` by the
+update runs; the verify re-runs measured p50 8.3 / p95 8.4 ms (max 8.5–8.7) on
+every fixture because headless rAF paced differently. Neither figure is 60 Hz
+vsync evidence.
+
+| Fixture | Spec | Backend | Golden | p50 ms | p95 ms | max ms | textureBytes |
+|---|---|---:|---:|---:|---:|---:|---:|
+| cube 1 instance, 640×360 | target (A.1) | WebGPU | `243224a8` | 10.0 | 10.1 | 10.9 | 922,880 |
+| cube 1 instance, 640×360 | target (A.1) | WebGL2 | `243224a8` | 10.0 | 10.1 | 11.1 | 256 |
+| cube 1 instance, 1920×1080 | lab fallback | WebGPU | `540a35fc` | 10.0 | 10.1 | 10.5 | 8,295,680 |
+| cube 1 instance, 1920×1080 | lab fallback | WebGL2 | `540a35fc` | 10.0 | 10.1 | 10.6 | 256 |
+| scene5000, 1920×1080 | target (A.2) | WebGPU | `cb91b2b4` | 10.0 | 10.2 | 10.6 | 8,295,680 |
+| scene5000, 1920×1080 | target (A.2) | WebGL2 | `0883832e` | 10.0 | 10.1 | 10.8 | 256 |
+| scene5000, 640×360 | lab fallback | WebGPU | `e136aeda` | 8.3 | 8.4 | 16.6 | 922,880 |
+| scene5000, 640×360 | lab fallback | WebGL2 | `e136aeda` | 8.3 | 8.4 | 8.7 | 256 |
+
+- Non-clear / bright / distinct-colour counts: cube 640×360 53,970 / 53,970 /
+  7 on both; cube 1920×1080 485,769 / 485,769 / 7 on both; scene5000 1920×1080
+  241,631 / 126,459 / 348 (WebGPU) and 241,633 / 126,459 / 347 (WebGL2);
+  scene5000 640×360 26,953 / 14,084 / 318 on both. One draw call and 12 or
+  60,000 triangles respectively; 0 GPU errors.
+- WebGPU `textureBytes` includes the swapchain depth attachment (921,600 B at
+  640×360, 8,294,400 B at 1920×1080); every fixture passes the runner's 12 MiB
+  ceiling.
+- Screenshot SHA-256: cube 640×360 both
+  `5f1e38cd63fcb1ad407dcc8e5e57fdbd888d617c8c137f2dc404d580f7add8d5`
+  (3,533 B); cube 1920×1080 both
+  `8f57cee73d6844c7236079335505c2ad453c55ded9a5d9dee954637a5b411d2c`
+  (13,461 B); scene5000 1920×1080 WebGPU
+  `389094ca305a8b7aeddf95f68d0dab04deae482c69ce2b08849357b464af4530`
+  (172,566 B), WebGL2
+  `adfe11b31e0882bfb745094a45c0a30f99a50b7226640bd6de9612f871296c21`
+  (172,574 B); scene5000 640×360 both
+  `62e664b0f0703e4749da0f5f34756954ab03d1ca233aa42934987057902fa410`
+  (35,865 B).
+- The 640×360 cube and 1920×1080 scene5000 are the spec fixtures; the other two
+  sizes are labelled lab fallbacks (`specConformant = false`) and are not target
+  acceptance evidence.
+
+### Cross-backend diff
+
+Direct comparison of the new PNG pairs, threshold >8/255 on any channel,
+allowance 2% of pixels:
+
+| Fixture | Different pixels | Total | Percent | Max channel delta | Budget |
+|---|---:|---:|---:|---:|---|
+| cube 640×360 | 0 | 230,400 | 0% | 0 | pass |
+| cube 1920×1080 | 0 | 2,073,600 | 0% | 0 | pass |
+| scene5000 1920×1080 | 4 | 2,073,600 | 0.000193% | 86 | pass |
+| scene5000 640×360 | 0 | 230,400 | 0% | 0 | pass |
+
+The cube fixture is exact and the scene5000 spec fixture differs on 4 pixels,
+the same count as before the fix (max delta rose from 37 to 86). No tolerance
+was loosened.
+
+### Why the old goldens are invalid
+
+The old hashes — cube `32312240`, scene5000 `83a995ef` / `fc205f5d`, and the
+`32312240` hash in the loss cases — were stable across backends but encoded the
+uncorrected transfer function. They cannot remain pass criteria: correctly
+displaying the same authored content necessarily produces a different image.
+The change is deliberate and covers both backends together. It is visible in
+the pixel statistics: cube bright pixels 26,884 → 53,970; scene5000 bright
+pixels 14,698 → 126,459 and distinct colours 304 → 348/347. The old rows above
+remain as historical evidence.
+
+**Still PENDING:** no GPU timestamp exists (`gpuFrameMs = null`); headless rAF
+was not 60 Hz-vsynced; no TV, Android or other real-hardware run was performed.
+Every TV/Android row elsewhere in this file stays PENDING.
+
+## A15 — Rapier payload (2026-10-23)
+
+Dependency installed for the 3D physics adapter: `@dimforge/rapier3d-compat`
+**0.21.0**, pinned exactly (no caret). Environment: Windows 11 Home Single
+Language (10.0.26300), Node v22.14.0, npm 10.9.2. No browser was involved.
+
+| File (installed package) | Raw bytes | gzip level 9 |
+|---|---:|---:|
+| `node_modules/@dimforge/rapier3d-compat/dist/rapier_wasm3d_bg.wasm` | 3,082,103 | 1,175,669 |
+| `node_modules/@dimforge/rapier3d-compat/dist/rapier.mjs` | 4,340,292 | 1,644,109 |
+
+- Version: `0.21.0` from the installed `package.json`.
+- License: `Apache-2.0` (`license` field); the installed `LICENSE` file's first
+  line reads `Apache License`.
+- Method (run from the repo root; no network, no build):
+  `node -e "const fs=require('fs'),z=require('zlib');for(const f of
+  ['node_modules/@dimforge/rapier3d-compat/dist/rapier_wasm3d_bg.wasm',
+  'node_modules/@dimforge/rapier3d-compat/dist/rapier.mjs']){const
+  b=fs.readFileSync(f);console.log(f,'raw',b.length,'gzip9',
+  z.gzipSync(b,{level:9}).length)}"`
+
+**These are local file-size measurements, not browser transfer sizes.**
+Nothing here says what a host page downloads or compiles at runtime: the
+`-compat` package inlines the WASM as base64 in the ESM bundle, so a browser
+fetches the JS bundle (or a bundler-produced variant), not the two files
+above. No frame times, step times or hardware numbers are recorded, and
+ER-07-10 (80 KB gzip physics package) and ER-07-13 stay PENDING.
+
+**Budget consequence (recorded, not hidden):** ER-07-10 was written for a
+no-Rapier package. It is amended to 80 KB gzip for the physics package JS
+**excluding** the Rapier payload, ≤ 2 MiB gzip for the lazy Rapier payload,
+and the unchanged ≤ 5 MB host + game total. The package-size gate stays
+PENDING until the runtime imports physics.

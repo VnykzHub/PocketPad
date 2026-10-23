@@ -89,6 +89,7 @@ Each spec lives at `docs/engine/<nn>-<name>.md` and follows the template in §7.
 | `17-editor.md` | Scene/world editor, placement, lighting, asset browser, play-in-editor | 03, 04, 06 |
 | `18-game-sdk.md` | Game lifecycle, `GameContext` evolution, packaging, templates, API reference | all |
 | `19-testing-benchmarks.md` | Unit/property/golden/integration/benchmark harness, acceptance scenes | all |
+| `20-m1-vertical-slice.md` | The M1 “Block 7 courier run” target: world, vehicle, pedestrians, mission, audio, save, acceptance rows | 07, 08, 09, 12, 15, 18 |
 
 This index is the plan. A spec that does not exist yet is not a contract; write it before implementing.
 
@@ -109,6 +110,22 @@ Every spec must contain, in this order:
 
 A spec without acceptance criteria is a wish, not a spec.
 
+### 7.1 Executable additions (required before implementation)
+
+A prose spec alone lets two agents implement the same interface differently. Every spec that defines a contract must also land:
+
+1. **A `.d.ts` contract file** in the owning package (`packages/engine/<pkg>/src/contracts/<name>.d.ts`), frozen and additive-only. The prose explains it; the types are the authority. Runtime constants live in a `.ts` module beside it and must match the declared type.
+2. **A conformance suite** in the engine test rig. Every implementation — WebGPU, WebGL2, Rapier adapter, custom physics — must pass the same suite. This is what makes parallel work safe.
+3. **A reference fixture and a numeric budget.** Rendering: a golden image plus a tolerance. Systems: a replay file and an expected state hash. Hot paths: a benchmark with a ceiling. “Fast” is never an acceptance criterion.
+4. **An ownership manifest** listing exact files. Extend one-writer-per-file to one-writer-per-package; cross-package changes are a request filed against the owning spec.
+
+The verification rig is built in **W0, before any layer**:
+
+- headless Chromium with WebGPU or software rendering for golden-image diffs;
+- a determinism harness (fixed seed, recorded input, state hash per N ticks, run twice);
+- frame-time and allocation budget tests using the debug counters;
+- a clean `npm ci`, typecheck, lint and **all-stage** trace check in the gate.
+
 ## 8. Milestones
 
 | Milestone | Acceptance | Honest scale |
@@ -121,7 +138,41 @@ A spec without acceptance criteria is a wish, not a spec.
 
 A milestone is complete only when its acceptance evidence exists. Until then, describe the engine as “in progress”, never as “GTA-class”.
 
-## 9. Current baseline (before M0)
+### 8.1 Execution waves (from the audit)
+
+The full audit and its evidence are in [`docs/wave5-audit.md`](../wave5-audit.md). Its core correction: **contracts first, then fan out by layer, integrate continuously, verify with automated oracles.** Do not gate engine layers on TV hardware; gate them on conformance and benchmarks.
+
+| Tier | Streams (parallel) | Starts when |
+|---|---|---|
+| **T0 Contracts** (serial) | Architecture, `RenderBackend`, `Scene`/ECS data layout, `AssetHandle`, `Physics3D`, `Audio`, `Input` action API, job/worker model, `GameContext` v2 | — |
+| **T1 Foundations** (~10 parallel) | Math; loop/jobs/pools; WebGPU device/pipeline core; WebGL2 backend core; glTF/KTX2/WebP/Opus/font parsers; KB/M/gamepad input; audio mixer; 3D physics core; snapshot networking; GPU test rig/profiler | T0 contracts + conformance suites |
+| **T2 Systems** (~8 parallel) | Scene/culling; PBR; cascaded shadows; post; skeletal animation; navmesh/agents; streaming; UI/SDF text; save/load | T1 contracts and stubs |
+| **T3 Gameplay** (~6 parallel) | Vehicle, character controller, camera rigs, missions, traffic/pedestrians, HUD/minimap/radio | T2 interfaces |
+| **T4 Content and tools** | Asset pipeline CLI, world editor, vertical-slice city block | T3 |
+
+| Wave | Work | Exit evidence | Estimate |
+|---|---|---|---|
+| **W0 Reset and contracts** | Fix lockfile/CI; all-stage trace; split `main.ts`; record renderer/physics/isolation decisions; freeze T0 contracts + conformance suites; build the GPU rig; write specs 00–19 | Clean `npm ci && npm run check`; every spec has a `.d.ts`, conformance suite and fixture; rig renders a golden triangle in CI | 1–2 days |
+| **W1 Foundations (M0)** | The ten T1 streams | Textured, lit glTF scene on WebGPU and WebGL2 passing golden diffs; KB/M/gamepad + phone input; physics boxes/raycasts; positional audio; benchmark; gate green | 2–4 days |
+| **W2 Systems** | The eight T2 streams | Skinned character under shadows + post; navmesh path; streamed cells with memory cap; SDF HUD; save/load round trip | 3–6 days |
+| **W3 Gameplay and slice (M1)** | T3 streams, then one city block | Drive a car through a block with pedestrians, one mission, audio, save/load; measured frame p95; replay determinism | 4–7 days |
+| **W4 Completeness (M2)** | Optimisation, LOD, GPU culling, editor, asset pipeline hardening, device matrix | Budgets met on named hardware; docs enough to build a game without engine source | Weeks |
+| **W5 Open-world proof (M3)** | Content, missions, traffic density, world scale | Vice City-scale slice measured on target hardware | Months or more (content-bound) |
+
+Durations are estimates, not measurements. A wave ends only on its exit evidence.
+
+## 9. Decisions recorded; remaining choices
+
+| Decision | Status | Choice |
+|---|---|---|
+| Physics | **Decided 2026-10-22** | **Rapier** behind `Physics3D`; custom only if a measured need appears |
+| Stage gating | **Decided 2026-10-22** | Retired for the engine track; the phone/room platform stays frozen and maintained on its own plan |
+| Cross-origin isolation | **Decided 2026-10-22** | **COOP/COEP enabled** in W0 (`same-origin` / `require-corp`), plus CORP `same-origin` |
+| WebGL2 fallback | **Decided 2026-10-22** | **Reduced feature tier**, not parity; games declare a minimum tier |
+| M3 content strategy | Open | Generated vs licensed vs hand-made; decide before content work and check licences |
+| WebGPU browser floor | Open | Verify the current Chromium/TV matrix in W0 before fixing a floor |
+
+## 10. Current baseline (before M0)
 
 What exists today, described in [`docs/ENGINE.md`](../ENGINE.md):
 

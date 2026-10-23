@@ -1,0 +1,56 @@
+{
+  "id": "ER-07-07",
+  "source": "docs/engine/07-physics3d.md ER-07-07, §5.12",
+  "world": {
+    "gravity": [0, -9.81, 0],
+    "fixedDt": 0.016666666666666666,
+    "sleep": {
+      "linearThreshold": 0.05,
+      "angularThreshold": 0.1,
+      "timeToSleep": 0.5
+    }
+  },
+  "boxes": {
+    "description": "Two separate islands of 32 boxes: 4 wide x 2 deep x 4 high each. The islands are 12 m apart, so waking one cannot physically touch the other.",
+    "columns": 4,
+    "depth": 2,
+    "rows": 4,
+    "halfExtents": [0.5, 0.5, 0.5],
+    "gap": 0.001,
+    "density": 100,
+    "friction": 0.8,
+    "restitution": 0,
+    "islandOffsets": [
+      [-6, 0, 0],
+      [6, 0, 0]
+    ],
+    "ground": {
+      "top": 0,
+      "halfExtents": [40, 0.5, 40]
+    }
+  },
+  "settleMaxTicks": 300,
+  "driftTicks": 600,
+  "driftLimitM": 0.005,
+  "wake": {
+    "island": 0,
+    "bodyIndex": 0,
+    "impulse": [300, 0, 0],
+    "observationTicks": 1,
+    "settleTicksAfterWake": 120
+  },
+  "recorded": {
+    "bodyCount": 65,
+    "sleepTick": 31,
+    "sleepingAfterSettle": 64,
+    "driftM": 0,
+    "island0AwakeAfterWake": 32,
+    "island1AsleepAfterWake": 32,
+    "settledHash": 3516035952,
+    "wakeHash": 2804183872,
+    "finalHash": 1422611971,
+    "nodeResult": "PASS (1/1) on Node 20 Windows, 2026-10-23; Rapier 0.21.0",
+    "browser": "PENDING — Desktop Chrome 155 M1 run",
+    "notes": "All values are Node measurements from this fixture, not targets. sleepTick is 1-based: the first step after which all 64 bodies report sleeping. driftM is the maximum per-body position change over the 600 ticks after settling; the overlay zeroes the gravity scale while asleep, so the measured value is exactly 0. wakeHash is taken one step after the impulse; finalHash 120 ticks later. Boxes are created in island, row, depth, column order."
+  }
+}

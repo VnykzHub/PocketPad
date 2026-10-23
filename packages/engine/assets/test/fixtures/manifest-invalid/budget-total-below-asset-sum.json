@@ -1,0 +1,21 @@
+{
+  "$fixture": {
+    "expect": "reject",
+    "code": "E_ASSET_BUDGET",
+    "rule": "declared entry bytes (1000) exceed budget.totalBytes (999); 06 3.7, 5.11"
+  },
+  "formatVersion": 1,
+  "id": "example-game",
+  "budget": {
+    "initialBytes": 512,
+    "totalBytes": 999
+  },
+  "assets": [
+    {
+      "id": "textures/atlas",
+      "kind": "texture",
+      "url": "assets/atlas.webp",
+      "bytes": 1000
+    }
+  ]
+}

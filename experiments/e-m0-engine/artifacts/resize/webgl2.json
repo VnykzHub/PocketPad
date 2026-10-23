@@ -1,0 +1,833 @@
+{
+  "ok": true,
+  "scene": "m0-textured-cube-v1",
+  "fixture": {
+    "sceneKey": "cube",
+    "instances": 1,
+    "width": 640,
+    "height": 360,
+    "specInstances": 1,
+    "specWidth": 640,
+    "specHeight": 360,
+    "specConformant": true
+  },
+  "requestedBackend": "webgl2",
+  "backend": "webgl2",
+  "case": "resize",
+  "dpr": 2,
+  "blocked": false,
+  "bench": false,
+  "engineBuild": {
+    "hash": "2657192f89089d384063407045b91997a9f282f8ec00ecaa2f10d82fcb0be50c",
+    "algorithm": "sha256",
+    "fileCount": 135,
+    "bytes": 960216,
+    "root": "packages/engine"
+  },
+  "chrome": "Chrome/155.0.8059.85",
+  "url": "http://127.0.0.1:37570/experiments/e-m0-engine/index.html?backend=webgl2&scene=cube&instances=1&size=640x360&case=resize",
+  "durationMs": 1496,
+  "pageStatusText": "PASS  case resize (webgl2)\nresize   10 calls in one task, DPR 2, final 640x360 CSS -> 1280x720 backing\nchecks   deviceSize=CSS true, backing=DPR true, gpuErrors=0, content=true\ncoalesce counter exposed=false, configureCalls=null (not invented)\nelapsed  728 ms",
+  "page": {
+    "schema": "m0-engine-demo/v2",
+    "ok": true,
+    "stage": "done",
+    "case": "resize",
+    "scene": "m0-textured-cube-v1",
+    "sceneKey": "cube",
+    "requestedBackend": "webgl2",
+    "backend": "webgl2",
+    "fallbackReason": null,
+    "adapter": "webgl2 | WebKit WebGL",
+    "features": [
+      "texture-array",
+      "msaa4",
+      "float-render-target",
+      "timestamp-query",
+      "compressed-s3tc"
+    ],
+    "browser": {
+      "name": "Chrome",
+      "version": "155.0.0.0",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+    },
+    "buildHash": "5e76fe23f24c150615f3089bac79ab7a878e8edefb917d910b0ccd5cae3f8183",
+    "build": {
+      "algorithm": "sha256",
+      "fileCount": 68,
+      "bytes": 401261,
+      "modules": [
+        "/packages/engine/core/dist/index.js",
+        "/packages/engine/core/dist/jobs/JobQueue.js",
+        "/packages/engine/core/dist/jobs/SyncExecutor.js",
+        "/packages/engine/core/dist/jobs/WorkerProtocol.js",
+        "/packages/engine/core/dist/jobs/index.js",
+        "/packages/engine/core/dist/jobs/types.js",
+        "/packages/engine/core/dist/math/Aabb.js",
+        "/packages/engine/core/dist/math/Frustum.js",
+        "/packages/engine/core/dist/math/Mat3.js",
+        "/packages/engine/core/dist/math/Mat4.js",
+        "/packages/engine/core/dist/math/Obb.js",
+        "/packages/engine/core/dist/math/Plane.js",
+        "/packages/engine/core/dist/math/Quat.js",
+        "/packages/engine/core/dist/math/Ray.js",
+        "/packages/engine/core/dist/math/Vec2.js",
+        "/packages/engine/core/dist/math/Vec3.js",
+        "/packages/engine/core/dist/math/Vec4.js",
+        "/packages/engine/core/dist/math/constants.js",
+        "/packages/engine/core/dist/math/index.js",
+        "/packages/engine/core/dist/platform/deviceProfile.js",
+        "/packages/engine/core/dist/platform/frameScheduler.js",
+        "/packages/engine/core/dist/platform/index.js",
+        "/packages/engine/core/dist/save/constants.js",
+        "/packages/engine/core/dist/save/errors.js",
+        "/packages/engine/core/dist/save/file.js",
+        "/packages/engine/core/dist/save/header.js",
+        "/packages/engine/core/dist/save/index.js",
+        "/packages/engine/core/dist/scene/ComponentStore.js",
+        "/packages/engine/core/dist/scene/EntityAllocator.js",
+        "/packages/engine/core/dist/scene/EntityPool.js",
+        "/packages/engine/core/dist/scene/Hierarchy.js",
+        "/packages/engine/core/dist/scene/Prefab.js",
+        "/packages/engine/core/dist/scene/Query.js",
+        "/packages/engine/core/dist/scene/Scene.js",
+        "/packages/engine/core/dist/scene/Serialization.js",
+        "/packages/engine/core/dist/scene/TransformSystem.js",
+        "/packages/engine/core/dist/scene/builtins.js",
+        "/packages/engine/core/dist/scene/component.js",
+        "/packages/engine/core/dist/scene/errors.js",
+        "/packages/engine/core/dist/scene/index.js",
+        "/packages/engine/core/dist/scene/types.js",
+        "/packages/engine/core/dist/time/FixedLoop.js",
+        "/packages/engine/core/dist/time/FrameStats.js",
+        "/packages/engine/core/dist/time/HostTick.js",
+        "/packages/engine/core/dist/time/LoopClock.js",
+        "/packages/engine/core/dist/time/PauseReasons.js",
+        "/packages/engine/core/dist/time/index.js",
+        "/packages/engine/core/dist/time/types.js",
+        "/packages/engine/core/dist/version.js",
+        "/packages/engine/renderer-webgl2/dist/buffer.js",
+        "/packages/engine/renderer-webgl2/dist/capability.js",
+        "/packages/engine/renderer-webgl2/dist/classify.js",
+        "/packages/engine/renderer-webgl2/dist/device.js",
+        "/packages/engine/renderer-webgl2/dist/errors.js",
+        "/packages/engine/renderer-webgl2/dist/failure.js",
+        "/packages/engine/renderer-webgl2/dist/features.js",
+        "/packages/engine/renderer-webgl2/dist/frame.js",
+        "/packages/engine/renderer-webgl2/dist/index.js",
+        "/packages/engine/renderer-webgl2/dist/limits.js",
+        "/packages/engine/renderer-webgl2/dist/material.js",
+        "/packages/engine/renderer-webgl2/dist/mesh.js",
+        "/packages/engine/renderer-webgl2/dist/pipelineCache.js",
+        "/packages/engine/renderer-webgl2/dist/resources.js",
+        "/packages/engine/renderer-webgl2/dist/shaders/forwardLit.js",
+        "/packages/engine/renderer-webgl2/dist/state.js",
+        "/packages/engine/renderer-webgl2/dist/stats.js",
+        "/packages/engine/renderer-webgl2/dist/texture.js",
+        "/packages/engine/renderer-webgl2/dist/version.js"
+      ]
+    },
+    "fixture": {
+      "name": "m0-textured-cube-v1",
+      "specInstances": 1,
+      "instances": 1,
+      "cssWidth": 640,
+      "cssHeight": 360,
+      "captureWarmupFrames": 0,
+      "captureFrame": 2,
+      "conformant": false
+    },
+    "size": {
+      "cssWidth": 640,
+      "cssHeight": 360,
+      "dpr": 2,
+      "width": 1280,
+      "height": 720
+    },
+    "texture": {
+      "created": true,
+      "label": "m0-checker-texture",
+      "width": 4,
+      "height": 4,
+      "format": "rgba8unorm-srgb",
+      "usage": [
+        "sample"
+      ],
+      "bytes": 64
+    },
+    "light": {
+      "kind": "built-in-directional",
+      "configurable": false
+    },
+    "framesRendered": 2,
+    "drawCalls": 1,
+    "triangles": 12,
+    "instances": 1,
+    "textureBytes": 256,
+    "gpuErrors": 0,
+    "hash": "1ecbcd59",
+    "nonClearPixels": 215903,
+    "brightPixels": 107524,
+    "distinctColors": 7,
+    "capture": {
+      "method": "canvas-2d-drawImage+getImageData",
+      "width": 1280,
+      "height": 720,
+      "frame": 2,
+      "warmupFrames": 0
+    },
+    "benchmark": null,
+    "stats": {
+      "drawCalls": 1,
+      "triangles": 12,
+      "instances": 1,
+      "culledInstances": 0,
+      "pipelineSwitches": 0,
+      "bindGroupSwitches": 0,
+      "textureBytes": 256,
+      "bufferBytes": 904,
+      "uploadBytes": 0,
+      "uploadCalls": 0,
+      "gpuErrors": 0,
+      "droppedDraws": 0,
+      "gpuFrameMs": null,
+      "cpuFrameMs": 0.20000000298023224
+    },
+    "caseResult": {
+      "dpr": 2,
+      "sequence": [
+        {
+          "width": 1280,
+          "height": 720
+        },
+        {
+          "width": 960,
+          "height": 540
+        },
+        {
+          "width": 640,
+          "height": 360
+        },
+        {
+          "width": 1024,
+          "height": 576
+        },
+        {
+          "width": 1280,
+          "height": 720
+        },
+        {
+          "width": 1152,
+          "height": 648
+        },
+        {
+          "width": 720,
+          "height": 405
+        },
+        {
+          "width": 640,
+          "height": 360
+        },
+        {
+          "width": 960,
+          "height": 540
+        },
+        {
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "resizeCalls": 10,
+      "frames": {
+        "total": 2,
+        "preResizeFrame": 1,
+        "postResizeFrame": 2
+      },
+      "initial": {
+        "cssWidth": 640,
+        "cssHeight": 360,
+        "dpr": 2,
+        "backingWidth": 1280,
+        "backingHeight": 720,
+        "deviceSize": {
+          "width": 640,
+          "height": 360
+        },
+        "deviceSizeMatchesCss": true,
+        "backingMatchesDpr": true,
+        "expectedBackingWidth": 1280,
+        "expectedBackingHeight": 720
+      },
+      "preFrame": {
+        "validFrame": true,
+        "stats": {
+          "drawCalls": 1,
+          "triangles": 12,
+          "instances": 1,
+          "culledInstances": 0,
+          "pipelineSwitches": 0,
+          "bindGroupSwitches": 0,
+          "textureBytes": 256,
+          "bufferBytes": 904,
+          "uploadBytes": 0,
+          "uploadCalls": 0,
+          "gpuErrors": 0,
+          "droppedDraws": 0,
+          "gpuFrameMs": null,
+          "cpuFrameMs": 1
+        }
+      },
+      "preCapture": {
+        "width": 1280,
+        "height": 720,
+        "hash": "1ecbcd59",
+        "nonClearPixels": 215903,
+        "brightPixels": 107524,
+        "distinctColors": 7
+      },
+      "changes": [
+        {
+          "index": 1,
+          "cssRequestedWidth": 1280,
+          "cssRequestedHeight": 720,
+          "canvasClientWidth": 1280,
+          "canvasClientHeight": 720,
+          "deviceSize": {
+            "width": 1280,
+            "height": 720
+          },
+          "backingWidth": 2560,
+          "backingHeight": 1440,
+          "dpr": 2
+        },
+        {
+          "index": 2,
+          "cssRequestedWidth": 960,
+          "cssRequestedHeight": 540,
+          "canvasClientWidth": 960,
+          "canvasClientHeight": 540,
+          "deviceSize": {
+            "width": 960,
+            "height": 540
+          },
+          "backingWidth": 1920,
+          "backingHeight": 1080,
+          "dpr": 2
+        },
+        {
+          "index": 3,
+          "cssRequestedWidth": 640,
+          "cssRequestedHeight": 360,
+          "canvasClientWidth": 640,
+          "canvasClientHeight": 360,
+          "deviceSize": {
+            "width": 640,
+            "height": 360
+          },
+          "backingWidth": 1280,
+          "backingHeight": 720,
+          "dpr": 2
+        },
+        {
+          "index": 4,
+          "cssRequestedWidth": 1024,
+          "cssRequestedHeight": 576,
+          "canvasClientWidth": 1024,
+          "canvasClientHeight": 576,
+          "deviceSize": {
+            "width": 1024,
+            "height": 576
+          },
+          "backingWidth": 2048,
+          "backingHeight": 1152,
+          "dpr": 2
+        },
+        {
+          "index": 5,
+          "cssRequestedWidth": 1280,
+          "cssRequestedHeight": 720,
+          "canvasClientWidth": 1280,
+          "canvasClientHeight": 720,
+          "deviceSize": {
+            "width": 1280,
+            "height": 720
+          },
+          "backingWidth": 2560,
+          "backingHeight": 1440,
+          "dpr": 2
+        },
+        {
+          "index": 6,
+          "cssRequestedWidth": 1152,
+          "cssRequestedHeight": 648,
+          "canvasClientWidth": 1152,
+          "canvasClientHeight": 648,
+          "deviceSize": {
+            "width": 1152,
+            "height": 648
+          },
+          "backingWidth": 2304,
+          "backingHeight": 1296,
+          "dpr": 2
+        },
+        {
+          "index": 7,
+          "cssRequestedWidth": 720,
+          "cssRequestedHeight": 405,
+          "canvasClientWidth": 720,
+          "canvasClientHeight": 405,
+          "deviceSize": {
+            "width": 720,
+            "height": 405
+          },
+          "backingWidth": 1440,
+          "backingHeight": 810,
+          "dpr": 2
+        },
+        {
+          "index": 8,
+          "cssRequestedWidth": 640,
+          "cssRequestedHeight": 360,
+          "canvasClientWidth": 640,
+          "canvasClientHeight": 360,
+          "deviceSize": {
+            "width": 640,
+            "height": 360
+          },
+          "backingWidth": 1280,
+          "backingHeight": 720,
+          "dpr": 2
+        },
+        {
+          "index": 9,
+          "cssRequestedWidth": 960,
+          "cssRequestedHeight": 540,
+          "canvasClientWidth": 960,
+          "canvasClientHeight": 540,
+          "deviceSize": {
+            "width": 960,
+            "height": 540
+          },
+          "backingWidth": 1920,
+          "backingHeight": 1080,
+          "dpr": 2
+        },
+        {
+          "index": 10,
+          "cssRequestedWidth": 640,
+          "cssRequestedHeight": 360,
+          "canvasClientWidth": 640,
+          "canvasClientHeight": 360,
+          "deviceSize": {
+            "width": 640,
+            "height": 360
+          },
+          "backingWidth": 1280,
+          "backingHeight": 720,
+          "dpr": 2
+        }
+      ],
+      "afterFrame": {
+        "cssWidth": 640,
+        "cssHeight": 360,
+        "dpr": 2,
+        "backingWidth": 1280,
+        "backingHeight": 720,
+        "deviceSize": {
+          "width": 640,
+          "height": 360
+        },
+        "deviceSizeMatchesCss": true,
+        "backingMatchesDpr": true,
+        "expectedBackingWidth": 1280,
+        "expectedBackingHeight": 720,
+        "validFrame": true,
+        "stats": {
+          "drawCalls": 1,
+          "triangles": 12,
+          "instances": 1,
+          "culledInstances": 0,
+          "pipelineSwitches": 0,
+          "bindGroupSwitches": 0,
+          "textureBytes": 256,
+          "bufferBytes": 904,
+          "uploadBytes": 0,
+          "uploadCalls": 0,
+          "gpuErrors": 0,
+          "droppedDraws": 0,
+          "gpuFrameMs": null,
+          "cpuFrameMs": 0.20000000298023224
+        }
+      },
+      "capture": {
+        "width": 1280,
+        "height": 720,
+        "hash": "1ecbcd59",
+        "nonClearPixels": 215903,
+        "brightPixels": 107524,
+        "distinctColors": 7
+      },
+      "contentPresent": true,
+      "coalescing": {
+        "counterExposed": false,
+        "configureCalls": null,
+        "resizeCallsObserved": 10,
+        "reason": "The built renderer contract exposes no swapchain/configure counter. Ten resize() calls ran in one task; the page will not invent a configure count."
+      },
+      "pass": {
+        "tenResizeCalls": true,
+        "tenCssSizeChanges": true,
+        "deviceSizeCssOnEveryCall": true,
+        "backingFollowsDprAfterFrame": true,
+        "deviceSizeMatchesCssAfterFrame": true,
+        "validFrameAfterResize": true,
+        "gpuErrorsZero": true,
+        "contentPresent": true,
+        "all": true
+      }
+    },
+    "notes": [
+      "The directional light is fixed inside the M0 shader; the built public API has no light object.",
+      "Texture usage is sample only because the WebGL2 M0 validator rejects copy-dst.",
+      "Build hash is SHA-256 over the engine JS modules the page actually loaded, sorted by path.",
+      "Ten resize() calls ran in one task. No public configure counter exists, so coalescing is reported as not measurable."
+    ],
+    "elapsedMs": 728
+  },
+  "caseResult": {
+    "dpr": 2,
+    "sequence": [
+      {
+        "width": 1280,
+        "height": 720
+      },
+      {
+        "width": 960,
+        "height": 540
+      },
+      {
+        "width": 640,
+        "height": 360
+      },
+      {
+        "width": 1024,
+        "height": 576
+      },
+      {
+        "width": 1280,
+        "height": 720
+      },
+      {
+        "width": 1152,
+        "height": 648
+      },
+      {
+        "width": 720,
+        "height": 405
+      },
+      {
+        "width": 640,
+        "height": 360
+      },
+      {
+        "width": 960,
+        "height": 540
+      },
+      {
+        "width": 640,
+        "height": 360
+      }
+    ],
+    "resizeCalls": 10,
+    "frames": {
+      "total": 2,
+      "preResizeFrame": 1,
+      "postResizeFrame": 2
+    },
+    "initial": {
+      "cssWidth": 640,
+      "cssHeight": 360,
+      "dpr": 2,
+      "backingWidth": 1280,
+      "backingHeight": 720,
+      "deviceSize": {
+        "width": 640,
+        "height": 360
+      },
+      "deviceSizeMatchesCss": true,
+      "backingMatchesDpr": true,
+      "expectedBackingWidth": 1280,
+      "expectedBackingHeight": 720
+    },
+    "preFrame": {
+      "validFrame": true,
+      "stats": {
+        "drawCalls": 1,
+        "triangles": 12,
+        "instances": 1,
+        "culledInstances": 0,
+        "pipelineSwitches": 0,
+        "bindGroupSwitches": 0,
+        "textureBytes": 256,
+        "bufferBytes": 904,
+        "uploadBytes": 0,
+        "uploadCalls": 0,
+        "gpuErrors": 0,
+        "droppedDraws": 0,
+        "gpuFrameMs": null,
+        "cpuFrameMs": 1
+      }
+    },
+    "preCapture": {
+      "width": 1280,
+      "height": 720,
+      "hash": "1ecbcd59",
+      "nonClearPixels": 215903,
+      "brightPixels": 107524,
+      "distinctColors": 7
+    },
+    "changes": [
+      {
+        "index": 1,
+        "cssRequestedWidth": 1280,
+        "cssRequestedHeight": 720,
+        "canvasClientWidth": 1280,
+        "canvasClientHeight": 720,
+        "deviceSize": {
+          "width": 1280,
+          "height": 720
+        },
+        "backingWidth": 2560,
+        "backingHeight": 1440,
+        "dpr": 2
+      },
+      {
+        "index": 2,
+        "cssRequestedWidth": 960,
+        "cssRequestedHeight": 540,
+        "canvasClientWidth": 960,
+        "canvasClientHeight": 540,
+        "deviceSize": {
+          "width": 960,
+          "height": 540
+        },
+        "backingWidth": 1920,
+        "backingHeight": 1080,
+        "dpr": 2
+      },
+      {
+        "index": 3,
+        "cssRequestedWidth": 640,
+        "cssRequestedHeight": 360,
+        "canvasClientWidth": 640,
+        "canvasClientHeight": 360,
+        "deviceSize": {
+          "width": 640,
+          "height": 360
+        },
+        "backingWidth": 1280,
+        "backingHeight": 720,
+        "dpr": 2
+      },
+      {
+        "index": 4,
+        "cssRequestedWidth": 1024,
+        "cssRequestedHeight": 576,
+        "canvasClientWidth": 1024,
+        "canvasClientHeight": 576,
+        "deviceSize": {
+          "width": 1024,
+          "height": 576
+        },
+        "backingWidth": 2048,
+        "backingHeight": 1152,
+        "dpr": 2
+      },
+      {
+        "index": 5,
+        "cssRequestedWidth": 1280,
+        "cssRequestedHeight": 720,
+        "canvasClientWidth": 1280,
+        "canvasClientHeight": 720,
+        "deviceSize": {
+          "width": 1280,
+          "height": 720
+        },
+        "backingWidth": 2560,
+        "backingHeight": 1440,
+        "dpr": 2
+      },
+      {
+        "index": 6,
+        "cssRequestedWidth": 1152,
+        "cssRequestedHeight": 648,
+        "canvasClientWidth": 1152,
+        "canvasClientHeight": 648,
+        "deviceSize": {
+          "width": 1152,
+          "height": 648
+        },
+        "backingWidth": 2304,
+        "backingHeight": 1296,
+        "dpr": 2
+      },
+      {
+        "index": 7,
+        "cssRequestedWidth": 720,
+        "cssRequestedHeight": 405,
+        "canvasClientWidth": 720,
+        "canvasClientHeight": 405,
+        "deviceSize": {
+          "width": 720,
+          "height": 405
+        },
+        "backingWidth": 1440,
+        "backingHeight": 810,
+        "dpr": 2
+      },
+      {
+        "index": 8,
+        "cssRequestedWidth": 640,
+        "cssRequestedHeight": 360,
+        "canvasClientWidth": 640,
+        "canvasClientHeight": 360,
+        "deviceSize": {
+          "width": 640,
+          "height": 360
+        },
+        "backingWidth": 1280,
+        "backingHeight": 720,
+        "dpr": 2
+      },
+      {
+        "index": 9,
+        "cssRequestedWidth": 960,
+        "cssRequestedHeight": 540,
+        "canvasClientWidth": 960,
+        "canvasClientHeight": 540,
+        "deviceSize": {
+          "width": 960,
+          "height": 540
+        },
+        "backingWidth": 1920,
+        "backingHeight": 1080,
+        "dpr": 2
+      },
+      {
+        "index": 10,
+        "cssRequestedWidth": 640,
+        "cssRequestedHeight": 360,
+        "canvasClientWidth": 640,
+        "canvasClientHeight": 360,
+        "deviceSize": {
+          "width": 640,
+          "height": 360
+        },
+        "backingWidth": 1280,
+        "backingHeight": 720,
+        "dpr": 2
+      }
+    ],
+    "afterFrame": {
+      "cssWidth": 640,
+      "cssHeight": 360,
+      "dpr": 2,
+      "backingWidth": 1280,
+      "backingHeight": 720,
+      "deviceSize": {
+        "width": 640,
+        "height": 360
+      },
+      "deviceSizeMatchesCss": true,
+      "backingMatchesDpr": true,
+      "expectedBackingWidth": 1280,
+      "expectedBackingHeight": 720,
+      "validFrame": true,
+      "stats": {
+        "drawCalls": 1,
+        "triangles": 12,
+        "instances": 1,
+        "culledInstances": 0,
+        "pipelineSwitches": 0,
+        "bindGroupSwitches": 0,
+        "textureBytes": 256,
+        "bufferBytes": 904,
+        "uploadBytes": 0,
+        "uploadCalls": 0,
+        "gpuErrors": 0,
+        "droppedDraws": 0,
+        "gpuFrameMs": null,
+        "cpuFrameMs": 0.20000000298023224
+      }
+    },
+    "capture": {
+      "width": 1280,
+      "height": 720,
+      "hash": "1ecbcd59",
+      "nonClearPixels": 215903,
+      "brightPixels": 107524,
+      "distinctColors": 7
+    },
+    "contentPresent": true,
+    "coalescing": {
+      "counterExposed": false,
+      "configureCalls": null,
+      "resizeCallsObserved": 10,
+      "reason": "The built renderer contract exposes no swapchain/configure counter. Ten resize() calls ran in one task; the page will not invent a configure count."
+    },
+    "pass": {
+      "tenResizeCalls": true,
+      "tenCssSizeChanges": true,
+      "deviceSizeCssOnEveryCall": true,
+      "backingFollowsDprAfterFrame": true,
+      "deviceSizeMatchesCssAfterFrame": true,
+      "validFrameAfterResize": true,
+      "gpuErrorsZero": true,
+      "contentPresent": true,
+      "all": true
+    }
+  },
+  "benchmark": null,
+  "screenshot": {
+    "path": "E:\\PROJECTS 2026\\PocketPad\\experiments\\e-m0-engine\\artifacts\\resize\\webgl2.png",
+    "bytes": 8639,
+    "sha256": "f33b09656d164ff843f1a32e5cd4433d27a40a4997e8e973132b7b90df85d611",
+    "width": 1280,
+    "height": 720,
+    "png": {
+      "width": 1280,
+      "height": 720,
+      "colorType": 2,
+      "bitDepth": 8
+    },
+    "captureError": null,
+    "decodeError": null,
+    "error": null
+  },
+  "crossBackendDiff": null,
+  "acceptance": {
+    "case": "resize",
+    "specConformant": false,
+    "functionalPass": true,
+    "casePass": true,
+    "blocked": false,
+    "goldenPass": null,
+    "crossBackendParityPass": null,
+    "benchmarkTargetMet": null,
+    "benchmarkHardMet": null,
+    "textureBytesWithinSpecExpected": null,
+    "gpuErrorsZero": true
+  },
+  "golden": {
+    "path": "E:\\PROJECTS 2026\\PocketPad\\experiments\\e-m0-engine\\golden.json",
+    "fixtureKey": "m0-textured-cube-v1|1|640x360",
+    "status": "not-applicable",
+    "expectedHash": null,
+    "updated": false
+  },
+  "diagnostics": [],
+  "blocker": null,
+  "functionalError": null,
+  "parityError": null,
+  "error": null
+}

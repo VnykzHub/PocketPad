@@ -1,0 +1,16 @@
+{
+  "note": "FNV-1a 32 over the CSTR payload of the ER-12-09 deterministic fixture; checked in, never regenerated at test time",
+  "formatVersion": 1,
+  "seed": 1592594996,
+  "cells": 4096,
+  "sparseHash": 1702361159,
+  "sparseHashHex": "6577f847",
+  "denseHash": 1880611142,
+  "denseHashHex": "7017d946",
+  "recipe": {
+    "manifest": "test/fixtures/world-64x64.world.json",
+    "writer": "setRngCursor(key, ordinal in ascending key order) for every written cell; for ordinals divisible by 64 also one entity {localId:1, kind:1, position {x: cx*64+1.5, y:0.25, z: cy*64+2.5}, rotation {0,0,0,1}, state:[ordinal,1,2,3]} and destroyed [7,9]",
+    "dense": "all 4096 cells written; hash = stateHash() over the full grid",
+    "sparse": "ordinals divisible by 17 written; hash = stateHash(written keys)"
+  }
+}

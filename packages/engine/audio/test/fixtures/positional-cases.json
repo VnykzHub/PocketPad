@@ -1,0 +1,205 @@
+{
+  "fixtureVersion": 1,
+  "source": "docs/engine/09-audio.md §3.2, §3.3, §5.5 and ER-09-02/ER-09-03",
+  "kind": "audio-positional-contract-cases",
+  "conventions": {
+    "handedness": "right-handed",
+    "up": "+Y",
+    "cameraForward": "-Z",
+    "listenerForwardFromQuat": "quatRotate(rotation, (0, 0, -1))",
+    "defaultUp": [0, 1, 0],
+    "panSign": {
+      "negativeX": "left",
+      "positiveX": "right"
+    },
+    "distanceModel": "inverse",
+    "panningModel": "equalpower",
+    "refDistance": 1,
+    "maxDistance": 100,
+    "rolloff": 1
+  },
+  "cases": [
+    {
+      "id": "listener-identity",
+      "kind": "listener-transform",
+      "input": {
+        "position": [0, 0, 0],
+        "rotation": [0, 0, 0, 1]
+      },
+      "expected": {
+        "forward": [0, 0, -1],
+        "up": [0, 1, 0]
+      }
+    },
+    {
+      "id": "listener-yaw-plus-90",
+      "kind": "listener-transform",
+      "input": {
+        "position": [0, 0, 0],
+        "rotation": [0, 0.7071067811865476, 0, 0.7071067811865476]
+      },
+      "expected": {
+        "forward": [-1, 0, 0],
+        "up": [0, 1, 0]
+      }
+    },
+    {
+      "id": "distance-inverse-1m",
+      "kind": "distance-attenuation",
+      "input": {
+        "distance": 1,
+        "refDistance": 1,
+        "maxDistance": 100,
+        "rolloff": 1,
+        "distanceModel": "inverse"
+      },
+      "expected": {
+        "gain": 1,
+        "toleranceDb": 1
+      }
+    },
+    {
+      "id": "distance-inverse-5m",
+      "kind": "distance-attenuation",
+      "input": {
+        "distance": 5,
+        "refDistance": 1,
+        "maxDistance": 100,
+        "rolloff": 1,
+        "distanceModel": "inverse"
+      },
+      "expected": {
+        "gain": 0.2,
+        "toleranceDb": 1
+      }
+    },
+    {
+      "id": "distance-inverse-20m",
+      "kind": "distance-attenuation",
+      "input": {
+        "distance": 20,
+        "refDistance": 1,
+        "maxDistance": 100,
+        "rolloff": 1,
+        "distanceModel": "inverse"
+      },
+      "expected": {
+        "gain": 0.05,
+        "toleranceDb": 1
+      }
+    },
+    {
+      "id": "distance-inverse-clamped-at-max",
+      "kind": "distance-attenuation",
+      "input": {
+        "distance": 200,
+        "refDistance": 1,
+        "maxDistance": 100,
+        "rolloff": 1,
+        "distanceModel": "inverse"
+      },
+      "expected": {
+        "gain": 0.01,
+        "note": "Inverse model floors at refDistance/maxDistance."
+      }
+    },
+    {
+      "id": "pan-left",
+      "kind": "pan-sign",
+      "input": {
+        "listenerPosition": [0, 0, 0],
+        "listenerForward": [0, 0, -1],
+        "listenerUp": [0, 1, 0],
+        "sourcePosition": [-5, 0, 0],
+        "toneHz": 440,
+        "seconds": 1,
+        "sampleRate": 48000,
+        "channels": 2
+      },
+      "expected": {
+        "side": "left",
+        "rmsDbDifferenceAtLeast": 6
+      }
+    },
+    {
+      "id": "pan-right",
+      "kind": "pan-sign",
+      "input": {
+        "listenerPosition": [0, 0, 0],
+        "listenerForward": [0, 0, -1],
+        "listenerUp": [0, 1, 0],
+        "sourcePosition": [5, 0, 0],
+        "toneHz": 440,
+        "seconds": 1,
+        "sampleRate": 48000,
+        "channels": 2
+      },
+      "expected": {
+        "side": "right",
+        "rmsDbDifferenceAtLeast": 6
+      }
+    },
+    {
+      "id": "pan-center-ahead",
+      "kind": "pan-sign",
+      "input": {
+        "listenerPosition": [0, 0, 0],
+        "listenerForward": [0, 0, -1],
+        "listenerUp": [0, 1, 0],
+        "sourcePosition": [0, 0, -5]
+      },
+      "expected": {
+        "side": "center",
+        "equalChannelGain": true
+      }
+    },
+    {
+      "id": "doppler-default-off",
+      "kind": "doppler",
+      "input": {
+        "doppler": false,
+        "relativeSpeed": 30
+      },
+      "expected": {
+        "rate": 1
+      }
+    },
+    {
+      "id": "doppler-clamp-low",
+      "kind": "doppler",
+      "input": {
+        "doppler": true,
+        "computedRate": 0.1
+      },
+      "expected": {
+        "rate": 0.5
+      }
+    },
+    {
+      "id": "doppler-clamp-high",
+      "kind": "doppler",
+      "input": {
+        "doppler": true,
+        "computedRate": 3.5
+      },
+      "expected": {
+        "rate": 2
+      }
+    },
+    {
+      "id": "spatial-defaults",
+      "kind": "source-defaults",
+      "input": {
+        "positional": true
+      },
+      "expected": {
+        "distanceModel": "inverse",
+        "panningModel": "equalpower",
+        "refDistance": 1,
+        "maxDistance": 100,
+        "rolloff": 1,
+        "doppler": false
+      }
+    }
+  ]
+}

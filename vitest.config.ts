@@ -25,7 +25,27 @@ export default defineConfig({
       nodeProject("packages/dev-server"),
       nodeProject("packages/games/reaction-duel"),
       nodeProject("packages/games/platformer"),
+      nodeProject("packages/games/engine-cube"),
       nodeProject("packages/runtime"),
+      {
+        root: "packages/engine/core",
+        test: {
+          name: "packages/engine/core",
+          environment: "node" as const,
+          passWithNoTests: true,
+          // Property suites run 10,000 fast-check cases; the default 5 s is
+          // exceeded when projects share the CPU. Assertions are unchanged.
+          testTimeout: 30_000,
+        },
+      },
+      nodeProject("packages/engine/renderer-webgpu"),
+      nodeProject("packages/engine/renderer-webgl2"),
+      nodeProject("packages/engine/assets"),
+      nodeProject("packages/engine/input"),
+      nodeProject("packages/engine/audio"),
+      nodeProject("packages/engine/physics"),
+      nodeProject("packages/engine/animation"),
+      nodeProject("packages/engine/streaming"),
       {
         root: "packages/controller",
         test: {
@@ -39,6 +59,7 @@ export default defineConfig({
       nodeProject("tools/input-bot"),
       nodeProject("tools/size-budget"),
       nodeProject("tools/trace-check"),
+      nodeProject("tools/engine-test"),
     ],
   },
 });

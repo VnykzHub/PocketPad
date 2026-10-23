@@ -1,0 +1,50 @@
+{
+  "formatVersion": 1,
+  "synthetic": true,
+  "source": "docs/engine/01-core-loop-time.md §3.7",
+  "note": "Normative order. Order ids are synthetic step labels, not traceability IDs. Steps 1-6 preserve the legacy game-visible order; step 7 is additive.",
+  "tickOrder": [
+    {
+      "order": 1,
+      "id": "tilt-update",
+      "description": "TiltIntegrator.update(dt, snapshot) for each slot.",
+      "engineOnly": false
+    },
+    {
+      "order": 2,
+      "id": "input-poll",
+      "description": "InputMapper.pollAll(loop.tick) exactly once per tick.",
+      "engineOnly": false
+    },
+    {
+      "order": 3,
+      "id": "input-reader-update",
+      "description": "InputReader.update(snapshot).",
+      "engineOnly": false
+    },
+    {
+      "order": 4,
+      "id": "controller-events",
+      "description": "Drain queued controller events; game.onEvent runs before simulate.",
+      "engineOnly": false
+    },
+    {
+      "order": 5,
+      "id": "game-simulate",
+      "description": "game.simulate(dt, snapshot).",
+      "engineOnly": false
+    },
+    {
+      "order": 6,
+      "id": "apply-job-results",
+      "description": "Apply drained job results in ascending id order.",
+      "engineOnly": false
+    },
+    {
+      "order": 7,
+      "id": "scene-world-transforms",
+      "description": "scene.updateWorldTransforms() once, after jobs and before the next render.",
+      "engineOnly": true
+    }
+  ]
+}

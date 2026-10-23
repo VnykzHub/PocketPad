@@ -1,0 +1,146 @@
+{
+  "schema": "pocketpad.webgl2.texture-format-map/1",
+  "spec": "docs/engine/05-renderer-webgl2.md §4.4",
+  "tokenOwner": "docs/engine/04-renderer-webgpu.md §4.5 (canonical core TextureFormat)",
+  "provenance": "Synthetic mapping data. No internalformat token here is a device capability measurement.",
+  "rules": {
+    "compressedUpload": "compressedTexStorage2D + compressedTexSubImage2D; the mip chain must be complete in the file and generateMipmap is never called.",
+    "uncompressedUpload": "immutable texStorage2D; generateMipmap only at load when the descriptor requests it, never per frame.",
+    "probe": "The probe removes any token whose required extension is absent; an unsupported token fails, never a silent downcast."
+  },
+  "formats": {
+    "rgba8unorm": {
+      "status": "core",
+      "internalFormat": "RGBA8",
+      "extension": null,
+      "renderTargetExtension": null,
+      "notes": "Default uncompressed colour format."
+    },
+    "rgba8unorm-srgb": {
+      "status": "core",
+      "internalFormat": "SRGB8_ALPHA8",
+      "extension": null,
+      "renderTargetExtension": null,
+      "notes": "sRGB sampling."
+    },
+    "bgra8unorm": {
+      "status": "unsupported",
+      "internalFormat": null,
+      "extension": null,
+      "renderTargetExtension": null,
+      "notes": "WebGPU swapchain format; the Tier B probe removes this token."
+    },
+    "rgba16float": {
+      "status": "core",
+      "internalFormat": "RGBA16F",
+      "extension": null,
+      "renderTargetExtension": "EXT_color_buffer_float",
+      "notes": "HDR post. Sampling is core; render-target use requires EXT_color_buffer_float."
+    },
+    "rgba32float": {
+      "status": "core",
+      "internalFormat": "RGBA32F",
+      "extension": null,
+      "renderTargetExtension": "EXT_color_buffer_float",
+      "notes": "Data and skinning targets. Sampling is core; render-target use requires EXT_color_buffer_float."
+    },
+    "r8unorm": {
+      "status": "core",
+      "internalFormat": "R8",
+      "extension": null,
+      "renderTargetExtension": null,
+      "notes": "Masks."
+    },
+    "rgb10a2unorm": {
+      "status": "core",
+      "internalFormat": "RGB10_A2",
+      "extension": null,
+      "renderTargetExtension": null,
+      "notes": "HDR-ish LDR targets."
+    },
+    "depth24plus": {
+      "status": "core",
+      "internalFormat": "DEPTH_COMPONENT24",
+      "extension": null,
+      "renderTargetExtension": null,
+      "notes": "Depth attachment."
+    },
+    "depth32float": {
+      "status": "core",
+      "internalFormat": "DEPTH_COMPONENT32F",
+      "extension": null,
+      "renderTargetExtension": null,
+      "notes": "Optional depth format."
+    },
+    "depth24plus-stencil8": {
+      "status": "core",
+      "internalFormat": "DEPTH24_STENCIL8",
+      "extension": null,
+      "renderTargetExtension": null,
+      "notes": "Stencil path."
+    },
+    "s3tc-dxt1": {
+      "status": "extension",
+      "internalFormat": "COMPRESSED_RGB_S3TC_DXT1_EXT",
+      "extension": "WEBGL_compressed_texture_s3tc",
+      "renderTargetExtension": null,
+      "notes": "Compressed; complete mip chain required."
+    },
+    "s3tc-dxt3": {
+      "status": "extension",
+      "internalFormat": "COMPRESSED_RGBA_S3TC_DXT3_EXT",
+      "extension": "WEBGL_compressed_texture_s3tc",
+      "renderTargetExtension": null,
+      "notes": "Compressed; complete mip chain required."
+    },
+    "s3tc-dxt5": {
+      "status": "extension",
+      "internalFormat": "COMPRESSED_RGBA_S3TC_DXT5_EXT",
+      "extension": "WEBGL_compressed_texture_s3tc",
+      "renderTargetExtension": null,
+      "notes": "Compressed; complete mip chain required."
+    },
+    "etc2-rgb8": {
+      "status": "extension",
+      "internalFormat": "COMPRESSED_RGB8_ETC2",
+      "extension": "WEBGL_compressed_texture_etc",
+      "renderTargetExtension": null,
+      "notes": "Compressed; complete mip chain required."
+    },
+    "etc2-rgba8": {
+      "status": "extension",
+      "internalFormat": "COMPRESSED_RGBA8_ETC2_EAC",
+      "extension": "WEBGL_compressed_texture_etc",
+      "renderTargetExtension": null,
+      "notes": "Compressed; complete mip chain required."
+    },
+    "astc-4x4": {
+      "status": "extension",
+      "internalFormat": "COMPRESSED_RGBA_ASTC_4x4_KHR",
+      "extension": "WEBGL_compressed_texture_astc",
+      "renderTargetExtension": null,
+      "notes": "Compressed; complete mip chain required."
+    },
+    "astc-6x6": {
+      "status": "extension",
+      "internalFormat": "COMPRESSED_RGBA_ASTC_6x6_KHR",
+      "extension": "WEBGL_compressed_texture_astc",
+      "renderTargetExtension": null,
+      "notes": "TV default where present; complete mip chain required."
+    },
+    "astc-8x8": {
+      "status": "extension",
+      "internalFormat": "COMPRESSED_RGBA_ASTC_8x8_KHR",
+      "extension": "WEBGL_compressed_texture_astc",
+      "renderTargetExtension": null,
+      "notes": "Compressed; complete mip chain required."
+    },
+    "bptc-rgba": {
+      "status": "extension",
+      "internalFormat": "COMPRESSED_RGBA_BPTC_UNORM_EXT",
+      "extension": "EXT_texture_compression_bptc",
+      "renderTargetExtension": null,
+      "notes": "Desktop; complete mip chain required."
+    }
+  }
+}

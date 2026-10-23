@@ -1,0 +1,21 @@
+{
+  "$fixture": {
+    "expect": "reject",
+    "code": "E_ASSET_FORMAT",
+    "rule": "budget.totalBytes must be >= budget.initialBytes (declaration invariant, not an overrun; 06 4.2)"
+  },
+  "formatVersion": 1,
+  "id": "example-game",
+  "budget": {
+    "initialBytes": 2048,
+    "totalBytes": 1024
+  },
+  "assets": [
+    {
+      "id": "textures/atlas",
+      "kind": "texture",
+      "url": "assets/atlas.webp",
+      "bytes": 1024
+    }
+  ]
+}

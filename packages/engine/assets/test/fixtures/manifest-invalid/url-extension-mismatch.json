@@ -1,0 +1,21 @@
+{
+  "$fixture": {
+    "expect": "reject",
+    "code": "E_ASSET_FORMAT",
+    "rule": "asset URL extension must agree with the declared kind/container"
+  },
+  "formatVersion": 1,
+  "id": "example-game",
+  "budget": {
+    "initialBytes": 1024,
+    "totalBytes": 2048
+  },
+  "assets": [
+    {
+      "id": "meshes/sedan",
+      "kind": "mesh",
+      "url": "assets/sedan.webp",
+      "bytes": 1024
+    }
+  ]
+}

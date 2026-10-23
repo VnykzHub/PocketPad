@@ -1,0 +1,21 @@
+{
+  "formatVersion": 1,
+  "$schema": "synthetic://engine-input/input-map-v1",
+  "generator": "synthetic-fixture",
+  "actions": [
+    {
+      "name": "primary",
+      "kind": "button",
+      "title": "Synthetic primary action",
+      "bindings": [
+        { "device": "keyboard", "code": "Space", "label": "jump" },
+        { "device": "gamepad", "pad": "self", "button": 0, "note": "synthetic pad" }
+      ],
+      "output": { "button": 0, "label": "primary bit" }
+    }
+  ],
+  "meta": {
+    "source": "docs/engine/10-input.md §4.1 (unknown fields are ignored)",
+    "synthetic": true
+  }
+}

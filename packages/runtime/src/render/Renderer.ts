@@ -3,9 +3,9 @@
  *
  * The contract is frozen in `docs/todos/phase-1-dev/D3-runtime-v0.md`:
  * games depend on `Renderer2D`/`Renderer3D`, never on a concrete backend, so
- * E12 can swap the 3D implementation without touching `CubeDemo` (FR-9.3,
- * NR-6.2). This module owns the two decisions the host must make before it
- * draws anything:
+ * the backend can be swapped without touching `CubeDemo` (FR-9.3, NR-6.2).
+ * This module owns the two decisions the host must make before it draws
+ * anything:
  *
  * 1. Is WebGL2 actually available? Feature detection only, no UA sniffing
  *    (FR-12.1). A probe creates (or reuses) the target canvas context.
@@ -17,10 +17,10 @@
  * backends fail; the rejection carries the same friendly notice, so the host
  * can render a static failure screen instead of a stack trace.
  *
- * E12 note: `WebGL2Renderer` is a thin custom WebGL2 implementation, not
- * Three.js. The E12 decision is pending; a Three.js backend would be a new
- * class behind these interfaces. This keeps the dependency graph at zero new
- * runtime packages (G7) and leaves the swap point explicit.
+ * Backend decision: this WebGL2 renderer is the fallback. The target engine
+ * is a custom WebGPU-first renderer (`docs/engine/04-renderer-webgpu.md`);
+ * Three.js is rejected (ADR-0002). The interfaces stay backend-agnostic, so
+ * the WebGPU backend is a new class behind them.
  */
 import {
   detectWebgl2,
@@ -37,7 +37,12 @@ export {
 } from "./capability.js";
 export type { Webgl2Capability } from "./capability.js";
 
-export type RendererBackend = "webgl2" | "canvas2d";
+/**
+ * Legacy renderer backends. `"webgpu"` is additive: the engine 3D adapter
+ * reports its real device backend so the overlay never claims WebGL2 while
+ * WebGPU is drawing.
+ */
+export type RendererBackend = "webgl2" | "webgpu" | "canvas2d";
 
 /** What `Renderer.init` reports for budget and texture decisions. */
 export interface RendererCapabilities {

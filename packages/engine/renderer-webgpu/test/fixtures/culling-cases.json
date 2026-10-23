@@ -1,0 +1,81 @@
+{
+  "formatVersion": 1,
+  "synthetic": true,
+  "clip": "webgpu",
+  "projection": {
+    "left": -10,
+    "right": 10,
+    "bottom": -10,
+    "top": 10,
+    "near": 1,
+    "far": 100
+  },
+  "cases": [
+    { "id": "center", "center": [0, 0, -50], "radius": 0.5, "visible": true },
+    { "id": "near-plane-tangent", "center": [0, 0, -0.5], "radius": 0.5, "visible": true },
+    { "id": "at-camera-plane", "center": [0, 0, 0], "radius": 0.5, "visible": false },
+    { "id": "behind-camera", "center": [0, 0, 5], "radius": 0.5, "visible": false },
+    { "id": "right-overlap", "center": [10.5, 0, -50], "radius": 1, "visible": true },
+    { "id": "right-tangent", "center": [11, 0, -50], "radius": 1, "visible": true },
+    { "id": "right-outside", "center": [11.5, 0, -50], "radius": 1, "visible": false },
+    { "id": "left-outside", "center": [-11.5, 0, -50], "radius": 1, "visible": false },
+    { "id": "top-outside", "center": [0, 11.5, -50], "radius": 1, "visible": false },
+    { "id": "far-inside", "center": [0, 0, -100], "radius": 1, "visible": true },
+    { "id": "far-tangent", "center": [0, 0, -100.5], "radius": 0.5, "visible": true },
+    { "id": "far-outside", "center": [0, 0, -101], "radius": 0.5, "visible": false }
+  ],
+  "transformedCases": [
+    {
+      "id": "translated-outside-right",
+      "translation": [12, 0, 0],
+      "scale": [1, 1, 1],
+      "center": [0, 0, -50],
+      "radius": 1,
+      "visible": false
+    },
+    {
+      "id": "scaled-tangent",
+      "translation": [10, 0, 0],
+      "scale": [2, 2, 2],
+      "center": [0, 0, -50],
+      "radius": 0.5,
+      "visible": true
+    },
+    {
+      "id": "scaled-outside",
+      "translation": [12, 0, 0],
+      "scale": [2, 2, 2],
+      "center": [0, 0, -50],
+      "radius": 0.5,
+      "visible": false
+    },
+    {
+      "id": "translated-behind-camera",
+      "translation": [0, 0, 60],
+      "scale": [1, 1, 1],
+      "center": [0, 0, -50],
+      "radius": 1,
+      "visible": false
+    },
+    {
+      "id": "translated-visible",
+      "translation": [0, 0, -20],
+      "scale": [1, 1, 1],
+      "center": [0, 0, -50],
+      "radius": 0.5,
+      "visible": true
+    }
+  ],
+  "instances": {
+    "localCenter": [0, 0, 0],
+    "localRadius": 0.5,
+    "twoFarApart": {
+      "translations": [
+        [0, 0, -50],
+        [10, 0, -50]
+      ],
+      "center": [5, 0, -50],
+      "radius": 5.5
+    }
+  }
+}

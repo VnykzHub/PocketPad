@@ -1,0 +1,77 @@
+{
+  "formatVersion": 1,
+  "worldId": "grid-too-large",
+  "seed": 1592594996,
+  "cellSizeMeters": 64,
+  "origin": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "grid": {
+    "minX": 0,
+    "minY": 0,
+    "maxX": 128,
+    "maxY": 129
+  },
+  "lodBands": [
+    {
+      "lod": 0,
+      "maxDistanceMeters": 96,
+      "hysteresisMeters": 8
+    },
+    {
+      "lod": 1,
+      "maxDistanceMeters": 160,
+      "hysteresisMeters": 12
+    },
+    {
+      "lod": 2,
+      "maxDistanceMeters": 256,
+      "hysteresisMeters": 16
+    },
+    {
+      "lod": 3,
+      "maxDistanceMeters": 384,
+      "hysteresisMeters": 24
+    }
+  ],
+  "budgets": {
+    "residentBytes": 67108864,
+    "textureBytes": 33554432,
+    "geometryBytes": 16777216,
+    "cpuBytes": 4194304,
+    "maxResidentCells": 256,
+    "maxConcurrentLoads": 4,
+    "maxLoadsStartedPerTick": 1,
+    "decisionIntervalTicks": 6,
+    "streamerTickMs": 2,
+    "maxTaskMs": 8,
+    "cacheBytes": 16777216,
+    "cacheEnabled": true
+  },
+  "cells": [
+    {
+      "key": "0,0",
+      "cx": 0,
+      "cy": 0,
+      "visualUrls": [
+        "cells/0_0_l0.cell",
+        "cells/0_0_l1.cell",
+        "cells/0_0_l2.cell",
+        "cells/0_0_l3.cell"
+      ],
+      "simUrl": "cells/0_0_sim.cell",
+      "visualBytes": [
+        512,
+        384,
+        256,
+        128
+      ],
+      "simBytes": 256,
+      "contentHash": "fnv1a32:5d85402b",
+      "hasCollision": true,
+      "hasNav": true
+    }
+  ]
+}

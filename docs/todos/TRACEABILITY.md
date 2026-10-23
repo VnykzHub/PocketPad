@@ -254,6 +254,136 @@ These are not requirements; they map which platform capability each game needs a
 
 ---
 
+## 10.1 Engine acceptance rows (W0+)
+
+Engine acceptance IDs are Gate-audited, not owned by a phone-platform stage. A row is added when its first tagged test lands.
+
+| ID | Short requirement | Layer | Primary work item(s) | Goal |
+|---|---|---|---|---|
+| ER-00-02 | The engine package graph has no forbidden edge; `engine-core` has zero runtime dependencies | Engine/QA | W0-CONTRACTS | M0 |
+| ER-00-14 | Renderer selection probes WebGPU → WebGL2 → Canvas2D, refuses 3D on Canvas2D and leaks no exception text | Engine/QA | W1-RUNTIME | M0 |
+| ER-00-15 | The scene encoder resolves ready assets, sorts deterministically and reuses pooled buffers | Engine/QA | W1-RUNTIME | M0 |
+| ER-00-16 | Ready assets resolve to cached GPU handles with ABI 1 mesh packing, format gating and refcounted destruction | Engine/QA | W1-RUNTIME | M0 |
+| ER-01-01 | The fixed 60 Hz loop produces the expected tick count and alpha for 30–144 Hz input | Engine/QA | W1-CORE | M0 |
+| ER-01-02 | A long stall is clamped to `maxCatchUpSteps` with no backlog | Engine/QA | W1-CORE | M0 |
+| ER-01-03 | Pause runs no ticks; paused frames render alpha 0; resume runs exactly one | Engine/QA | W1-CORE | M0 |
+| ER-01-04 | Held pause reasons aggregate and release only when all are clear | Engine/QA | W1-CORE | M0 |
+| ER-01-05 | The loop clock is monotonic under random and invalid deltas | Engine/QA | W1-CORE | M0 |
+| ER-01-06 | Frame stats percentiles match nearest-rank and reuse caller objects | Engine/QA | W1-CORE | M0 |
+| ER-01-10 | Jobs dispatch by priority, drain globally by id, and contain cancellation/crashes | Engine/QA | W1-CORE | M0 |
+| ER-01-12 | The host tick order matches the seven-step contract | Engine/QA | W1-CORE | M0 |
+| ER-02-01 | Vec algebra, aliasing and degenerate inputs behave as specified | Engine/QA | W1-CORE | M0 |
+| ER-02-02 | Mat3/Mat4 algebra, inversion and TRS decomposition are correct | Engine/QA | W1-CORE | M0 |
+| ER-02-03 | TRS compose/decompose round-trips within tolerance | Engine/QA | W1-CORE | M0 |
+| ER-02-04 | Quaternion product order, rotation and conversions are correct | Engine/QA | W1-CORE | M0 |
+| ER-02-05 | Both projection families map near/far to the correct NDC depth | Engine/QA | W1-CORE | M0 |
+| ER-02-06 | `lookAt` is right-handed, orthonormal and finite on degenerates | Engine/QA | W1-CORE | M0 |
+| ER-02-07 | Ray/AABB/plane intersections and ranges are correct | Engine/QA | W1-CORE | M0 |
+| ER-02-08 | OBB SAT and AABB tests are symmetric, including touching pairs | Engine/QA | W1-CORE | M0 |
+| ER-02-09 | Frustum containment/intersection uses positive-inside and strict near | Engine/QA | W1-CORE | M0 |
+| ER-03-01 | Entity allocation, generations and slot reuse are correct | Engine/QA | W1-CORE | M0 |
+| ER-03-02 | Sparse-set component storage add/get/remove/column semantics are correct | Engine/QA | W1-CORE | M0 |
+| ER-03-03 | Queries are allocation-free, ordered and exclude disabled entities | Engine/QA | W1-CORE | M0 |
+| ER-03-05 | Hierarchy links validate cycles, self-parents and depth limits | Engine/QA | W1-CORE | M0 |
+| ER-03-06 | Transform dirty propagation and world matrices are correct | Engine/QA | W1-CORE | M0 |
+| ER-03-09 | Scene snapshot serialization round-trips deterministically | Engine/QA | W1-CORE | M0 |
+| ER-03-10 | Prefabs instantiate and entity pools reuse slots correctly | Engine/QA | W1-CORE | M0 |
+| ER-03-11 | 10,000 renderables and 1,000 physics writes stay within the scene contract | Engine/QA | W1-CORE | M0 |
+| ER-04-03 | The pipeline cache hits, caches failures and creates no pipelines in steady state | Engine/QA | W1-RENDERERS | M0 |
+| ER-04-04 | Resource creation/destruction, byte counters and handle staleness behave as specified | Engine/QA | W1-RENDERERS | M0 |
+| ER-04-05 | Device loss and restore rebuild built-ins, keep live handles valid and go stale only when non-restorable; browser PASS 2026-10-23 via the dev-only real-destroy hook (hash `32312240` pre/post, 63.6 ms/1 frame, handles reused, second loss terminal); no-asset-refetch/no-game-restart unobserved on the asset-free page | Engine/QA | W1-RENDERERS | M0 |
+| ER-04-06 | Resize coalescing, DPR backing size and zero-size frame behavior are correct; browser resize PASS on both backends, one-configure assertion PENDING (no counter) | Engine/QA | W1-RENDERERS | M0 |
+| ER-04-07 | Descriptor validation and error-scope handling never throw from uncaptured errors | Engine/QA | W1-RENDERERS | M0 |
+| ER-04-08 | Steady-state frames reuse buffers and allocate no new instance arrays in unit tests; the 480-frame heap-growth browser bench remains PENDING | Engine/QA | W1-RENDERERS | M0 |
+| ER-04-09 | WebGPU and WebGL2 render the shared lit fixture with matching output; the smoke page hashes match, the tick-300 golden remains PENDING | Engine/QA | W1-RENDERERS | M0 |
+| ER-04-10 | Frustum culling and the 65,536-instance cap behave as specified under batching | Engine/QA | W1-RENDERERS | M0 |
+| ER-04-11 | M0 opaque unlit selects a cached unlit pipeline and samples base colour × tint; full M1 material fixture remains PENDING | Engine/QA | W1-RENDERERS | M0 |
+| ER-04-15 | Readback and timestamp features are refused or reported exactly as the contract allows | Engine/QA | W1-RENDERERS | M0 |
+| ER-04-16 | The package depends only on engine-core and is structurally assignable to RenderDevice and the SDK capabilities | Engine/QA | W1-RENDERERS | M0 |
+| ER-04-17 | Device factory, resize, resource lifecycle, draw counts and dispose idempotence behave as specified | Engine/QA | W1-RENDERERS | M0 |
+| ER-05-01 | The WebGL2 device implements the RenderDevice contract with ABI 1, texture mapping, pipeline cache and frame recording | Engine/QA | W1-RENDERERS | M0 |
+| ER-05-05 | Capability classification is deterministic and monotone across the fixture cases | Engine/QA | W1-RENDERERS | M0 |
+| ER-05-06 | Context loss increments the epoch once, lost frames are dropped and restore rebuilds under the same handles; browser PASS 2026-10-23 (hash `32312240` pre/post, 29.2 ms/3 frames, epoch incremented), handle-staleness clause not exercised | Engine/QA | W1-RENDERERS | M0 |
+| ER-05-07 | A 3D game on Canvas2D is refused before init with the unsupported-feature error | Engine/QA | W1-RENDERERS | M0 |
+| ER-05-08 | Canvas2D preserves the 2D drawing contract and refuses 3D operations | Engine/QA | W1-RENDERERS | M0 |
+| ER-05-11 | The WebGL2 package has zero third-party runtime dependencies and stays within the host budget | Engine/QA | W1-RENDERERS | M0 |
+| ER-05-12 | Failure notices have fixed copy, correct retry flags and no token/URL/PII | Engine/QA | W1-RENDERERS | M0 |
+| ER-06-01 | Manifests validate: the valid fixture loads and all 16 invalid fixtures fail with the named code and path | Engine/QA | W1-ASSETS | M0 |
+| ER-06-02 | Asset fetch is byte-accurate, reports progress and fails on short/long/non-2xx/abort/timeout | Engine/QA | W1-ASSETS | M0 |
+| ER-06-03 | The M0 GLB subset decodes meshes and rejects unsupported layouts by code | Engine/QA | W1-ASSETS | M0 |
+| ER-06-04 | KTX2 headers, levels and format gating validate; unsupported formats are refused | Engine/QA | W1-ASSETS | M0 |
+| ER-06-05 | WebP/PNG decode through the injected bitmap seam and enforce dimension limits | Engine/QA | W1-ASSETS | M0 |
+| ER-06-06 | Audio, font, JSON and material decoders validate their formats and clamps | Engine/QA | W1-ASSETS | M0 |
+| ER-06-07 | Refcounts, budgets, progress, trim and dispose follow the library contract | Engine/QA | W1-ASSETS | M0 |
+| ER-06-08 | The worker pool is lazy, bounded, replaces one failure then degrades, and meets its deadlines | Engine/QA | W1-ASSETS | M0 |
+| ER-06-09 | A 5 MB load keeps main-thread tasks ≤ 8 ms and per-asset work ≤ 2 ms p95 | Engine/QA | W1-ASSETS | M0 |
+| ER-07-01 | The physics wave is gated: the full check is green, every test carries its ID and none is skipped or weakened; gate green 2026-10-23 (234 files / 2,685 tests), contract suite 31/31, M1 fixtures still absent | Engine/QA | W1-PHYSICS | M1 |
+| ER-07-02 | 600-tick mixed-body determinism: Node PASS, two runs hash `3733532183`; `velocityIterations` 4 changes it to `3756658819`; Chrome replay PENDING | Engine/QA | W1-PHYSICS | M1 |
+| ER-07-03 | Vehicle slalom fixture: Node PASS, 30 m/s at 6.22 s, 150.53 m slalom, no wheel-air ticks, stops at 0.155 m/s; hardware run PENDING | Engine/QA | W1-PHYSICS | M1 |
+| ER-07-04 | Character course: Node PASS, ramp stop, 0.3 m step, 2 m drop, wall penetration 0.00074 m and ceiling detected | Engine/QA | W1-PHYSICS | M1 |
+| ER-07-06 | CCD wall: Node PASS, 10,000 crossings at 250 m/s with no tunnel; the per-body `ccd:false` control is unavailable on Rapier 0.21 (RV-75) | Engine/QA | W1-PHYSICS | M1 |
+| ER-07-07 | 64-box stack: Node PASS, all sleep at tick 31, drift 0, 32/32 island split on wake | Engine/QA | W1-PHYSICS | M1 |
+| ER-07-08 | 32-layer filter matrix: Node PASS, all 1,024 pairs match, sensor and `collideConnected` cases correct | Engine/QA | W1-PHYSICS | M1 |
+| ER-07-09 | 2D migration parity: the moved `two-d` solver reproduces the pre-migration 300-tick golden bit-for-bit (fixture sha256 `c8d0546c…`, tick-300 hash `31b03748`); no game API changed | Engine/QA | W1-PHYSICS | M1 |
+| ER-08-01 | The animation facade lifecycle, handles, stats, clamping and hash behave as specified; unit PASS, full-gate half via the root project | Engine/QA | W1-ANIMATION | M1 |
+| ER-08-02 | Two identical 600-tick 32-instance runs hash identically; speed and fade changes alter the hash; Chrome replay PENDING | Engine/QA | W1-ANIMATION | M1 |
+| ER-08-03 | Sampling, interpolation, loop wrap, blend/crossfade, masks, palette and the 600-tick golden blend are correct in Node | Engine/QA | W1-ANIMATION | M1 |
+| ER-08-04 | Event windows, loop wrap, dominant-base emission and overflow policy are correct in Node | Engine/QA | W1-ANIMATION | M1 |
+| ER-08-05 | Root motion delta, yaw-only default, apply/zero and teleport rejection are correct in Node | Engine/QA | W1-ANIMATION | M1 |
+| ER-08-10 | CPU morph weights, clamping and hash inclusion are correct; GPU deformation PENDING | Engine/QA | W1-ANIMATION | M2 |
+| ER-09-01 | One AudioContext at most, constructed only on unlock, including concurrent and repeated unlocks | Engine/QA | W1-AUDIO | M0 |
+| ER-09-02 | Offline positional render shows the correct left/right RMS difference; unit math exists, render PENDING | Engine/QA | W1-AUDIO | M1 |
+| ER-09-03 | Offline distance render matches the inverse model within ±1 dB; unit arithmetic exists, render PENDING | Engine/QA | W1-AUDIO | M1 |
+| ER-09-04 | Voice pool bounds, steal order and accounting hold (unit PASS: 56 steals / 0 drops); browser voices case PENDING | Engine/QA | W1-AUDIO | M1 |
+| ER-09-05 | Crossfade and music ramps match cos/sin within ±2% in an offline render; unit scheduling only, render PENDING | Engine/QA | W1-AUDIO | M1 |
+| ER-09-06 | Clock monotonicity and click placement; unit half PASS with a fake clock, offline render PENDING | Engine/QA | W1-AUDIO | M1 |
+| ER-09-07 | Latency values are recorded after unlock | Engine/QA | W1-AUDIO | M1 |
+| ER-09-08 | Hidden-tab suspend/resume preserves track and clock | Engine/QA | W1-AUDIO | M1 |
+| ER-09-09 | Missing/throwing Web Audio yields unavailable with silent no-ops and no rejected promises | Engine/QA | W1-AUDIO | M0 |
+| ER-09-10 | AudioBus migration parity (unit PASS) and both games unlock from the start-screen gesture (PENDING) | Engine/QA | W1-AUDIO | M0 |
+| ER-09-11 | Audio hot path heap/frame regression budgets | Engine/QA | W1-AUDIO | M1 |
+| ER-09-12 | Decoded audio stays within budget and a failed asset keeps the previous buffer | Engine/QA | W1-AUDIO | M1 |
+| ER-09-13 | TV unlock, continuity and latency | Engine/QA | W1-AUDIO | M1 |
+| ER-09-14 | A 10,000-call API sequence in every state never throws or corrupts state | Engine/QA | W1-AUDIO | M0 |
+| ER-09-15 | Mix/radio config validation fails malformed documents with `E_AUDIO_FORMAT` and a JSON path | Engine/QA | W1-AUDIO | M0 |
+| ER-10-01 | Keyboard traces produce the expected action levels, values and edges per tick | Engine/QA | W1-INPUT | M0 |
+| ER-10-02 | Sub-tick taps emit exactly one press/release edge and never duplicate across ticks | Engine/QA | W1-INPUT | M0 |
+| ER-10-04 | Phone tick semantics handle older/equal/wrapped ticks and bursts with OR-accumulated edges | Engine/QA | W1-INPUT | M0 |
+| ER-10-05 | Deadzone math is continuous, monotonic, bounded and exact at zero deadzone | Engine/QA | W1-INPUT | M0 |
+| ER-10-06 | Gamepad traces map standard pads correctly and ignore non-standard pads | Engine/QA | W1-INPUT | M0 |
+| ER-10-07 | Device assignment keeps phone/keyboard/pad slots deterministic and stable on disconnect | Engine/QA | W1-INPUT | M0 |
+| ER-10-08 | Rebinding capture, conflicts, reserved keys, timeout and overlay round-trip behave as specified | Engine/QA | W1-INPUT | M0 |
+| ER-10-09 | Focus loss releases held inputs once and pointer-lock exit clears buttons | Engine/QA | W1-INPUT | M0 |
+| ER-10-10 | The default desktop map synthesizes the controller bits the reference games expect | Engine/QA | W1-INPUT | M0 |
+| ER-10-12 | `poll` is idempotent per tick and rejects non-monotonic ticks in dev | Engine/QA | W1-INPUT | M0 |
+| ER-10-13 | Invalid action maps fail with `E_INPUT_FORMAT` and a JSON path, leaving the previous map intact | Engine/QA | W1-INPUT | M0 |
+| ER-10-15 | Pointer move/wheel accumulation, button edges and pointer-lock behavior are correct | Engine/QA | W1-INPUT | M0 |
+| ER-12-01 | The world manifest parses/validates, rejects the documented invalid keys/URLs/LODs and enforces the cell caps; timing p95 PENDING | Engine/QA | W1-STREAMING | M1 |
+| ER-12-03 | The resident ledger never exceeds its byte or cell budget; pressure/eviction stages work in unit tests, full pressure run PENDING | Engine/QA | W1-STREAMING | M1 |
+| ER-12-06 | LOD bands and hysteresis resist ±2 m oscillation and monotone sweeps | Engine/QA | W1-STREAMING | M1 |
+| ER-12-07 | Residency transitions, cancellation, caps and stop-zeroing are correct; full teleport streamer test PENDING | Engine/QA | W1-STREAMING | M1 |
+| ER-12-08 | Cell headers reject bad magic/version/alignment/overlap/hash/size/kind and survive the truncation/fuzz sweep | Engine/QA | W1-STREAMING | M1 |
+| ER-12-09 | CSTR dense/sparse golden hashes and byte-identical round trips hold; invalid payloads are rejected atomically | Engine/QA | W1-STREAMING | M1 |
+| ER-12-11 | Ten focuses are accepted (eleven rejected), far focuses cap at LOD2 and the score order is deterministic | Engine/QA | W1-STREAMING | M1 |
+| ER-12-12 | The checked-in 4,096-cell manifest is within the 512 KiB gzip budget; browser boot/CacheStorage/network PENDING | Engine/QA | W1-STREAMING | M1 |
+| ER-15-01 | The v1 header codec reproduces the 85-byte fixture and round-trips boundary fields | Engine/QA | W1-CORE | M0 |
+| ER-15-02 | Malformed headers are refused as a unit with the named save error | Engine/QA | W1-CORE | M0 |
+| ER-15-03 | Property tests cover valid round-trips, bit mutations, arbitrary bytes and truncation | Engine/QA | W1-CORE | M0 |
+| ER-15-04 | FNV-1a 32 matches published vectors and the golden payload | Engine/QA | W1-CORE | M0 |
+| ER-15-05 | Newer save versions are refused and left untouched; M0 refuses version 0 as format | Engine/QA | W1-CORE | M0 |
+| ER-15-06 | Payload bit flips are refused with a hash error and never mutate the file | Engine/QA | W1-CORE | M0 |
+| ER-15-11 | A save for a different game is refused with `E_SAVE_GAME` when checked | Engine/QA | W1-CORE | M0 |
+| ER-15-07 | Crash/failure points never yield a partial save; the old save survives every pre-commit failure; init removes only temp files (memory adapter PASS; OPFS rename points PENDING) | Engine/QA | W1-RUNTIME | M1 |
+| ER-15-08 | Quota and slot-cap failures return named codes, leave the previous save intact and never evict; browser quota PENDING | Engine/QA | W1-RUNTIME | M1 |
+| ER-15-09 | OPFS adapter round trip against a mocked file tree: golden bytes, temp→move order, no destination delete, temp-only cleanup, corruption listed unreadable; real browser OPFS/32 MiB payload PENDING | Engine/QA | W1-RUNTIME | M1 |
+| ER-15-10 | Storage tier selection: OPFS when secure+move, IndexedDB fallback, otherwise `ctx.save` absent; adapters pass in Node (mock OPFS, `fake-indexeddb`), real browser/reload PENDING | Engine/QA | W1-RUNTIME | M1 |
+| ER-15-12 | Stored headers/metadata/log lines contain no token, room, PIN, session, email or IPv4; errors never include payload bytes (unit PASS, CI review PENDING) | Engine/QA | W1-RUNTIME | M1 |
+| ER-18-02 | Engine `Scene`, `AssetLibrary` and `RendererCapabilities` are assignable to the SDK structural projections; the negative fixture remains PENDING | Engine/QA | W1-RUNTIME | M0 |
+| ER-19-01 | Engine rig commands, result schema and exit codes are contract-tested; malformed suites and results are refused | Engine/QA | W0-CONTRACTS | M0 |
+| ER-19-11 | The shared conformance suite runs against every backend and reports each case in declaration order | Engine/QA | W0-CONTRACTS | M0 |
+
+---
+
 ## 11. Amendments (non-spec decisions that affect implementation)
 
 | ID | Amendment | Owner work item | Why |

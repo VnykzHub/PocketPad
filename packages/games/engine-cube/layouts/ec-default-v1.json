@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "ec-default-v1",
+  "orientation": "landscape",
+  "background": "#0b0d12",
+  "controls": [
+    {
+      "type": "stick",
+      "id": "orbit",
+      "x": "18%",
+      "y": "68%",
+      "label": "Orbit",
+      "size": "40%",
+      "axis": "left",
+      "mode": "floating"
+    },
+    {
+      "type": "button",
+      "id": "boost",
+      "x": "84%",
+      "y": "70%",
+      "label": "Boost",
+      "symbol": ">>",
+      "shape": "circle",
+      "r": "16%",
+      "bit": 0
+    }
+  ]
+}

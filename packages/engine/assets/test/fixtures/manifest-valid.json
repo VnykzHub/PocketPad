@@ -1,0 +1,93 @@
+{
+  "$fixture": {
+    "expect": "accept",
+    "note": "Synthetic contract fixture. Not a measurement. Unknown fields are ignored by v1 readers."
+  },
+  "formatVersion": 1,
+  "id": "example-game",
+  "budget": {
+    "initialBytes": 561152,
+    "totalBytes": 1415168
+  },
+  "assets": [
+    {
+      "id": "data/config",
+      "kind": "json",
+      "url": "data/config.json",
+      "bytes": 4096,
+      "initial": true,
+      "group": "boot"
+    },
+    {
+      "id": "textures/atlas-01",
+      "kind": "texture",
+      "url": "assets/atlas-01.webp",
+      "bytes": 524288,
+      "hash": "fnv1a32:1a2b3c4d",
+      "initial": true,
+      "group": "boot",
+      "variants": [
+        {
+          "url": "assets/atlas-01-bc7.ktx2",
+          "bytes": 131072,
+          "requires": ["compressed-s3tc"],
+          "container": "ktx2",
+          "format": "bc7-rgba-unorm"
+        }
+      ]
+    },
+    {
+      "id": "textures/ui",
+      "kind": "texture",
+      "url": "assets/ui.png",
+      "bytes": 65536,
+      "initial": false,
+      "group": "ui"
+    },
+    {
+      "id": "meshes/sedan",
+      "kind": "mesh",
+      "url": "assets/sedan.glb",
+      "bytes": 262144,
+      "initial": false,
+      "group": "city",
+      "dependencies": ["materials/sedan"]
+    },
+    {
+      "id": "materials/sedan",
+      "kind": "material",
+      "url": "assets/sedan.material.json",
+      "bytes": 2048,
+      "initial": false,
+      "group": "city",
+      "dependencies": ["textures/atlas-01"]
+    },
+    {
+      "id": "audio/engine",
+      "kind": "audio",
+      "url": "assets/engine.ogg",
+      "bytes": 524288,
+      "initial": false,
+      "group": "city",
+      "streaming": false,
+      "mimeType": "audio/ogg",
+      "durationSeconds": 12.5
+    },
+    {
+      "id": "fonts/ui",
+      "kind": "font",
+      "url": "assets/ui.woff2",
+      "bytes": 32768,
+      "initial": true,
+      "group": "boot",
+      "meta": {
+        "family": "Inter",
+        "weight": 400
+      },
+      "x-editor": "unknown entry fields are ignored"
+    }
+  ],
+  "x-future": {
+    "note": "unknown top-level fields are ignored by v1 readers"
+  }
+}

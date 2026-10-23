@@ -1,0 +1,10 @@
+{
+  "formatVersion": 1,
+  "actions": [
+    {
+      "name": "move",
+      "kind": "vector3",
+      "bindings": [{ "device": "keyboard", "code": "KeyW" }]
+    }
+  ]
+}

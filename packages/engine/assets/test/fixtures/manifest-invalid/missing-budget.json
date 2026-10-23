@@ -1,0 +1,17 @@
+{
+  "$fixture": {
+    "expect": "reject",
+    "code": "E_ASSET_FORMAT",
+    "rule": "budget is required"
+  },
+  "formatVersion": 1,
+  "id": "example-game",
+  "assets": [
+    {
+      "id": "textures/atlas",
+      "kind": "texture",
+      "url": "assets/atlas.webp",
+      "bytes": 1024
+    }
+  ]
+}

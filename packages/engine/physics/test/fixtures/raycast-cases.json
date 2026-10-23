@@ -1,0 +1,386 @@
+{
+  "$fixture": {
+    "name": "raycast-cases",
+    "kind": "physics-query-contract-cases",
+    "formatVersion": 1,
+    "spec": "docs/engine/07-physics3d.md",
+    "sections": ["3.4", "5.5"],
+    "synthetic": true,
+    "measured": false,
+    "dateFormat": "none",
+    "notes": [
+      "Synthetic geometry and expected topology only. No engine run produced these values.",
+      "Vec3 uses [x, y, z] in metres. Quat uses [x, y, z, w]. Trimesh vertices are world-local; indices are triangles.",
+      "distanceMeters is omitted for ordinary hits because no engine exists to measure it. The one explicit 0 is the contract rule for a solid ray starting inside a shape (07 §3.4).",
+      "hit and orderedHits are topology: nearest collider, sensor flag and triangle index. Normals, points and travel are not asserted."
+    ]
+  },
+  "fixtureVersion": 1,
+  "world": {
+    "gravity": [0, -9.81, 0],
+    "bodies": [
+      {
+        "id": "floor",
+        "type": "static",
+        "position": [0, 0, 0],
+        "enabled": true,
+        "colliders": [
+          {
+            "id": "floor-collider",
+            "shape": { "kind": "box", "halfExtents": [10, 0.5, 10] },
+            "friction": 0.6,
+            "restitution": 0,
+            "sensor": false,
+            "layer": 0,
+            "mask": 4294967295
+          }
+        ]
+      },
+      {
+        "id": "sphere",
+        "type": "static",
+        "position": [3, 1, 0],
+        "enabled": true,
+        "colliders": [
+          {
+            "id": "sphere-collider",
+            "shape": { "kind": "sphere", "radius": 0.5 },
+            "friction": 0.6,
+            "restitution": 0,
+            "sensor": false,
+            "layer": 1,
+            "mask": 4294967295
+          }
+        ]
+      },
+      {
+        "id": "sensor",
+        "type": "static",
+        "position": [-3, 1, 0],
+        "enabled": true,
+        "colliders": [
+          {
+            "id": "sensor-collider",
+            "shape": { "kind": "sphere", "radius": 0.5 },
+            "friction": 0.6,
+            "restitution": 0,
+            "sensor": true,
+            "layer": 6,
+            "mask": 4294967295
+          }
+        ]
+      },
+      {
+        "id": "overhead",
+        "type": "static",
+        "position": [0, 0, 0],
+        "enabled": true,
+        "colliders": [
+          {
+            "id": "overhead-collider",
+            "shape": {
+              "kind": "trimesh",
+              "vertices": [-2, 2, -2, 2, 2, -2, 2, 2, 2, -2, 2, 2],
+              "indices": [0, 1, 2, 0, 2, 3],
+              "triangleCount": 2
+            },
+            "friction": 0.6,
+            "restitution": 0,
+            "sensor": false,
+            "layer": 2,
+            "mask": 4294967295
+          }
+        ]
+      },
+      {
+        "id": "disabled-sphere",
+        "type": "static",
+        "position": [0, 1, -2],
+        "enabled": false,
+        "colliders": [
+          {
+            "id": "disabled-sphere-collider",
+            "shape": { "kind": "sphere", "radius": 0.5 },
+            "friction": 0.6,
+            "restitution": 0,
+            "sensor": false,
+            "layer": 1,
+            "mask": 4294967295
+          }
+        ]
+      },
+      {
+        "id": "wall",
+        "type": "static",
+        "position": [0, 1, -5],
+        "enabled": true,
+        "colliders": [
+          {
+            "id": "wall-collider",
+            "shape": { "kind": "box", "halfExtents": [5, 2, 0.1] },
+            "friction": 0.6,
+            "restitution": 0,
+            "sensor": false,
+            "layer": 0,
+            "mask": 4294967295
+          }
+        ]
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "ray-down-hits-floor",
+      "description": "A downward ray outside the overhead quad hits the floor.",
+      "query": "raycast",
+      "origin": [5, 5, 5],
+      "direction": [0, -1, 0],
+      "maxDistance": 10,
+      "solid": true,
+      "filter": null,
+      "expect": {
+        "hit": true,
+        "collider": "floor-collider",
+        "triangleIndex": -1,
+        "sensor": false,
+        "orderedHits": null,
+        "distanceMeters": null,
+        "note": "Primitive hits report triangleIndex -1 (07 §3.4)."
+      }
+    },
+    {
+      "id": "ray-up-misses",
+      "description": "An upward ray from the same origin hits nothing in range.",
+      "query": "raycast",
+      "origin": [5, 5, 5],
+      "direction": [0, 1, 0],
+      "maxDistance": 10,
+      "solid": true,
+      "filter": null,
+      "expect": {
+        "hit": false,
+        "collider": null,
+        "triangleIndex": null,
+        "sensor": null,
+        "orderedHits": null,
+        "distanceMeters": null,
+        "note": "A miss leaves the caller's hit object untouched (07 §3.4)."
+      }
+    },
+    {
+      "id": "ray-hits-sphere",
+      "description": "A horizontal ray hits the static sphere, not the floor.",
+      "query": "raycast",
+      "origin": [-1, 1, 0],
+      "direction": [1, 0, 0],
+      "maxDistance": 10,
+      "solid": true,
+      "filter": null,
+      "expect": {
+        "hit": true,
+        "collider": "sphere-collider",
+        "triangleIndex": -1,
+        "sensor": false,
+        "orderedHits": null,
+        "distanceMeters": null,
+        "note": "The sensor is behind the origin and excluded by default anyway."
+      }
+    },
+    {
+      "id": "sensor-ignored-by-default",
+      "description": "The nearer sensor is skipped unless includeSensors is set.",
+      "query": "raycast",
+      "origin": [-6, 1, 0],
+      "direction": [1, 0, 0],
+      "maxDistance": 10,
+      "solid": true,
+      "filter": null,
+      "expect": {
+        "hit": true,
+        "collider": "sphere-collider",
+        "triangleIndex": -1,
+        "sensor": false,
+        "orderedHits": null,
+        "distanceMeters": null,
+        "note": "includeSensors defaults to false (07 §3.4)."
+      }
+    },
+    {
+      "id": "sensor-included-when-requested",
+      "description": "The same ray returns the nearer sensor when sensors are included.",
+      "query": "raycast",
+      "origin": [-6, 1, 0],
+      "direction": [1, 0, 0],
+      "maxDistance": 10,
+      "solid": true,
+      "filter": { "layer": 0, "mask": 4294967295, "includeSensors": true },
+      "expect": {
+        "hit": true,
+        "collider": "sensor-collider",
+        "triangleIndex": -1,
+        "sensor": true,
+        "orderedHits": null,
+        "distanceMeters": null,
+        "note": "The sensor is nearer along the ray."
+      }
+    },
+    {
+      "id": "layer-mask-excludes-sphere",
+      "description": "A mask that excludes sphere layer 1 misses the sphere.",
+      "query": "raycast",
+      "origin": [-1, 1, 0],
+      "direction": [1, 0, 0],
+      "maxDistance": 10,
+      "solid": true,
+      "filter": { "layer": 0, "mask": 4, "includeSensors": false },
+      "expect": {
+        "hit": false,
+        "collider": null,
+        "triangleIndex": null,
+        "sensor": null,
+        "orderedHits": null,
+        "distanceMeters": null,
+        "note": "Mask bit 2 accepts only the overhead trimesh layer; the ray does not reach it."
+      }
+    },
+    {
+      "id": "layer-mask-includes-sphere",
+      "description": "A mask with bit 1 accepts sphere layer 1.",
+      "query": "raycast",
+      "origin": [-1, 1, 0],
+      "direction": [1, 0, 0],
+      "maxDistance": 10,
+      "solid": true,
+      "filter": { "layer": 0, "mask": 2, "includeSensors": false },
+      "expect": {
+        "hit": true,
+        "collider": "sphere-collider",
+        "triangleIndex": -1,
+        "sensor": false,
+        "orderedHits": null,
+        "distanceMeters": null,
+        "note": "Layer/mask filtering is applied before narrowphase (07 §5.5)."
+      }
+    },
+    {
+      "id": "inside-solid-reports-zero-distance",
+      "description": "A solid ray starting inside the floor box returns distance 0.",
+      "query": "raycast",
+      "origin": [5, 0.25, 5],
+      "direction": [0, 1, 0],
+      "maxDistance": 5,
+      "solid": true,
+      "filter": null,
+      "expect": {
+        "hit": true,
+        "collider": "floor-collider",
+        "triangleIndex": -1,
+        "sensor": false,
+        "orderedHits": null,
+        "distanceMeters": 0,
+        "note": "07 §3.4: a ray starting inside a shape reports distance 0 when solid is true."
+      }
+    },
+    {
+      "id": "trimesh-triangle-index",
+      "description": "A downward ray through the first triangle reports triangle 0.",
+      "query": "raycast",
+      "origin": [-1, 5, -1.5],
+      "direction": [0, -1, 0],
+      "maxDistance": 10,
+      "solid": true,
+      "filter": null,
+      "expect": {
+        "hit": true,
+        "collider": "overhead-collider",
+        "triangleIndex": 0,
+        "sensor": false,
+        "orderedHits": null,
+        "distanceMeters": null,
+        "note": "The point (-1, -1.5) in the quad's XZ plane lies inside triangle [0, 1, 2]."
+      }
+    },
+    {
+      "id": "raycast-all-sensor-then-sphere",
+      "description": "raycastAll returns every accepted hit in ascending distance order.",
+      "query": "raycastAll",
+      "origin": [-6, 1, 0],
+      "direction": [1, 0, 0],
+      "maxDistance": 10,
+      "solid": true,
+      "filter": { "layer": 0, "mask": 4294967295, "includeSensors": true },
+      "expect": {
+        "hit": true,
+        "collider": "sensor-collider",
+        "triangleIndex": -1,
+        "sensor": true,
+        "orderedHits": ["sensor-collider", "sphere-collider"],
+        "distanceMeters": null,
+        "note": "07 §3.4: ascending distance, ties by ascending collider index."
+      }
+    },
+    {
+      "id": "disabled-body-ignored",
+      "description": "A disabled body is ignored even when its layer passes the mask.",
+      "query": "raycast",
+      "origin": [0, 1, 0],
+      "direction": [0, 0, -1],
+      "maxDistance": 10,
+      "solid": true,
+      "filter": { "layer": 0, "mask": 2, "includeSensors": false },
+      "expect": {
+        "hit": false,
+        "collider": null,
+        "triangleIndex": null,
+        "sensor": null,
+        "orderedHits": null,
+        "distanceMeters": null,
+        "note": "Queries ignore disabled bodies (07 §3.4); the wall layer is excluded by the mask."
+      }
+    },
+    {
+      "id": "exclude-body-filter",
+      "description": "excludeBody removes the only collider the mask accepts.",
+      "query": "raycast",
+      "origin": [-1, 1, 0],
+      "direction": [1, 0, 0],
+      "maxDistance": 10,
+      "solid": true,
+      "filter": {
+        "layer": 0,
+        "mask": 2,
+        "includeSensors": false,
+        "excludeBody": "sphere"
+      },
+      "expect": {
+        "hit": false,
+        "collider": null,
+        "triangleIndex": null,
+        "sensor": null,
+        "orderedHits": null,
+        "distanceMeters": null,
+        "note": "excludeBody is a QueryFilter field (07 §3.4); the harness resolves the fixture id to a handle."
+      }
+    },
+    {
+      "id": "sphere-cast-down-hits-floor",
+      "description": "A swept sphere pointing down contacts the floor top.",
+      "query": "sphereCast",
+      "origin": [5, 5, 5],
+      "direction": [0, -1, 0],
+      "maxDistance": 10,
+      "radius": 0.5,
+      "solid": true,
+      "filter": null,
+      "expect": {
+        "hit": true,
+        "collider": "floor-collider",
+        "triangleIndex": -1,
+        "sensor": false,
+        "orderedHits": null,
+        "distanceMeters": null,
+        "note": "sphereCast is the primitive behind the character controller (07 §3.4)."
+      }
+    }
+  ]
+}

@@ -1,9 +1,11 @@
 # Spec: Browser Game Platform with Phone Controllers
 
-**Codename:** lanpad (placeholder)
+**Codename:** PocketPad
 **Version:** 0.3
 **Status:** Ready for Phase 1 (Dev). Phase 2 (Production) is blocked until the Dev Exit Gate passes.
 **Target site:** vynkzhub.com
+
+> **Amendment banner (2026-10-22).** A14–A18 in `docs/todos/README.md` reframe this product as a **browser-native game engine for any display** and record the renderer (custom WebGPU-first, WebGL2 reduced fallback, no Three.js), physics (Rapier behind `Physics3D`), host input (keyboard/mouse and gamepad), engine gating (D0–P6 retired for the engine track) and cross-origin isolation (COOP/COEP). Where this spec says TV-first, phone-only input or Canvas2D-only rendering, the amendments win. The wire protocol, budgets and phone/room contract are unchanged.
 
 ---
 

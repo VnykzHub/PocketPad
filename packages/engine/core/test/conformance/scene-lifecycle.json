@@ -1,0 +1,131 @@
+{
+  "formatVersion": 1,
+  "synthetic": true,
+  "source": "docs/engine/03-scene-ecs.md §3.1–3.7",
+  "orderingNote": "Query results follow the driver column's dense array order (03 §3.6). With no removals from the renderable column in this script, that order is add order: 0, 2, then 1 after slot reuse.",
+  "note": "Hand-derived lifecycle only; no implementation was run. Entity ids are runtime-local.",
+  "steps": [
+    {
+      "op": "createEntity",
+      "expect": { "id": 0, "generation": 1 }
+    },
+    {
+      "op": "createEntity",
+      "expect": { "id": 1, "generation": 1 }
+    },
+    {
+      "op": "createEntity",
+      "expect": { "id": 2, "generation": 1 }
+    },
+    {
+      "op": "add",
+      "entity": { "id": 0, "generation": 1 },
+      "component": "renderable",
+      "value": {
+        "mesh": "cube",
+        "material": "default",
+        "visible": true,
+        "layer": 0
+      }
+    },
+    {
+      "op": "add",
+      "entity": { "id": 2, "generation": 1 },
+      "component": "renderable",
+      "value": {
+        "mesh": "cube",
+        "material": "default",
+        "visible": true,
+        "layer": 0
+      }
+    },
+    {
+      "op": "setEnabled",
+      "entity": { "id": 0, "generation": 1 },
+      "enabled": false
+    },
+    {
+      "op": "query",
+      "components": ["renderable"],
+      "expect": { "ids": [2], "count": 1 }
+    },
+    {
+      "op": "queryAll",
+      "components": ["renderable"],
+      "expect": { "ids": [0, 2], "count": 2 }
+    },
+    {
+      "op": "isAlive",
+      "entity": { "id": 1, "generation": 1 },
+      "expect": true
+    },
+    {
+      "op": "destroyEntity",
+      "entity": { "id": 1, "generation": 1 }
+    },
+    {
+      "op": "isAlive",
+      "entity": { "id": 1, "generation": 1 },
+      "expect": false
+    },
+    {
+      "op": "createEntity",
+      "expect": { "id": 1, "generation": 2 }
+    },
+    {
+      "op": "isAlive",
+      "entity": { "id": 1, "generation": 2 },
+      "expect": true
+    },
+    {
+      "op": "add",
+      "entity": { "id": 1, "generation": 2 },
+      "component": "renderable",
+      "value": {
+        "mesh": "cube",
+        "material": "default",
+        "visible": true,
+        "layer": 0
+      }
+    },
+    {
+      "op": "query",
+      "components": ["renderable"],
+      "expect": { "ids": [2, 1], "count": 2 }
+    },
+    {
+      "op": "queryAll",
+      "components": ["renderable"],
+      "expect": { "ids": [0, 2, 1], "count": 3 }
+    },
+    {
+      "op": "queryCount",
+      "components": ["renderable"],
+      "expect": 2
+    }
+  ],
+  "final": {
+    "aliveCount": 3,
+    "freeSlots": 0,
+    "entities": [
+      {
+        "id": 0,
+        "generation": 1,
+        "enabled": false,
+        "components": ["transform", "renderable"]
+      },
+      {
+        "id": 1,
+        "generation": 2,
+        "enabled": true,
+        "components": ["transform", "renderable"]
+      },
+      {
+        "id": 2,
+        "generation": 1,
+        "enabled": true,
+        "components": ["transform", "renderable"]
+      }
+    ]
+  }
+}

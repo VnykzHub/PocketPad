@@ -8,19 +8,23 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join, relative, resolve } from "node:path";
 
-const DASH_PREFIXES = ["FR", "NR", "PR", "SR", "AR", "TR"] as const;
+const DASH_PREFIXES = ["FR", "NR", "PR", "SR", "AR", "TR", "ER"] as const;
 const BARE_PREFIXES = ["A", "G", "E", "C"] as const;
 
 /** Prefix display/grouping order. */
 export const PREFIX_ORDER: readonly string[] = [...DASH_PREFIXES, ...BARE_PREFIXES];
 
 /**
- * Matches FR-7.3, NR-6.1, PR-9.3, SR-6, AR-4, TR-1, A9, G1, E17 and C10.
+ * Matches FR-7.3, NR-6.1, PR-9.3, SR-6, AR-4, TR-1, ER-19-01, A9, G1, E17 and C10.
+ *
+ * ER IDs carry two hyphen-separated numbers (engine spec + acceptance row), so
+ * they need their own alternative; the dotted form is for the phone-platform
+ * requirement families.
  *
  * The surrounding negative lookarounds keep work-item IDs such as
  * `D0-SRV-03` or `P1-SRV-03` from being mistaken for requirement tags.
  */
-const ID_SOURCE = String.raw`(?<![A-Za-z0-9-])(?:(?:FR|NR|PR|SR|AR|TR)-\d+(?:\.\d+)?|[AGEC]\d+)(?![A-Za-z0-9-])`;
+const ID_SOURCE = String.raw`(?<![A-Za-z0-9-])(?:(?:FR|NR|PR|SR|AR|TR)-\d+(?:\.\d+)?|ER-\d+-\d+|[AGEC]\d+)(?![A-Za-z0-9-])`;
 const ANCHORED_ID = new RegExp(`^(?:${ID_SOURCE})$`);
 
 const TEXT_EXTENSIONS = new Set([
@@ -169,7 +173,8 @@ export function rowMentionsStage(row: string, stage: string): boolean {
 }
 
 function idParts(id: string): { prefix: string; major: number; minor: number } {
-  const match = /^([A-Z]+)-?(\d+)(?:\.(\d+))?$/.exec(id);
+  // ER IDs use a second hyphen (ER-19-01); the phone-platform families use a dot.
+  const match = /^([A-Z]+)-?(\d+)(?:[-.](\d+))?$/.exec(id);
   if (match === null) return { prefix: "", major: 0, minor: 0 };
   return {
     prefix: match[1] ?? "",

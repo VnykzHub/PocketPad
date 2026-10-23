@@ -1,0 +1,556 @@
+{
+  "$fixture": {
+    "name": "bodies-cases",
+    "kind": "physics-body-contract-cases",
+    "formatVersion": 1,
+    "spec": "docs/engine/07-physics3d.md",
+    "sections": ["3.1", "3.2", "4.2", "4.4", "5.16"],
+    "synthetic": true,
+    "measured": false,
+    "dateFormat": "none",
+    "notes": [
+      "Synthetic descriptors only. No engine run produced these values.",
+      "07 §3.1 requires a derived mass when body mass is 0 or absent, but states no numeric volume or inertia formula. Derived mass and every inertia are null rather than invented.",
+      "Vec3 is [x, y, z] in metres; Quat is [x, y, z, w]; density is kg/m^3; mass is kg.",
+      "Only the dynamic-trimesh rejection names its error code in 07 §3.1 (E_ASSET_FORMAT). Other rejections record why they are invalid and the inferred E_CONTRACT basis from 07 §5.16."
+    ]
+  },
+  "fixtureVersion": 1,
+  "cases": [
+    {
+      "id": "static-kerb",
+      "description": "A static box kerb with explicit material and layer.",
+      "body": {
+        "type": "static",
+        "position": [0, 0, 0],
+        "rotation": [0, 0, 0, 1]
+      },
+      "colliders": [
+        {
+          "shape": { "kind": "box", "halfExtents": [2, 0.1, 0.5] },
+          "friction": 0.6,
+          "restitution": 0,
+          "density": 1000,
+          "sensor": false,
+          "layer": 1,
+          "mask": 4294967295,
+          "localPosition": [0, 0, 0],
+          "localRotation": [0, 0, 0, 1]
+        }
+      ],
+      "expect": {
+        "accepted": true,
+        "error": null,
+        "errorBasis": null,
+        "errorStage": null,
+        "bodyType": "static",
+        "colliderCount": 1,
+        "massMode": "static-infinite",
+        "massKg": null,
+        "inertia": null,
+        "sensor": false,
+        "note": "Static bodies have infinite mass and zero inverse inertia (07 §5.5)."
+      }
+    },
+    {
+      "id": "dynamic-sphere-explicit-mass",
+      "description": "A dynamic sphere with an explicit mass and CCD enabled.",
+      "body": {
+        "type": "dynamic",
+        "position": [0, 4, 0],
+        "rotation": [0, 0, 0, 1],
+        "mass": 123,
+        "ccd": true
+      },
+      "colliders": [
+        {
+          "shape": { "kind": "sphere", "radius": 0.5 },
+          "friction": 0.6,
+          "restitution": 0,
+          "density": 1000,
+          "sensor": false,
+          "layer": 0,
+          "mask": 4294967295
+        }
+      ],
+      "expect": {
+        "accepted": true,
+        "error": null,
+        "errorBasis": null,
+        "errorStage": null,
+        "bodyType": "dynamic",
+        "colliderCount": 1,
+        "massMode": "explicit",
+        "massKg": 123,
+        "inertia": null,
+        "sensor": false,
+        "note": "Explicit mass is echoed. Inertia still depends on shape and is not asserted: 07 names a formula module but states no numeric formula."
+      }
+    },
+    {
+      "id": "dynamic-box-derived-mass",
+      "description": "A dynamic box whose mass is derived from collider density and volume.",
+      "body": {
+        "type": "dynamic",
+        "position": [1, 2, 0],
+        "rotation": [0, 0, 0, 1],
+        "mass": 0
+      },
+      "colliders": [
+        {
+          "shape": { "kind": "box", "halfExtents": [0.5, 0.5, 0.5] },
+          "friction": 0.6,
+          "restitution": 0,
+          "density": 500,
+          "sensor": false,
+          "layer": 0,
+          "mask": 4294967295
+        }
+      ],
+      "expect": {
+        "accepted": true,
+        "error": null,
+        "errorBasis": null,
+        "errorStage": null,
+        "bodyType": "dynamic",
+        "colliderCount": 1,
+        "massMode": "derived-from-colliders",
+        "massKg": null,
+        "inertia": null,
+        "sensor": false,
+        "note": "07 §3.1 requires derivation from density and volume but gives no numeric formula, so no value is asserted."
+      }
+    },
+    {
+      "id": "dynamic-capsule",
+      "description": "A dynamic capsule with an explicit mass.",
+      "body": {
+        "type": "dynamic",
+        "position": [0, 1.2, 0],
+        "rotation": [0, 0, 0, 1],
+        "mass": 80
+      },
+      "colliders": [
+        {
+          "shape": { "kind": "capsule", "radius": 0.3, "halfHeight": 0.6 },
+          "friction": 0.6,
+          "restitution": 0,
+          "density": 1000,
+          "sensor": false,
+          "layer": 0,
+          "mask": 4294967295
+        }
+      ],
+      "expect": {
+        "accepted": true,
+        "error": null,
+        "errorBasis": null,
+        "errorStage": null,
+        "bodyType": "dynamic",
+        "colliderCount": 1,
+        "massMode": "explicit",
+        "massKg": 80,
+        "inertia": null,
+        "sensor": false,
+        "note": "Capsule axis is local +Y; total height is 2 * (halfHeight + radius)."
+      }
+    },
+    {
+      "id": "dynamic-trimesh-rejected",
+      "description": "A dynamic body with a trimesh collider must be rejected.",
+      "body": {
+        "type": "dynamic",
+        "position": [0, 2, 0],
+        "rotation": [0, 0, 0, 1],
+        "mass": 10
+      },
+      "colliders": [
+        {
+          "shape": {
+            "kind": "trimesh",
+            "vertices": [-1, 0, -1, 1, 0, -1, 0, 1, 1],
+            "indices": [0, 1, 2],
+            "triangleCount": 1
+          },
+          "friction": 0.6,
+          "restitution": 0,
+          "density": 1000,
+          "sensor": false,
+          "layer": 0,
+          "mask": 4294967295
+        }
+      ],
+      "expect": {
+        "accepted": false,
+        "error": "E_ASSET_FORMAT",
+        "errorBasis": "explicit",
+        "errorStage": "createCollider",
+        "bodyType": "dynamic",
+        "colliderCount": null,
+        "massMode": null,
+        "massKg": null,
+        "inertia": null,
+        "sensor": null,
+        "note": "07 §3.1 explicitly rejects a dynamic trimesh at createCollider with E_ASSET_FORMAT."
+      }
+    },
+    {
+      "id": "kinematic-trimesh-accepted",
+      "description": "A kinematicPosition body accepts a trimesh collider.",
+      "body": {
+        "type": "kinematicPosition",
+        "position": [0, 0, 0],
+        "rotation": [0, 0, 0, 1]
+      },
+      "colliders": [
+        {
+          "shape": {
+            "kind": "trimesh",
+            "vertices": [-2, 2, -2, 2, 2, -2, 2, 2, 2, -2, 2, 2],
+            "indices": [0, 1, 2, 0, 2, 3],
+            "triangleCount": 2
+          },
+          "friction": 0.6,
+          "restitution": 0,
+          "density": 1000,
+          "sensor": false,
+          "layer": 2,
+          "mask": 4294967295
+        }
+      ],
+      "expect": {
+        "accepted": true,
+        "error": null,
+        "errorBasis": null,
+        "errorStage": null,
+        "bodyType": "kinematicPosition",
+        "colliderCount": 1,
+        "massMode": "not-applicable",
+        "massKg": null,
+        "inertia": null,
+        "sensor": false,
+        "note": "07 §3.1 accepts trimesh on static and both kinematic body types."
+      }
+    },
+    {
+      "id": "zero-sphere-radius-rejected",
+      "description": "A sphere collider with radius 0 violates radius > 0.",
+      "body": {
+        "type": "dynamic",
+        "position": [0, 1, 0],
+        "rotation": [0, 0, 0, 1],
+        "mass": 1
+      },
+      "colliders": [
+        {
+          "shape": { "kind": "sphere", "radius": 0 },
+          "friction": 0.6,
+          "restitution": 0,
+          "density": 1000,
+          "sensor": false,
+          "layer": 0,
+          "mask": 4294967295
+        }
+      ],
+      "expect": {
+        "accepted": false,
+        "error": "E_CONTRACT",
+        "errorBasis": "inferred-07-5.16",
+        "errorStage": "createCollider",
+        "bodyType": "dynamic",
+        "colliderCount": null,
+        "massMode": null,
+        "massKg": null,
+        "inertia": null,
+        "sensor": null,
+        "note": "07 §3.1 requires radius > 0; §5.16 lists E_CONTRACT for descriptor validation but does not name this case individually."
+      }
+    },
+    {
+      "id": "zero-box-half-extent-rejected",
+      "description": "A box collider with a zero half extent violates halfExtents > 0.",
+      "body": {
+        "type": "dynamic",
+        "position": [0, 1, 0],
+        "rotation": [0, 0, 0, 1],
+        "mass": 1
+      },
+      "colliders": [
+        {
+          "shape": { "kind": "box", "halfExtents": [1, 0, 1] },
+          "friction": 0.6,
+          "restitution": 0,
+          "density": 1000,
+          "sensor": false,
+          "layer": 0,
+          "mask": 4294967295
+        }
+      ],
+      "expect": {
+        "accepted": false,
+        "error": "E_CONTRACT",
+        "errorBasis": "inferred-07-5.16",
+        "errorStage": "createCollider",
+        "bodyType": "dynamic",
+        "colliderCount": null,
+        "massMode": null,
+        "massKg": null,
+        "inertia": null,
+        "sensor": null,
+        "note": "07 §3.1 requires every halfExtents component > 0."
+      }
+    },
+    {
+      "id": "static-with-linear-velocity-rejected",
+      "description": "A static body may not be created with linear velocity.",
+      "body": {
+        "type": "static",
+        "position": [0, 0, 0],
+        "rotation": [0, 0, 0, 1],
+        "linearVelocity": [1, 0, 0]
+      },
+      "colliders": [],
+      "expect": {
+        "accepted": false,
+        "error": "E_CONTRACT",
+        "errorBasis": "inferred-07-5.16",
+        "errorStage": "createBody",
+        "bodyType": "static",
+        "colliderCount": null,
+        "massMode": null,
+        "massKg": null,
+        "inertia": null,
+        "sensor": null,
+        "note": "07 §3.1 says linearVelocity is rejected on static."
+      }
+    },
+    {
+      "id": "static-with-angular-velocity-rejected",
+      "description": "A static body may not be created with angular velocity.",
+      "body": {
+        "type": "static",
+        "position": [0, 0, 0],
+        "rotation": [0, 0, 0, 1],
+        "angularVelocity": [0, 1, 0]
+      },
+      "colliders": [],
+      "expect": {
+        "accepted": false,
+        "error": "E_CONTRACT",
+        "errorBasis": "inferred-07-5.16",
+        "errorStage": "createBody",
+        "bodyType": "static",
+        "colliderCount": null,
+        "massMode": null,
+        "massKg": null,
+        "inertia": null,
+        "sensor": null,
+        "note": "07 §3.1 says angularVelocity is rejected on static."
+      }
+    },
+    {
+      "id": "sensor-collider",
+      "description": "A dynamic body with a sensor sphere and a restricted mask.",
+      "body": {
+        "type": "dynamic",
+        "position": [0, 2, 0],
+        "rotation": [0, 0, 0, 1],
+        "mass": 1
+      },
+      "colliders": [
+        {
+          "shape": { "kind": "sphere", "radius": 0.25 },
+          "friction": 0.6,
+          "restitution": 0,
+          "density": 1000,
+          "sensor": true,
+          "layer": 5,
+          "mask": 3
+        }
+      ],
+      "expect": {
+        "accepted": true,
+        "error": null,
+        "errorBasis": null,
+        "errorStage": null,
+        "bodyType": "dynamic",
+        "colliderCount": 1,
+        "massMode": "explicit",
+        "massKg": 1,
+        "inertia": null,
+        "sensor": true,
+        "note": "Sensors generate trigger events and no contact response (07 §3.1, §5.5)."
+      }
+    },
+    {
+      "id": "compound-two-colliders",
+      "description": "A compound body with two primitive colliders.",
+      "body": {
+        "type": "dynamic",
+        "position": [0, 1, 0],
+        "rotation": [0, 0, 0, 1],
+        "mass": 100
+      },
+      "colliders": [
+        {
+          "shape": { "kind": "box", "halfExtents": [0.5, 0.5, 0.5] },
+          "friction": 0.6,
+          "restitution": 0,
+          "density": 1000,
+          "sensor": false,
+          "layer": 0,
+          "mask": 4294967295
+        },
+        {
+          "shape": { "kind": "sphere", "radius": 0.4 },
+          "friction": 0.6,
+          "restitution": 0,
+          "density": 1000,
+          "sensor": false,
+          "layer": 0,
+          "mask": 4294967295,
+          "localPosition": [0, 1, 0]
+        }
+      ],
+      "expect": {
+        "accepted": true,
+        "error": null,
+        "errorBasis": null,
+        "errorStage": null,
+        "bodyType": "dynamic",
+        "colliderCount": 2,
+        "massMode": "explicit",
+        "massKg": 100,
+        "inertia": null,
+        "sensor": false,
+        "note": "Compound bodies are multiple colliders on one body; there is no compound shape union (07 §3.1)."
+      }
+    },
+    {
+      "id": "layer-31-accepted",
+      "description": "Layer 31 is the highest valid named-layer index.",
+      "body": {
+        "type": "dynamic",
+        "position": [0, 1, 0],
+        "rotation": [0, 0, 0, 1],
+        "mass": 1
+      },
+      "colliders": [
+        {
+          "shape": { "kind": "sphere", "radius": 0.2 },
+          "friction": 0.6,
+          "restitution": 0,
+          "density": 1000,
+          "sensor": false,
+          "layer": 31,
+          "mask": 4294967295
+        }
+      ],
+      "expect": {
+        "accepted": true,
+        "error": null,
+        "errorBasis": null,
+        "errorStage": null,
+        "bodyType": "dynamic",
+        "colliderCount": 1,
+        "massMode": "explicit",
+        "massKg": 1,
+        "inertia": null,
+        "sensor": false,
+        "note": "07 §3.1 and §4.2 constrain layer to 0..31."
+      }
+    },
+    {
+      "id": "layer-32-rejected",
+      "description": "Layer 32 is outside the 0..31 named-layer range.",
+      "body": {
+        "type": "dynamic",
+        "position": [0, 1, 0],
+        "rotation": [0, 0, 0, 1],
+        "mass": 1
+      },
+      "colliders": [
+        {
+          "shape": { "kind": "sphere", "radius": 0.2 },
+          "friction": 0.6,
+          "restitution": 0,
+          "density": 1000,
+          "sensor": false,
+          "layer": 32,
+          "mask": 4294967295
+        }
+      ],
+      "expect": {
+        "accepted": false,
+        "error": "E_CONTRACT",
+        "errorBasis": "inferred-07-5.16",
+        "errorStage": "createCollider",
+        "bodyType": "dynamic",
+        "colliderCount": null,
+        "massMode": null,
+        "massKg": null,
+        "inertia": null,
+        "sensor": null,
+        "note": "07 §4.2 says layer is an index into layers, 0..31."
+      }
+    },
+    {
+      "id": "explicit-mass-overrides-density",
+      "description": "An explicit body mass wins over collider density.",
+      "body": {
+        "type": "dynamic",
+        "position": [0, 1, 0],
+        "rotation": [0, 0, 0, 1],
+        "mass": 50
+      },
+      "colliders": [
+        {
+          "shape": { "kind": "box", "halfExtents": [0.5, 0.5, 0.5] },
+          "friction": 0.6,
+          "restitution": 0,
+          "density": 8000,
+          "sensor": false,
+          "layer": 0,
+          "mask": 4294967295
+        }
+      ],
+      "expect": {
+        "accepted": true,
+        "error": null,
+        "errorBasis": null,
+        "errorStage": null,
+        "bodyType": "dynamic",
+        "colliderCount": 1,
+        "massMode": "explicit",
+        "massKg": 50,
+        "inertia": null,
+        "sensor": false,
+        "note": "07 §3.1 says density is ignored when body mass is set."
+      }
+    },
+    {
+      "id": "body-without-collider",
+      "description": "A dynamic body may exist with no collider; it collides with nothing.",
+      "body": {
+        "type": "dynamic",
+        "position": [0, 5, 0],
+        "rotation": [0, 0, 0, 1],
+        "mass": 5
+      },
+      "colliders": [],
+      "expect": {
+        "accepted": true,
+        "error": null,
+        "errorBasis": null,
+        "errorStage": null,
+        "bodyType": "dynamic",
+        "colliderCount": 0,
+        "massMode": "explicit",
+        "massKg": 5,
+        "inertia": null,
+        "sensor": false,
+        "note": "07 §3.1: a body with no collider exists but collides with nothing."
+      }
+    }
+  ]
+}

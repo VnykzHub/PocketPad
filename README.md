@@ -27,7 +27,7 @@ The engine is not a TV accessory. **Any browser is a display target** — deskto
 
 ## How it works today
 
-```
+```text
 Display browser (host)  <---->  Server  <---->  Phone browser (controller)
 runs the simulation            pairs rooms,       sends touch, gyro,
 and renders the game           relays messages    buttons; shows private UI
@@ -43,7 +43,7 @@ The host is authoritative. Phones never simulate, never see game state beyond th
 ## Current state (verified)
 
 | Area | Status |
-|---|---|
+| --- | --- |
 | Protocol, broker, sessions, reconnect | Working; 8 slots, 30 s reservations, host loss/recovery |
 | Controller | 11 control types, touch engine, gyro, haptics, fullscreen |
 | Host runtime | Fixed 60 Hz loop, `GameHost`, `GameContext`, Canvas2D + custom WebGL2 |
@@ -56,7 +56,7 @@ The host is authoritative. Phones never simulate, never see game state beyond th
 ## Roadmap
 
 | Milestone | What it proves |
-|---|---|
+| --- | --- |
 | **M0 — Foundation** | Specs for every engine subsystem; WebGPU renderer with WebGL2 fallback; 3D math/scene; asset manifest and loaders; keyboard/mouse/gamepad input; a textured 3D scene |
 | **M1 — Vertical slice** | A real 3D slice: a city block, a drivable vehicle, pedestrians, a mission, streaming, audio and save/load |
 | **M2 — Engine completeness** | Animation, PBR/lighting, 3D physics, AI/navigation, world streaming, UI/text in 3D, profiling and budgets |
@@ -86,7 +86,7 @@ There is no `npm run dev`; build first.
 
 ## Repository layout
 
-```
+```text
 packages/protocol/     wire types and binary codecs
 packages/broker/       rooms, sessions, slots, relay core
 packages/dev-server/   LAN dev server and static routes

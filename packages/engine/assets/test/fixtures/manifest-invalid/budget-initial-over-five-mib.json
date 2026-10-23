@@ -1,0 +1,22 @@
+{
+  "$fixture": {
+    "expect": "reject",
+    "code": "E_ASSET_BUDGET",
+    "rule": "budget.initialBytes and the initial asset sum must not exceed 5242880 (06 4.2, 5.11)"
+  },
+  "formatVersion": 1,
+  "id": "example-game",
+  "budget": {
+    "initialBytes": 5242881,
+    "totalBytes": 5242881
+  },
+  "assets": [
+    {
+      "id": "textures/atlas",
+      "kind": "texture",
+      "url": "assets/atlas.webp",
+      "bytes": 1024,
+      "initial": true
+    }
+  ]
+}

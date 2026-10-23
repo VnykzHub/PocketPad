@@ -1,0 +1,468 @@
+{
+  "schema": "pocketpad.webgl2.capability-cases/1",
+  "spec": "docs/engine/05-renderer-webgl2.md §3.3 and §4.8 (ER-05-05)",
+  "provenance": "Synthetic limit/extension sets. No value is a device measurement.",
+  "featureSetSemantics": "expected.features is the exact EngineFeature set; array order is not significant.",
+  "cases": [
+    {
+      "id": "below-standard",
+      "description": "Working WebGL2 context whose texture and vertex-texture limits miss the standard tier.",
+      "limits": {
+        "maxTextureSize": 2048,
+        "maxCubeMapTextureSize": 2048,
+        "max3DTextureSize": 256,
+        "maxArrayTextureLayers": 256,
+        "maxTextureImageUnits": 8,
+        "maxVertexTextureImageUnits": 8,
+        "maxCombinedTextureImageUnits": 16,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 12,
+        "maxUniformBlockSize": 16384,
+        "maxDrawBuffers": 4,
+        "maxColorAttachments": 4,
+        "maxSamples": 1,
+        "maxAnisotropy": 1
+      },
+      "extensions": [],
+      "expected": {
+        "tier": "minimal",
+        "features": ["texture-array"]
+      }
+    },
+    {
+      "id": "no-extensions-standard",
+      "description": "No extensions at all; standard limits still classify as standard because standard needs no extension.",
+      "limits": {
+        "maxTextureSize": 4096,
+        "maxCubeMapTextureSize": 4096,
+        "max3DTextureSize": 256,
+        "maxArrayTextureLayers": 256,
+        "maxTextureImageUnits": 16,
+        "maxVertexTextureImageUnits": 16,
+        "maxCombinedTextureImageUnits": 32,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 16,
+        "maxUniformBlockSize": 16384,
+        "maxDrawBuffers": 4,
+        "maxColorAttachments": 4,
+        "maxSamples": 1,
+        "maxAnisotropy": 1
+      },
+      "extensions": [],
+      "expected": {
+        "tier": "standard",
+        "features": ["texture-array"]
+      }
+    },
+    {
+      "id": "msaa4-core",
+      "description": "maxSamples >= 4 adds the msaa4 feature without changing the tier.",
+      "limits": {
+        "maxTextureSize": 4096,
+        "maxCubeMapTextureSize": 4096,
+        "max3DTextureSize": 256,
+        "maxArrayTextureLayers": 256,
+        "maxTextureImageUnits": 16,
+        "maxVertexTextureImageUnits": 16,
+        "maxCombinedTextureImageUnits": 32,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 16,
+        "maxUniformBlockSize": 16384,
+        "maxDrawBuffers": 4,
+        "maxColorAttachments": 4,
+        "maxSamples": 4,
+        "maxAnisotropy": 1
+      },
+      "extensions": [],
+      "expected": {
+        "tier": "standard",
+        "features": ["msaa4", "texture-array"]
+      }
+    },
+    {
+      "id": "astc-only",
+      "description": "ASTC compression without float support stays standard.",
+      "limits": {
+        "maxTextureSize": 4096,
+        "maxCubeMapTextureSize": 4096,
+        "max3DTextureSize": 256,
+        "maxArrayTextureLayers": 256,
+        "maxTextureImageUnits": 16,
+        "maxVertexTextureImageUnits": 16,
+        "maxCombinedTextureImageUnits": 32,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 16,
+        "maxUniformBlockSize": 16384,
+        "maxDrawBuffers": 4,
+        "maxColorAttachments": 4,
+        "maxSamples": 1,
+        "maxAnisotropy": 1
+      },
+      "extensions": ["WEBGL_compressed_texture_astc"],
+      "expected": {
+        "tier": "standard",
+        "features": ["compressed-astc", "texture-array"]
+      }
+    },
+    {
+      "id": "float-only",
+      "description": "Float colour buffers without any compressed family stay standard; extended needs both.",
+      "limits": {
+        "maxTextureSize": 4096,
+        "maxCubeMapTextureSize": 4096,
+        "max3DTextureSize": 256,
+        "maxArrayTextureLayers": 256,
+        "maxTextureImageUnits": 16,
+        "maxVertexTextureImageUnits": 16,
+        "maxCombinedTextureImageUnits": 32,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 16,
+        "maxUniformBlockSize": 16384,
+        "maxDrawBuffers": 4,
+        "maxColorAttachments": 4,
+        "maxSamples": 1,
+        "maxAnisotropy": 1
+      },
+      "extensions": ["EXT_color_buffer_float", "OES_texture_float_linear"],
+      "expected": {
+        "tier": "standard",
+        "features": ["float-render-target", "texture-array"]
+      }
+    },
+    {
+      "id": "float-and-msaa-no-compression",
+      "description": "Float support plus 4x samples still stays standard without a compressed family.",
+      "limits": {
+        "maxTextureSize": 4096,
+        "maxCubeMapTextureSize": 4096,
+        "max3DTextureSize": 256,
+        "maxArrayTextureLayers": 256,
+        "maxTextureImageUnits": 16,
+        "maxVertexTextureImageUnits": 16,
+        "maxCombinedTextureImageUnits": 32,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 16,
+        "maxUniformBlockSize": 16384,
+        "maxDrawBuffers": 4,
+        "maxColorAttachments": 4,
+        "maxSamples": 4,
+        "maxAnisotropy": 1
+      },
+      "extensions": ["EXT_color_buffer_float", "OES_texture_float_linear"],
+      "expected": {
+        "tier": "standard",
+        "features": ["float-render-target", "msaa4", "texture-array"]
+      }
+    },
+    {
+      "id": "timestamp-only",
+      "description": "The timer-query extension maps to timestamp-query and does not raise the tier.",
+      "limits": {
+        "maxTextureSize": 4096,
+        "maxCubeMapTextureSize": 4096,
+        "max3DTextureSize": 256,
+        "maxArrayTextureLayers": 256,
+        "maxTextureImageUnits": 16,
+        "maxVertexTextureImageUnits": 16,
+        "maxCombinedTextureImageUnits": 32,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 16,
+        "maxUniformBlockSize": 16384,
+        "maxDrawBuffers": 4,
+        "maxColorAttachments": 4,
+        "maxSamples": 1,
+        "maxAnisotropy": 1
+      },
+      "extensions": ["EXT_disjoint_timer_query_webgl2"],
+      "expected": {
+        "tier": "standard",
+        "features": ["texture-array", "timestamp-query"]
+      }
+    },
+    {
+      "id": "float-linear-only",
+      "description": "OES_texture_float_linear is a tier condition but not an EngineFeature by itself.",
+      "limits": {
+        "maxTextureSize": 4096,
+        "maxCubeMapTextureSize": 4096,
+        "max3DTextureSize": 256,
+        "maxArrayTextureLayers": 256,
+        "maxTextureImageUnits": 16,
+        "maxVertexTextureImageUnits": 16,
+        "maxCombinedTextureImageUnits": 32,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 16,
+        "maxUniformBlockSize": 16384,
+        "maxDrawBuffers": 4,
+        "maxColorAttachments": 4,
+        "maxSamples": 1,
+        "maxAnisotropy": 1
+      },
+      "extensions": ["OES_texture_float_linear"],
+      "expected": {
+        "tier": "standard",
+        "features": ["texture-array"]
+      }
+    },
+    {
+      "id": "extended-astc",
+      "description": "All extended conditions met with an ASTC family.",
+      "limits": {
+        "maxTextureSize": 8192,
+        "maxCubeMapTextureSize": 8192,
+        "max3DTextureSize": 2048,
+        "maxArrayTextureLayers": 2048,
+        "maxTextureImageUnits": 16,
+        "maxVertexTextureImageUnits": 16,
+        "maxCombinedTextureImageUnits": 32,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 24,
+        "maxUniformBlockSize": 65536,
+        "maxDrawBuffers": 8,
+        "maxColorAttachments": 8,
+        "maxSamples": 4,
+        "maxAnisotropy": 16
+      },
+      "extensions": [
+        "EXT_color_buffer_float",
+        "OES_texture_float_linear",
+        "WEBGL_compressed_texture_astc"
+      ],
+      "expected": {
+        "tier": "extended",
+        "features": [
+          "compressed-astc",
+          "float-render-target",
+          "msaa4",
+          "texture-array"
+        ]
+      }
+    },
+    {
+      "id": "extended-s3tc",
+      "description": "All extended conditions met with an S3TC family.",
+      "limits": {
+        "maxTextureSize": 8192,
+        "maxCubeMapTextureSize": 8192,
+        "max3DTextureSize": 2048,
+        "maxArrayTextureLayers": 2048,
+        "maxTextureImageUnits": 16,
+        "maxVertexTextureImageUnits": 16,
+        "maxCombinedTextureImageUnits": 32,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 24,
+        "maxUniformBlockSize": 65536,
+        "maxDrawBuffers": 8,
+        "maxColorAttachments": 8,
+        "maxSamples": 4,
+        "maxAnisotropy": 16
+      },
+      "extensions": [
+        "EXT_color_buffer_float",
+        "OES_texture_float_linear",
+        "WEBGL_compressed_texture_s3tc"
+      ],
+      "expected": {
+        "tier": "extended",
+        "features": [
+          "compressed-s3tc",
+          "float-render-target",
+          "msaa4",
+          "texture-array"
+        ]
+      }
+    },
+    {
+      "id": "extended-etc2",
+      "description": "All extended conditions met with an ETC2 family.",
+      "limits": {
+        "maxTextureSize": 8192,
+        "maxCubeMapTextureSize": 8192,
+        "max3DTextureSize": 2048,
+        "maxArrayTextureLayers": 2048,
+        "maxTextureImageUnits": 16,
+        "maxVertexTextureImageUnits": 16,
+        "maxCombinedTextureImageUnits": 32,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 24,
+        "maxUniformBlockSize": 65536,
+        "maxDrawBuffers": 8,
+        "maxColorAttachments": 8,
+        "maxSamples": 4,
+        "maxAnisotropy": 16
+      },
+      "extensions": [
+        "EXT_color_buffer_float",
+        "OES_texture_float_linear",
+        "WEBGL_compressed_texture_etc"
+      ],
+      "expected": {
+        "tier": "extended",
+        "features": [
+          "compressed-etc2",
+          "float-render-target",
+          "msaa4",
+          "texture-array"
+        ]
+      }
+    },
+    {
+      "id": "extended-bptc-only",
+      "description": "BPTC counts as a compressed family for the tier, but EngineFeature has no BPTC token; the feature set stays without a compressed-* value.",
+      "limits": {
+        "maxTextureSize": 8192,
+        "maxCubeMapTextureSize": 8192,
+        "max3DTextureSize": 2048,
+        "maxArrayTextureLayers": 2048,
+        "maxTextureImageUnits": 16,
+        "maxVertexTextureImageUnits": 16,
+        "maxCombinedTextureImageUnits": 32,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 24,
+        "maxUniformBlockSize": 65536,
+        "maxDrawBuffers": 8,
+        "maxColorAttachments": 8,
+        "maxSamples": 4,
+        "maxAnisotropy": 16
+      },
+      "extensions": [
+        "EXT_color_buffer_float",
+        "OES_texture_float_linear",
+        "EXT_texture_compression_bptc"
+      ],
+      "expected": {
+        "tier": "extended",
+        "features": ["float-render-target", "msaa4", "texture-array"]
+      }
+    },
+    {
+      "id": "extended-missing-msaa4",
+      "description": "Every extended condition except maxSamples >= 4; the device lands at standard.",
+      "limits": {
+        "maxTextureSize": 8192,
+        "maxCubeMapTextureSize": 8192,
+        "max3DTextureSize": 2048,
+        "maxArrayTextureLayers": 2048,
+        "maxTextureImageUnits": 16,
+        "maxVertexTextureImageUnits": 16,
+        "maxCombinedTextureImageUnits": 32,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 24,
+        "maxUniformBlockSize": 65536,
+        "maxDrawBuffers": 8,
+        "maxColorAttachments": 8,
+        "maxSamples": 2,
+        "maxAnisotropy": 16
+      },
+      "extensions": [
+        "EXT_color_buffer_float",
+        "OES_texture_float_linear",
+        "WEBGL_compressed_texture_astc"
+      ],
+      "expected": {
+        "tier": "standard",
+        "features": [
+          "compressed-astc",
+          "float-render-target",
+          "texture-array"
+        ]
+      }
+    },
+    {
+      "id": "extended-missing-float-linear",
+      "description": "EXT_color_buffer_float without OES_texture_float_linear does not reach extended.",
+      "limits": {
+        "maxTextureSize": 8192,
+        "maxCubeMapTextureSize": 8192,
+        "max3DTextureSize": 2048,
+        "maxArrayTextureLayers": 2048,
+        "maxTextureImageUnits": 16,
+        "maxVertexTextureImageUnits": 16,
+        "maxCombinedTextureImageUnits": 32,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 24,
+        "maxUniformBlockSize": 65536,
+        "maxDrawBuffers": 8,
+        "maxColorAttachments": 8,
+        "maxSamples": 4,
+        "maxAnisotropy": 16
+      },
+      "extensions": [
+        "EXT_color_buffer_float",
+        "WEBGL_compressed_texture_astc"
+      ],
+      "expected": {
+        "tier": "standard",
+        "features": [
+          "compressed-astc",
+          "float-render-target",
+          "msaa4",
+          "texture-array"
+        ]
+      }
+    },
+    {
+      "id": "standard-edge-vtx-15",
+      "description": "One vertex texture unit below the standard threshold drops the classifier to minimal.",
+      "limits": {
+        "maxTextureSize": 4096,
+        "maxCubeMapTextureSize": 4096,
+        "max3DTextureSize": 256,
+        "maxArrayTextureLayers": 256,
+        "maxTextureImageUnits": 16,
+        "maxVertexTextureImageUnits": 15,
+        "maxCombinedTextureImageUnits": 32,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 16,
+        "maxUniformBlockSize": 16384,
+        "maxDrawBuffers": 4,
+        "maxColorAttachments": 4,
+        "maxSamples": 4,
+        "maxAnisotropy": 1
+      },
+      "extensions": ["WEBGL_compressed_texture_astc"],
+      "expected": {
+        "tier": "minimal",
+        "features": ["compressed-astc", "msaa4", "texture-array"]
+      }
+    },
+    {
+      "id": "extended-multi-compression",
+      "description": "Several compressed families report one feature per present extension.",
+      "limits": {
+        "maxTextureSize": 8192,
+        "maxCubeMapTextureSize": 8192,
+        "max3DTextureSize": 2048,
+        "maxArrayTextureLayers": 2048,
+        "maxTextureImageUnits": 16,
+        "maxVertexTextureImageUnits": 16,
+        "maxCombinedTextureImageUnits": 32,
+        "maxVertexAttributes": 16,
+        "maxUniformBufferBindings": 24,
+        "maxUniformBlockSize": 65536,
+        "maxDrawBuffers": 8,
+        "maxColorAttachments": 8,
+        "maxSamples": 4,
+        "maxAnisotropy": 16
+      },
+      "extensions": [
+        "EXT_color_buffer_float",
+        "OES_texture_float_linear",
+        "WEBGL_compressed_texture_astc",
+        "WEBGL_compressed_texture_etc",
+        "WEBGL_compressed_texture_s3tc"
+      ],
+      "expected": {
+        "tier": "extended",
+        "features": [
+          "compressed-astc",
+          "compressed-etc2",
+          "compressed-s3tc",
+          "float-render-target",
+          "msaa4",
+          "texture-array"
+        ]
+      }
+    }
+  ]
+}

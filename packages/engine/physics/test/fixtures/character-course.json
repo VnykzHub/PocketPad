@@ -1,0 +1,83 @@
+{
+  "id": "ER-07-04",
+  "source": "docs/engine/07-physics3d.md ER-07-04, §3.5, §5.8",
+  "world": {
+    "gravity": [0, -9.81, 0],
+    "fixedDt": 0.016666666666666666
+  },
+  "character": {
+    "radius": 0.35,
+    "halfHeight": 0.55,
+    "slopeLimitDegrees": 40,
+    "stepOffset": 0.3,
+    "snapToGround": 0.1,
+    "gravity": 9.81,
+    "moveSpeed": 3
+  },
+  "course": {
+    "ground": {
+      "top": 0,
+      "halfExtents": [60, 0.5, 60]
+    },
+    "ramp": {
+      "description": "45° ramp rising toward +X; its low corner touches the ground at x=0, y=0",
+      "center": [2.298097037926873, 2.298097037926873, 0],
+      "halfExtents": [3, 0.25, 4],
+      "rotation": [0, 0, 0.3826834323650898, 0.9238795325112867],
+      "start": [-3, 0.9, 0]
+    },
+    "step": {
+      "description": "0.3 m step, top surface at y=0.3",
+      "center": [6.5, 0.15, 8],
+      "halfExtents": [1, 0.15, 2],
+      "start": [4.6, 0.9, 8]
+    },
+    "drop": {
+      "description": "airborne start 2 m above the ground",
+      "start": [-6, 2.9, 8],
+      "heightM": 2
+    },
+    "wall": {
+      "description": "vertical wall face at x=13.5",
+      "center": [14, 2, -8],
+      "halfExtents": [0.5, 2, 2],
+      "faceX": 13.5,
+      "start": [11.5, 0.9, -8]
+    },
+    "ceiling": {
+      "description": "flat ceiling underside at y=2.05",
+      "center": [8, 2.3, -8],
+      "halfExtents": [2, 0.25, 2],
+      "bottomY": 2.05,
+      "start": [8, 0.9, -8]
+    }
+  },
+  "control": {
+    "rampPushTicks": 240,
+    "rampMeasureTicks": 60,
+    "stepWalkTicks": 50,
+    "dropMaxTicks": 120,
+    "wallPushTicks": 120,
+    "ceilingPushTicks": 12,
+    "ceilingPushPerTick": 0.1
+  },
+  "recorded": {
+    "rampHitWallTick": 56,
+    "rampHorizontalAdvanceM": -0.00019952654838562012,
+    "rampVerticalAdvanceM": 0.0012657642364501953,
+    "stepFinalX": 6.731963634490967,
+    "stepClimbedY": 1.2009999752044678,
+    "stepGrounded": true,
+    "dropLandingTick": 38,
+    "dropFinalY": 0.901099681854248,
+    "wallHitSeen": true,
+    "wallMaxPenetrationM": -0.0007423400878909803,
+    "ceilingHitSeen": true,
+    "ceilingMaxHeadY": 2.049197816848755,
+    "ceilingPenetrationM": -0.0008021831512450284,
+    "finalHash": 3078637351,
+    "nodeResult": "PASS (1/1) on Node 20 Windows, 2026-10-23; Rapier 0.21.0",
+    "browser": "PENDING — Desktop Chrome 155 M1 run",
+    "notes": "All values are Node measurements from this fixture, not targets. headY = body centre y + halfHeight + radius; penetration is measured against the authored face/bottom. Negative penetration means the capsule stayed short of the authored surface. Step top is y=0.3; stepFinalX 6.73 is past the step centre (6.5), stepClimbedY 1.201 = resting height 0.901 + 0.3."
+  }
+}

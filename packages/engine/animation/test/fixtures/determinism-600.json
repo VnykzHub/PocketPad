@@ -1,0 +1,35 @@
+{
+  "ticks": 600,
+  "fixedStep": 0.016666666666666666,
+  "instanceCount": 32,
+  "clips": [
+    "walk-1.0",
+    "run-0.6",
+    "events-loop"
+  ],
+  "tree": {
+    "clips": [
+      "walk-1.0",
+      "run-0.6"
+    ],
+    "thresholds": [
+      0,
+      1
+    ],
+    "syncPhase": true
+  },
+  "crossfades": [
+    {
+      "tick": 120,
+      "clip": "run-0.6",
+      "fadeOutPreviousSeconds": 0.2
+    },
+    {
+      "tick": 240,
+      "clip": "walk-1.0",
+      "fadeOutPreviousSeconds": 0.1
+    }
+  ],
+  "speedChange": 1.25,
+  "fadeChange": 0.3
+}

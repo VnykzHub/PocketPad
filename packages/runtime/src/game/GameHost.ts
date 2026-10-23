@@ -24,13 +24,14 @@ import type {
   GameDebug,
   GameRenderer3D,
   JsonValue,
+  SaveApi,
 } from "@lanpad/sdk";
 import type { InputMapper } from "../input/InputMapper.js";
 import { TiltIntegrator } from "../input/TiltIntegrator.js";
 import type { InputSnapshot } from "../input/types.js";
 import { FixedLoop } from "../loop/FixedLoop.js";
 import type { FrameStats, LoopHooks } from "../loop/types.js";
-import { createGameContext } from "./GameContext.js";
+import { createGameContext, takePendingSave } from "./GameContext.js";
 import { GameEventQueue, SnapshotInputReader } from "./InputReader.js";
 
 export type GameHostPhase = "idle" | "starting" | "playing" | "paused" | "failed" | "disposed";
@@ -53,6 +54,10 @@ export interface GameHostDeps {
   readonly debug?: GameDebug;
   readonly seed?: number;
   readonly eventCapacity?: number;
+  /** Host-provided save API; absent means the game runs without persistence. */
+  readonly save?: SaveApi;
+  /** Manifest slug; binds the installed save capability (stage knows it). */
+  readonly gameId?: string;
   /** Receives the loop's reused stats object (overlay, dynamic resolution). */
   readonly onFrameStats?: (stats: FrameStats) => void;
   /** Called once when the game throws; the loop is already stopped. */
@@ -65,11 +70,11 @@ const TILT_SLOT_COUNT = 8;
 
 export class GameHost {
   readonly game: Game;
-  readonly context: GameContext;
   readonly loop: FixedLoop;
   readonly events: GameEventQueue;
   readonly input: SnapshotInputReader;
 
+  private contextValue: GameContext;
   private readonly audio: PausableAudio;
   private readonly onError: ((error: unknown) => void) | undefined;
   private readonly tiltIntegrators: TiltIntegrator[] = [];
@@ -85,7 +90,7 @@ export class GameHost {
     }
     this.events = new GameEventQueue(deps.eventCapacity);
     this.input = new SnapshotInputReader(this.events);
-    this.context = createGameContext({
+    this.contextValue = createGameContext({
       manifest: deps.game.manifest,
       input: this.input,
       renderer: deps.renderer,
@@ -93,6 +98,8 @@ export class GameHost {
       serverNow: deps.serverNow ?? noServerTime,
       ...(deps.debug === undefined ? {} : { debug: deps.debug }),
       ...(deps.seed === undefined ? {} : { seed: deps.seed }),
+      ...(deps.save === undefined ? {} : { save: deps.save }),
+      ...(deps.gameId === undefined ? {} : { gameId: deps.gameId }),
     });
 
     const onFrameStats = deps.onFrameStats;
@@ -107,6 +114,15 @@ export class GameHost {
       cancel: deps.cancel,
       mapper: deps.mapper,
     });
+  }
+
+  /**
+   * The game context. It is rebuilt once during `start()` if an installed
+   * save provider was async and resolved a store, so `game.init` always sees
+   * the final `ctx.save` (15 §5.5).
+   */
+  get context(): GameContext {
+    return this.contextValue;
   }
 
   get phase(): GameHostPhase {
@@ -126,7 +142,17 @@ export class GameHost {
     if (this.phaseValue !== "idle") return;
     this.phaseValue = "starting";
     try {
-      await this.game.init(this.context);
+      // An async save provider (OPFS/IndexedDB open) resolves before init;
+      // failure leaves `ctx.save` undefined rather than failing the game.
+      const pendingSave = takePendingSave(this.contextValue);
+      if (pendingSave !== undefined) {
+        const save = await pendingSave;
+        if (this.phaseValue !== "starting") return; // disposed while opening
+        if (save !== undefined) {
+          this.contextValue = Object.freeze({ ...this.contextValue, save });
+        }
+      }
+      await this.game.init(this.contextValue);
     } catch (error) {
       this.fail(error);
       throw error;

@@ -4,6 +4,7 @@
   "type": "module",
   "workspaces": [
     "packages/*",
+    "packages/engine/*",
     "sdk",
     "tools/*"
   ],
@@ -13,11 +14,12 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "typecheck": "tsc -b && npm run typecheck:games",
-    "typecheck:games": "tsc -p packages/games/reaction-duel/tsconfig.json --noEmit && tsc -p packages/games/platformer/tsconfig.json --noEmit",
+    "typecheck:games": "tsc -p packages/games/reaction-duel/tsconfig.json --noEmit && tsc -p packages/games/platformer/tsconfig.json --noEmit && tsc -p packages/games/engine-cube/tsconfig.json --noEmit",
     "lint": "eslint . --ignore-pattern \".github/**\"",
     "test": "vitest run",
     "size": "node tools/size-budget/dist/cli.js",
-    "trace": "node tools/trace-check/dist/cli.js --stage D0",
+    "trace": "node tools/trace-check/dist/cli.js --stage D0 && node tools/trace-check/dist/cli.js --stage D1 && node tools/trace-check/dist/cli.js --stage D2 && node tools/trace-check/dist/cli.js --stage D3 && node tools/trace-check/dist/cli.js --stage D4 && node tools/trace-check/dist/cli.js --stage D5 && node tools/trace-check/dist/cli.js --stage D6 && node tools/trace-check/dist/cli.js --stage D7",
+    "trace:gate": "node tools/trace-check/dist/cli.js",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run size && npm run trace"
   },
   "devDependencies": {
@@ -25,6 +27,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/ws": "^8.18.2",
     "eslint": "^10.13.0",
+    "fake-indexeddb": "^6.2.4",
     "fast-check": "^4.10.2",
     "jsdom": "^29.1.1",
     "typescript": "^6.0.3",

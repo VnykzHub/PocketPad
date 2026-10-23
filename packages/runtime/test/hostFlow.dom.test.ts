@@ -8,6 +8,7 @@
  * — is the production code path.
  */
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
+import { getGames } from "../src/game/registry.js";
 
 const ROOM_TOKEN = "r".repeat(22);
 const HOST_TOKEN = "h".repeat(22);
@@ -163,7 +164,9 @@ describe("host shell", () => {
     const launcher = document.querySelector(".lanpad-launcher");
     expect(launcher).not.toBeNull();
     expect(launcher?.querySelector("h1")?.textContent).toBe("Games");
-    expect(document.querySelectorAll(".lanpad-launcher__card")).toHaveLength(2);
+    expect(document.querySelectorAll(".lanpad-launcher__card")).toHaveLength(
+      getGames().length,
+    );
     expect(document.querySelector(".lanpad-canvas")).toBeNull();
     // HP-02: the lobby hero is the only place the code/PIN are rendered.
     expect(document.getElementById("room-code")?.textContent).toBe("----");
@@ -178,7 +181,7 @@ describe("host shell", () => {
     const labels = Array.from(
       document.querySelectorAll(".lanpad-launcher__card-connected"),
     );
-    expect(labels).toHaveLength(2);
+    expect(labels).toHaveLength(getGames().length);
     for (const label of labels) {
       expect(label.textContent).toBe("1 connected");
     }

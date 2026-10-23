@@ -1,0 +1,27 @@
+{
+  "formatVersion": 1,
+  "actions": [
+    {
+      "name": "primary",
+      "kind": "button",
+      "bindings": [
+        { "device": "keyboard", "code": "KeyA" },
+        { "device": "keyboard", "code": "KeyB" },
+        { "device": "keyboard", "code": "KeyC" },
+        { "device": "keyboard", "code": "KeyD" },
+        { "device": "keyboard", "code": "KeyE" },
+        { "device": "keyboard", "code": "KeyF" },
+        { "device": "keyboard", "code": "KeyG" },
+        { "device": "keyboard", "code": "KeyH" },
+        { "device": "keyboard", "code": "KeyI" },
+        { "device": "keyboard", "code": "KeyJ" },
+        { "device": "keyboard", "code": "KeyK" },
+        { "device": "keyboard", "code": "KeyL" },
+        { "device": "keyboard", "code": "KeyM" },
+        { "device": "keyboard", "code": "KeyN" },
+        { "device": "keyboard", "code": "KeyO" },
+        { "device": "keyboard", "code": "KeyP" }
+      ]
+    }
+  ]
+}

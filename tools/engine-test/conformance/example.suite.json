@@ -1,0 +1,34 @@
+{
+  "formatVersion": 1,
+  "kind": "engine-conformance-suite",
+  "suiteId": "engine-core-contract",
+  "cases": [
+    {
+      "suiteId": "engine-core-contract",
+      "id": "projection-depth-range-webgl",
+      "kind": "math-projection",
+      "input": {
+        "family": "webgl",
+        "check": "depth-range"
+      }
+    },
+    {
+      "suiteId": "engine-core-contract",
+      "id": "quat-composition-order",
+      "kind": "math-quat-order",
+      "input": {
+        "composition": "left-to-right"
+      }
+    },
+    {
+      "suiteId": "engine-core-contract",
+      "id": "scene-destroy-twice",
+      "kind": "scene-lifecycle",
+      "input": {
+        "operations": ["create", "destroy", "destroy"]
+      },
+      "skip": true,
+      "reason": "Synthetic skip example; the case runs once the scene contract lands."
+    }
+  ]
+}

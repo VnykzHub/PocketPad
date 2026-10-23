@@ -1,0 +1,10 @@
+{
+  "formatVersion": 1,
+  "actions": [
+    {
+      "name": "primary",
+      "kind": "button",
+      "bindings": []
+    }
+  ]
+}

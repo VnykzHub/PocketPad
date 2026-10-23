@@ -8,12 +8,13 @@
  *
  * D5/D6 capabilities (`panels`, `layouts`, `haptics`, `events`) are owned by
  * the host shell, which calls `installRuntimeCapabilities()` before the game
- * starts. `GameHost` is frozen in this wave and constructs the context
- * without dependency overrides, so the registry is the seam; when GameHost
- * gains explicit `panels/layouts/haptics/events` deps, pass them there and
- * drop the registry. Until a capability is installed, calling it throws
- * `CapabilityUnavailableError` so a game fails loudly instead of silently
- * doing nothing.
+ * starts. Explicit deps win over the registry. Until a capability is
+ * installed, calling it throws `CapabilityUnavailableError` so a game fails
+ * loudly instead of silently doing nothing.
+ *
+ * `save` (spec 15) is different: it is optional in the SDK contract and
+ * has no throwing fallback. When the host cannot provide storage the member
+ * is absent and the game feature-detects `ctx.save === undefined` (15 §3.8).
  */
 import type {
   GameAudio,
@@ -26,6 +27,7 @@ import type {
   GamePanels,
   GameRenderer3D,
   GameRng,
+  SaveApi,
 } from "@lanpad/sdk";
 import type { SnapshotInputReader } from "./InputReader.js";
 
@@ -120,12 +122,36 @@ export interface RuntimeGameContext extends GameContext {
   readonly events: GameEvents;
 }
 
+/** Context a save provider needs to bind storage to the running game. */
+export interface SaveCapabilityContext {
+  readonly manifest: GameManifest;
+  /** Host-resolved manifest slug; absent means no persistence. */
+  readonly gameId?: string;
+}
+
+/** A provider may open storage asynchronously; `undefined` means no save. */
+export type SaveCapabilityResult =
+  | SaveApi
+  | undefined
+  | Promise<SaveApi | undefined>;
+
+/**
+ * Either a ready `SaveApi` or a per-game factory. Hosts that only know the
+ * game id when the stage opens pass the factory (15 §3.8: no throwing stub).
+ * An async factory is resolved by `GameHost` before `game.init`, so a store
+ * that cannot open leaves `ctx.save` undefined (15 §5.5 tier 3).
+ */
+export type SaveCapability =
+  | SaveApi
+  | ((context: SaveCapabilityContext) => SaveCapabilityResult);
+
 /** Live capabilities the host shell installs before the game starts. */
 export interface RuntimeCapabilities {
   readonly panels?: GamePanels;
   readonly layouts?: GameLayouts;
   readonly haptics?: GameHaptics;
   readonly events?: GameEvents;
+  readonly save?: SaveCapability;
 }
 
 let installedCapabilities: RuntimeCapabilities = {};
@@ -143,6 +169,34 @@ export function clearRuntimeCapabilities(): void {
   installedCapabilities = {};
 }
 
+/**
+ * Internal handoff for an async save provider. The promise never rejects:
+ * a failed open means "no persistence", not a failed game boot. `GameHost`
+ * awaits it before `game.init` and then rebuilds the frozen context with the
+ * resolved member.
+ */
+const pendingSaves = new WeakMap<
+  GameContext,
+  Promise<SaveApi | undefined>
+>();
+
+/** Internal: the pending async save result for `context`, if any. */
+export function takePendingSave(
+  context: GameContext,
+): Promise<SaveApi | undefined> | undefined {
+  return pendingSaves.get(context);
+}
+
+function isPromiseLike(
+  value: unknown,
+): value is PromiseLike<SaveApi | undefined> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { then?: unknown }).then === "function"
+  );
+}
+
 export interface GameContextDeps {
   readonly manifest: GameManifest;
   readonly input: SnapshotInputReader;
@@ -157,11 +211,45 @@ export interface GameContextDeps {
   readonly layouts?: GameLayouts;
   readonly haptics?: GameHaptics;
   readonly events?: GameEvents;
+  /** Explicit save API; wins over an installed save capability. */
+  readonly save?: SaveApi;
+  /** Host-resolved manifest slug, used to bind an installed save provider. */
+  readonly gameId?: string;
 }
 
 export function createGameContext(deps: GameContextDeps): RuntimeGameContext {
   const serverNow = deps.serverNow;
-  return Object.freeze({
+  // A save failure leaves `save` undefined; there is deliberately no
+  // throwing fallback (15 §3.8).
+  const explicitSave = deps.save;
+  const installedSave = installedCapabilities.save;
+  let providedSave: SaveApi | undefined;
+  let pendingSave: Promise<SaveApi | undefined> | undefined;
+  if (explicitSave !== undefined) {
+    providedSave = explicitSave;
+  } else if (typeof installedSave === "function") {
+    try {
+      const resolved = installedSave({
+        manifest: deps.manifest,
+        ...(deps.gameId === undefined ? {} : { gameId: deps.gameId }),
+      });
+      if (isPromiseLike(resolved)) {
+        // GameHost awaits this before `game.init`; a rejection is "no save".
+        pendingSave = Promise.resolve(resolved).then(
+          (value) => value,
+          () => undefined,
+        );
+      } else {
+        providedSave = resolved;
+      }
+    } catch {
+      // A failing provider means "no persistence", never a failed boot.
+      providedSave = undefined;
+    }
+  } else {
+    providedSave = installedSave;
+  }
+  const context: RuntimeGameContext = Object.freeze({
     manifest: deps.manifest,
     input: deps.input,
     renderer: deps.renderer,
@@ -172,6 +260,11 @@ export function createGameContext(deps: GameContextDeps): RuntimeGameContext {
     layouts: deps.layouts ?? installedCapabilities.layouts ?? unavailableLayouts,
     haptics: deps.haptics ?? installedCapabilities.haptics ?? unavailableHaptics,
     events: deps.events ?? installedCapabilities.events ?? unavailableEvents,
+    ...(providedSave === undefined ? {} : { save: providedSave }),
     serverNow: (): number | null => serverNow(),
   });
+  if (pendingSave !== undefined && providedSave === undefined) {
+    pendingSaves.set(context, pendingSave);
+  }
+  return context;
 }

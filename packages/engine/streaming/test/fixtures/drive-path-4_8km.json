@@ -1,0 +1,18 @@
+{
+  "name": "drive-path-4_8km",
+  "ticks": 7200,
+  "warmupTicks": 600,
+  "tickHz": 60,
+  "speedMps": 40,
+  "start": {
+    "x": 100,
+    "y": 0,
+    "z": 100
+  },
+  "heading": {
+    "x": 1,
+    "y": 0,
+    "z": 0
+  },
+  "cameraHalfFovRad": 0.6
+}

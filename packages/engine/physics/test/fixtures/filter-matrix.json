@@ -1,0 +1,78 @@
+{
+  "id": "ER-07-08",
+  "source": "docs/engine/07-physics3d.md ER-07-08, §5.9",
+  "world": {
+    "gravity": [0, 0, 0],
+    "fixedDt": 0.016666666666666666
+  },
+  "matrix": {
+    "description": "One cell per ordered layer pair (a, b), a = 0..31 row, b = 0..31 column. Each cell holds a dynamic sphere on layer a and a static box on layer b, overlapping by 0.25 m. All cells sit in one world on a 3 m grid, so a cell can only contact its own partner. A pair interacts exactly when both masks accept each other's layer (§5.9).",
+    "layerMasks": [
+      0,
+      2,
+      169093204,
+      1352745613,
+      2232030264,
+      676372834,
+      1116015188,
+      338186401,
+      2705491210,
+      169093712,
+      1352746629,
+      2232032296,
+      676376898,
+      1116023316,
+      338186401,
+      2705491210,
+      169158736,
+      1352876677,
+      2232292392,
+      676897090,
+      1117063700,
+      338186401,
+      2705491210,
+      177481808,
+      1369522821,
+      2265584680,
+      743481666,
+      1250232852,
+      338186401,
+      2705491210,
+      1242835024,
+      4294967295
+    ],
+    "maskRule": "mask[i] = bit i, plus bit j for every j where (i*5 + j*3) % 7 < 2; then mask[0] = 0, mask[1] = 1 << 1, mask[31] = 0xffffffff. Recorded as data so the fixture does not depend on the formula.",
+    "spacing": 3,
+    "sphereRadius": 0.35,
+    "boxHalfExtents": [0.35, 0.35, 0.35],
+    "boxOffsetX": 0.45
+  },
+  "sensor": {
+    "body": { "radius": 0.4, "layer": 3, "mask": 16 },
+    "sensor": { "halfExtents": [0.4, 0.4, 0.4], "layer": 4, "mask": 8 },
+    "ticks": 1
+  },
+  "joint": {
+    "halfExtents": [0.5, 0.5, 0.5],
+    "positionA": [0, 0, 0],
+    "positionB": [0.4, 0, 0],
+    "anchorA": [0.4, 0, 0],
+    "anchorB": [0, 0, 0],
+    "ticks": 1
+  },
+  "recorded": {
+    "observedInteractions": 111,
+    "observedRows": [0, 2, 135274564, 8, 2147483664, 32, 1082196548, 270549120, 2688581888, 135275072, 1024, 2147485696, 4096, 1082204676, 270549120, 2688581888, 135340096, 131072, 2147745792, 524288, 1083245060, 270549120, 2688581888, 143663168, 16777216, 2181038080, 67108864, 1216414212, 270549120, 2688581888, 1209016384, 2722400528],
+    "crossCellEvents": 0,
+    "sensorTriggerEnters": 1,
+    "sensorContactEvents": 0,
+    "sensorBodyDeltaM": 0,
+    "filteredSensorTriggerEnters": 0,
+    "jointCollideFalseContacts": 0,
+    "jointCollideTrueContacts": 1,
+    "unjointedContacts": 1,
+    "nodeResult": "PASS (3/3) on Node 20 Windows, 2026-10-23; Rapier 0.21.0",
+    "browser": "PENDING — Desktop Chrome 155 M1 run",
+    "notes": "observedRows is one u32 per layer a; bit b is set when that cell produced a contact event. observedInteractions counts bits across the rows. Sensor and joint counts are events after the stated number of ticks; sensorBodyDeltaM is the largest change of the sensor-overlapped body's position and must be 0 for no contact response. All values are Node measurements from this fixture, not targets."
+  }
+}

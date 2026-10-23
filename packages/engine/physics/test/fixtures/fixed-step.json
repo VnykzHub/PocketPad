@@ -1,0 +1,404 @@
+{
+  "$fixture": {
+    "name": "fixed-step",
+    "kind": "physics-fixed-step-contract-cases",
+    "formatVersion": 1,
+    "spec": "docs/engine/07-physics3d.md",
+    "sections": ["3.2", "5.3", "5.11", "5.12"],
+    "synthetic": true,
+    "measured": false,
+    "dateFormat": "none",
+    "notes": [
+      "All values are tick counts or contract constants. No wall-clock time was measured.",
+      "The world has no accumulator: step() is called exactly once per engine tick (07 §3.2). hostFrameTicks models the host fixed loop's carry, in units of fixed ticks, not seconds.",
+      "Every state hash is null. 07 §5.11 metadata is recorded in runs; no engine exists to produce expectedStateHash in W0.",
+      "seed is recorded but never consumed: 07 §5.11 states physics has no RNG."
+    ]
+  },
+  "fixtureVersion": 1,
+  "fixedDtSeconds": 0.016666666666666666,
+  "engineHz": 60,
+  "worldAccumulator": false,
+  "cases": [
+    {
+      "id": "one-engine-tick-one-step",
+      "kind": "step-count",
+      "description": "One engine tick results in exactly one world step and tick 1.",
+      "engineTicks": 1,
+      "worldStepCalls": 1,
+      "paused": false,
+      "hostFrameTicks": null,
+      "expect": {
+        "worldSteps": 1,
+        "tickAfter": 1,
+        "remainderTicks": null,
+        "sameStateHash": null,
+        "expectedStateHash": null,
+        "note": "07 §3.2: step() is called once per engine tick."
+      }
+    },
+    {
+      "id": "paused-frame-does-not-step",
+      "kind": "step-count",
+      "description": "A paused engine frame advances no simulation tick.",
+      "engineTicks": 0,
+      "worldStepCalls": 0,
+      "paused": true,
+      "hostFrameTicks": null,
+      "expect": {
+        "worldSteps": 0,
+        "tickAfter": 0,
+        "remainderTicks": null,
+        "sameStateHash": null,
+        "expectedStateHash": null,
+        "note": "07 §8 integration: pause does not advance."
+      }
+    },
+    {
+      "id": "sixty-ticks-one-second",
+      "kind": "step-count",
+      "description": "Sixty fixed ticks equal one simulated second.",
+      "engineTicks": 60,
+      "worldStepCalls": 60,
+      "paused": false,
+      "hostFrameTicks": null,
+      "expect": {
+        "worldSteps": 60,
+        "tickAfter": 60,
+        "remainderTicks": null,
+        "sameStateHash": null,
+        "expectedStateHash": null,
+        "note": "fixedDt is 1/60 s (07 §4.1)."
+      }
+    },
+    {
+      "id": "six-hundred-ticks",
+      "kind": "step-count",
+      "description": "The ER-07-02 duration is 600 ticks, not 600 frames.",
+      "engineTicks": 600,
+      "worldStepCalls": 600,
+      "paused": false,
+      "hostFrameTicks": null,
+      "expect": {
+        "worldSteps": 600,
+        "tickAfter": 600,
+        "remainderTicks": null,
+        "sameStateHash": null,
+        "expectedStateHash": null,
+        "note": "The 600-tick acceptance hash is recorded later; no value is invented here."
+      }
+    },
+    {
+      "id": "double-step-in-one-tick-doubles-time",
+      "kind": "step-count",
+      "description": "A second step() in one engine tick is legal API-wise but doubles simulated time.",
+      "engineTicks": 1,
+      "worldStepCalls": 2,
+      "paused": false,
+      "hostFrameTicks": null,
+      "expect": {
+        "worldSteps": 2,
+        "tickAfter": 2,
+        "remainderTicks": null,
+        "sameStateHash": null,
+        "expectedStateHash": null,
+        "note": "07 §3.2: legal API-wise, a game bug, breaks replay expectations."
+      }
+    },
+    {
+      "id": "host-frame-half-tick",
+      "kind": "host-accumulator",
+      "description": "A host frame shorter than one fixed tick emits no world step.",
+      "engineTicks": null,
+      "worldStepCalls": null,
+      "paused": false,
+      "hostFrameTicks": [0.5],
+      "expect": {
+        "worldSteps": 0,
+        "tickAfter": 0,
+        "remainderTicks": 0.5,
+        "sameStateHash": null,
+        "expectedStateHash": null,
+        "note": "Accumulation is host-owned; the world has no accumulator."
+      }
+    },
+    {
+      "id": "host-frame-three-and-quarter-ticks",
+      "kind": "host-accumulator",
+      "description": "A 3.25-tick host frame emits three steps and carries 0.25.",
+      "engineTicks": null,
+      "worldStepCalls": null,
+      "paused": false,
+      "hostFrameTicks": [3.25],
+      "expect": {
+        "worldSteps": 3,
+        "tickAfter": 3,
+        "remainderTicks": 0.25,
+        "sameStateHash": null,
+        "expectedStateHash": null,
+        "note": "Remainder is in fixed-tick units and is exact in this synthetic case."
+      }
+    },
+    {
+      "id": "host-accumulator-carries-remainder",
+      "kind": "host-accumulator",
+      "description": "Two 2.5-tick host frames emit five total steps with no remainder.",
+      "engineTicks": null,
+      "worldStepCalls": null,
+      "paused": false,
+      "hostFrameTicks": [2.5, 2.5],
+      "expect": {
+        "worldSteps": 5,
+        "tickAfter": 5,
+        "remainderTicks": 0,
+        "sameStateHash": null,
+        "expectedStateHash": null,
+        "note": "The first frame carries 0.5 into the second."
+      }
+    },
+    {
+      "id": "solver-iterations-change-hash",
+      "kind": "determinism",
+      "description": "Changing velocityIterations must change the 600-tick state hash.",
+      "engineTicks": null,
+      "worldStepCalls": null,
+      "paused": false,
+      "hostFrameTicks": null,
+      "fixedDtSeconds": 0.016666666666666666,
+      "runs": [
+        {
+          "id": "baseline",
+          "ticks": 600,
+          "solver": {
+            "velocityIterations": 8,
+            "positionIterations": 3,
+            "warmStarting": true,
+            "substeps": 1
+          },
+          "substeps": 1,
+          "seed": null,
+          "bodies": null,
+          "joints": null,
+          "inputTrace": null,
+          "expectedStateHash": null
+        },
+        {
+          "id": "velocity-iterations-7",
+          "ticks": 600,
+          "solver": {
+            "velocityIterations": 7,
+            "positionIterations": 3,
+            "warmStarting": true,
+            "substeps": 1
+          },
+          "substeps": 1,
+          "seed": null,
+          "bodies": null,
+          "joints": null,
+          "inputTrace": null,
+          "expectedStateHash": null
+        }
+      ],
+      "expect": {
+        "worldSteps": null,
+        "tickAfter": 600,
+        "remainderTicks": null,
+        "sameStateHash": false,
+        "expectedStateHash": null,
+        "note": "07 §5.11 records solver configuration because it changes the hash."
+      }
+    },
+    {
+      "id": "substeps-change-hash",
+      "kind": "determinism",
+      "description": "Changing substeps from 1 to 2 must change the state hash.",
+      "engineTicks": null,
+      "worldStepCalls": null,
+      "paused": false,
+      "hostFrameTicks": null,
+      "fixedDtSeconds": 0.016666666666666666,
+      "runs": [
+        {
+          "id": "substeps-1",
+          "ticks": 600,
+          "solver": {
+            "velocityIterations": 8,
+            "positionIterations": 3,
+            "warmStarting": true,
+            "substeps": 1
+          },
+          "substeps": 1,
+          "seed": null,
+          "bodies": null,
+          "joints": null,
+          "inputTrace": null,
+          "expectedStateHash": null
+        },
+        {
+          "id": "substeps-2",
+          "ticks": 600,
+          "solver": {
+            "velocityIterations": 8,
+            "positionIterations": 3,
+            "warmStarting": true,
+            "substeps": 2
+          },
+          "substeps": 2,
+          "seed": null,
+          "bodies": null,
+          "joints": null,
+          "inputTrace": null,
+          "expectedStateHash": null
+        }
+      ],
+      "expect": {
+        "worldSteps": null,
+        "tickAfter": 600,
+        "remainderTicks": null,
+        "sameStateHash": false,
+        "expectedStateHash": null,
+        "note": "substeps is both a SolverConfig field and replay metadata (07 §3.2, §5.11)."
+      }
+    },
+    {
+      "id": "warm-starting-change-hash",
+      "kind": "determinism",
+      "description": "Toggling warmStarting must change the state hash.",
+      "engineTicks": null,
+      "worldStepCalls": null,
+      "paused": false,
+      "hostFrameTicks": null,
+      "fixedDtSeconds": 0.016666666666666666,
+      "runs": [
+        {
+          "id": "warm-starting-on",
+          "ticks": 600,
+          "solver": {
+            "velocityIterations": 8,
+            "positionIterations": 3,
+            "warmStarting": true,
+            "substeps": 1
+          },
+          "substeps": 1,
+          "seed": null,
+          "bodies": null,
+          "joints": null,
+          "inputTrace": null,
+          "expectedStateHash": null
+        },
+        {
+          "id": "warm-starting-off",
+          "ticks": 600,
+          "solver": {
+            "velocityIterations": 8,
+            "positionIterations": 3,
+            "warmStarting": false,
+            "substeps": 1
+          },
+          "substeps": 1,
+          "seed": null,
+          "bodies": null,
+          "joints": null,
+          "inputTrace": null,
+          "expectedStateHash": null
+        }
+      ],
+      "expect": {
+        "worldSteps": null,
+        "tickAfter": 600,
+        "remainderTicks": null,
+        "sameStateHash": false,
+        "expectedStateHash": null,
+        "note": "Warm starting applies cached impulses and is part of the recorded solver config."
+      }
+    },
+    {
+      "id": "seed-does-not-change-hash",
+      "kind": "determinism",
+      "description": "Two seeds with identical configuration must produce the same state hash.",
+      "engineTicks": null,
+      "worldStepCalls": null,
+      "paused": false,
+      "hostFrameTicks": null,
+      "fixedDtSeconds": 0.016666666666666666,
+      "runs": [
+        {
+          "id": "seed-1",
+          "ticks": 600,
+          "solver": {
+            "velocityIterations": 8,
+            "positionIterations": 3,
+            "warmStarting": true,
+            "substeps": 1
+          },
+          "substeps": 1,
+          "seed": 1,
+          "bodies": null,
+          "joints": null,
+          "inputTrace": null,
+          "expectedStateHash": null
+        },
+        {
+          "id": "seed-2",
+          "ticks": 600,
+          "solver": {
+            "velocityIterations": 8,
+            "positionIterations": 3,
+            "warmStarting": true,
+            "substeps": 1
+          },
+          "substeps": 1,
+          "seed": 2,
+          "bodies": null,
+          "joints": null,
+          "inputTrace": null,
+          "expectedStateHash": null
+        }
+      ],
+      "expect": {
+        "worldSteps": null,
+        "tickAfter": 600,
+        "remainderTicks": null,
+        "sameStateHash": true,
+        "expectedStateHash": null,
+        "note": "07 §5.11 records seed but the physics world has no RNG and never reads it."
+      }
+    },
+    {
+      "id": "state-hash-is-not-recorded",
+      "kind": "determinism",
+      "description": "The 600-tick hash is a placeholder until a run is recorded.",
+      "engineTicks": null,
+      "worldStepCalls": null,
+      "paused": false,
+      "hostFrameTicks": null,
+      "fixedDtSeconds": 0.016666666666666666,
+      "runs": [
+        {
+          "id": "unrecorded",
+          "ticks": 600,
+          "solver": {
+            "velocityIterations": 8,
+            "positionIterations": 3,
+            "warmStarting": true,
+            "substeps": 1
+          },
+          "substeps": 1,
+          "seed": null,
+          "bodies": null,
+          "joints": null,
+          "inputTrace": null,
+          "expectedStateHash": null
+        }
+      ],
+      "expect": {
+        "worldSteps": null,
+        "tickAfter": 600,
+        "remainderTicks": null,
+        "sameStateHash": null,
+        "expectedStateHash": null,
+        "note": "ER-07-02 records the real hash on CI Node 20 and Chrome 155; W0 has no engine."
+      }
+    }
+  ]
+}

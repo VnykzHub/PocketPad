@@ -1,0 +1,124 @@
+{
+  "formatVersion": 1,
+  "actions": [
+    {
+      "name": "move",
+      "kind": "vector2",
+      "deadzone": 0.15,
+      "yUp": true,
+      "bindings": [
+        { "device": "keyboard", "code": "KeyW", "component": "y", "scale": -1 },
+        { "device": "keyboard", "code": "KeyS", "component": "y", "scale": 1 },
+        { "device": "keyboard", "code": "KeyA", "component": "x", "scale": -1 },
+        { "device": "keyboard", "code": "KeyD", "component": "x", "scale": 1 },
+        { "device": "keyboard", "code": "ArrowUp", "component": "y", "scale": -1 },
+        { "device": "keyboard", "code": "ArrowDown", "component": "y", "scale": 1 },
+        { "device": "keyboard", "code": "ArrowLeft", "component": "x", "scale": -1 },
+        { "device": "keyboard", "code": "ArrowRight", "component": "x", "scale": 1 },
+        { "device": "phone", "slot": "self", "channel": "axis", "axis": "lx" },
+        { "device": "phone", "slot": "self", "channel": "axis", "axis": "ly" },
+        { "device": "gamepad", "pad": "self", "axis": 0, "component": "x" },
+        { "device": "gamepad", "pad": "self", "axis": 1, "component": "y" }
+      ],
+      "output": { "stick": "left" }
+    },
+    {
+      "name": "look",
+      "kind": "vector2",
+      "deadzone": 0.15,
+      "bindings": [
+        { "device": "phone", "slot": "self", "channel": "axis", "axis": "rx" },
+        { "device": "phone", "slot": "self", "channel": "axis", "axis": "ry" },
+        { "device": "gamepad", "pad": "self", "axis": 2, "component": "x" },
+        { "device": "gamepad", "pad": "self", "axis": 3, "component": "y" }
+      ],
+      "output": { "stick": "right" }
+    },
+    {
+      "name": "primary",
+      "kind": "button",
+      "bindings": [
+        { "device": "keyboard", "code": "Space" },
+        { "device": "keyboard", "code": "Enter" },
+        { "device": "pointer", "button": 0 },
+        { "device": "gamepad", "pad": "self", "button": 0 },
+        { "device": "phone", "slot": "self", "channel": "button", "bit": 0 }
+      ],
+      "output": { "button": 0 }
+    },
+    {
+      "name": "secondary",
+      "kind": "button",
+      "bindings": [
+        { "device": "keyboard", "code": "ShiftLeft" },
+        { "device": "gamepad", "pad": "self", "button": 1 },
+        { "device": "phone", "slot": "self", "channel": "button", "bit": 1 }
+      ],
+      "output": { "button": 1 }
+    },
+    {
+      "name": "interact",
+      "kind": "button",
+      "bindings": [
+        { "device": "keyboard", "code": "KeyE" },
+        { "device": "gamepad", "pad": "self", "button": 2 },
+        { "device": "phone", "slot": "self", "channel": "button", "bit": 3 }
+      ],
+      "output": { "button": 2 }
+    },
+    {
+      "name": "pause",
+      "kind": "button",
+      "bindings": [
+        { "device": "keyboard", "code": "KeyP" },
+        { "device": "gamepad", "pad": "self", "button": 9 }
+      ],
+      "output": { "button": 9 }
+    },
+    {
+      "name": "fire",
+      "kind": "axis",
+      "threshold": 0.25,
+      "hysteresis": 0.15,
+      "bindings": [
+        { "device": "phone", "slot": "self", "channel": "axis", "axis": "rt", "scale": 1 },
+        { "device": "gamepad", "pad": "self", "button": 7 }
+      ],
+      "output": { "trigger": "rt" }
+    },
+    {
+      "name": "brake",
+      "kind": "axis",
+      "bindings": [
+        { "device": "phone", "slot": "self", "channel": "axis", "axis": "lt" },
+        { "device": "gamepad", "pad": "self", "button": 6 }
+      ],
+      "output": { "trigger": "lt" }
+    },
+    {
+      "name": "cursor",
+      "kind": "vector2",
+      "bindings": [
+        { "device": "pointer", "axis": "x", "component": "x" },
+        { "device": "pointer", "axis": "y", "component": "y" }
+      ]
+    },
+    {
+      "name": "turn",
+      "kind": "axis",
+      "bindings": [
+        { "device": "pointer", "axis": "dx" },
+        { "device": "pointer", "axis": "wheel", "scale": -1 }
+      ],
+      "output": { "axis": "rx" }
+    },
+    {
+      "name": "pitch",
+      "kind": "axis",
+      "bindings": [
+        { "device": "pointer", "axis": "dy" }
+      ],
+      "output": { "axis": "ry" }
+    }
+  ]
+}

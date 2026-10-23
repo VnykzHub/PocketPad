@@ -1,0 +1,12 @@
+{
+  "formatVersion": 1,
+  "actions": [
+    {
+      "name": "move",
+      "kind": "axis",
+      "bindings": [
+        { "device": "gamepad", "pad": 4, "axis": 0 }
+      ]
+    }
+  ]
+}

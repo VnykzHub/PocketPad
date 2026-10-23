@@ -1,0 +1,11 @@
+{
+  "name": "lod-oscillation",
+  "ticks": 600,
+  "amplitudeMeters": 2,
+  "boundariesMeters": [
+    96,
+    160,
+    256
+  ],
+  "cellSizeMeters": 64
+}

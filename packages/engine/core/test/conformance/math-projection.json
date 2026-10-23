@@ -1,0 +1,132 @@
+{
+  "formatVersion": 1,
+  "synthetic": true,
+  "source": "docs/engine/02-math.md §3.6",
+  "note": "Hand-computed from the spec formulas; no implementation was run. Matrices are column-major: m[c*4+r]. Probes are (x,y,z,w) camera-space points.",
+  "cases": [
+    {
+      "id": "perspective-webgl2",
+      "fn": "mat4PerspectiveWebGL2",
+      "argsOrder": ["fovY", "aspect", "near", "far"],
+      "args": [1.5707963267948966, 1, 1, 5],
+      "expected": [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, -1.5, -1,
+        0, 0, -2.5, 0
+      ],
+      "probes": [
+        {
+          "label": "camera-z-near",
+          "point": [0, 0, -1, 1],
+          "expectNdcZ": -1
+        },
+        {
+          "label": "camera-z-far",
+          "point": [0, 0, -5, 1],
+          "expectNdcZ": 1
+        }
+      ]
+    },
+    {
+      "id": "perspective-webgpu",
+      "fn": "mat4PerspectiveWebGPU",
+      "argsOrder": ["fovY", "aspect", "near", "far"],
+      "args": [1.5707963267948966, 1, 1, 5],
+      "expected": [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, -1.25, -1,
+        0, 0, -1.25, 0
+      ],
+      "probes": [
+        {
+          "label": "camera-z-near",
+          "point": [0, 0, -1, 1],
+          "expectNdcZ": 0
+        },
+        {
+          "label": "camera-z-far",
+          "point": [0, 0, -5, 1],
+          "expectNdcZ": 1
+        }
+      ]
+    },
+    {
+      "id": "orthographic-webgl2",
+      "fn": "mat4OrthographicWebGL2",
+      "argsOrder": ["left", "right", "bottom", "top", "near", "far"],
+      "args": [-1, 1, -1, 1, 1, 5],
+      "expected": [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, -0.5, 0,
+        0, 0, -1.5, 1
+      ],
+      "probes": [
+        {
+          "label": "camera-z-near",
+          "point": [0, 0, -1, 1],
+          "expectNdcZ": -1
+        },
+        {
+          "label": "camera-z-far",
+          "point": [0, 0, -5, 1],
+          "expectNdcZ": 1
+        }
+      ]
+    },
+    {
+      "id": "orthographic-webgpu",
+      "fn": "mat4OrthographicWebGPU",
+      "argsOrder": ["left", "right", "bottom", "top", "near", "far"],
+      "args": [-1, 1, -1, 1, 1, 5],
+      "expected": [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, -0.25, 0,
+        0, 0, -0.25, 1
+      ],
+      "probes": [
+        {
+          "label": "camera-z-near",
+          "point": [0, 0, -1, 1],
+          "expectNdcZ": 0
+        },
+        {
+          "label": "camera-z-far",
+          "point": [0, 0, -5, 1],
+          "expectNdcZ": 1
+        }
+      ]
+    },
+    {
+      "id": "look-at-forward-minus-z",
+      "fn": "mat4LookAt",
+      "argsOrder": ["eye", "target", "up"],
+      "args": [
+        [0, 0, 5],
+        [0, 0, 0],
+        [0, 1, 0]
+      ],
+      "expected": [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, -5, 1
+      ],
+      "probes": [
+        {
+          "label": "target-maps-to-eye-space-depth-minus-five",
+          "point": [0, 0, 0, 1],
+          "expectClip": [0, 0, -5, 1]
+        },
+        {
+          "label": "eye-maps-to-origin",
+          "point": [0, 0, 5, 1],
+          "expectClip": [0, 0, 0, 1]
+        }
+      ]
+    }
+  ]
+}

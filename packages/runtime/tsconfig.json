@@ -7,5 +7,14 @@
     "types": ["vite/client"]
   },
   "include": ["src"],
-  "references": [{ "path": "../protocol" }, { "path": "../../sdk" }]
+  "references": [
+    { "path": "../protocol" },
+    { "path": "../../sdk" },
+    { "path": "../engine/core" },
+    { "path": "../engine/physics" },
+    { "path": "../engine/renderer-webgpu" },
+    { "path": "../engine/renderer-webgl2" },
+    { "path": "../engine/assets" },
+    { "path": "../engine/input" }
+  ]
 }

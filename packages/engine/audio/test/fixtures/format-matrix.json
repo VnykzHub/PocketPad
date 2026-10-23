@@ -1,0 +1,90 @@
+{
+  "fixtureVersion": 1,
+  "source": "docs/engine/09-audio.md §4.1, §4.4, §5.6, §5.9",
+  "kind": "audio-format-matrix",
+  "entries": [
+    {
+      "id": "opus-ogg",
+      "codec": "opus",
+      "container": "ogg",
+      "extension": ".opus",
+      "mimeType": "audio/ogg",
+      "runtimeUse": "decoded",
+      "required": true,
+      "notes": "Preferred for SFX and short music; decoded after unlock."
+    },
+    {
+      "id": "opus-webm",
+      "codec": "opus",
+      "container": "webm",
+      "extension": ".webm",
+      "mimeType": "audio/webm",
+      "runtimeUse": "streamed",
+      "required": true,
+      "notes": "Media-element streaming for music and radio."
+    },
+    {
+      "id": "pcm-wav",
+      "codec": "pcm",
+      "container": "wav",
+      "extension": ".wav",
+      "mimeType": "audio/wav",
+      "runtimeUse": "dev-test",
+      "required": false,
+      "notes": "Dev and test fixtures only; never in the production boot set."
+    },
+    {
+      "id": "aac-m4a",
+      "codec": "aac",
+      "container": "mp4",
+      "extension": ".m4a",
+      "mimeType": "audio/mp4",
+      "runtimeUse": "optional-streamed",
+      "required": false,
+      "featureGate": "canPlayType",
+      "notes": "Optional streamed-music fallback only when canPlayType accepts it."
+    }
+  ],
+  "fallbackOrder": ["opus-webm", "aac-m4a"],
+  "byUse": {
+    "sfx": ["opus-ogg"],
+    "shortMusic": ["opus-ogg"],
+    "streamedMusic": ["opus-webm", "aac-m4a"],
+    "radio": ["opus-webm", "aac-m4a"],
+    "devTest": ["pcm-wav"]
+  },
+  "routing": {
+    "streamWhen": {
+      "durationSecondsGreaterThan": 30,
+      "bytesGreaterThan": 1048576
+    },
+    "manifestOverride": {
+      "field": "streaming",
+      "values": [true, false]
+    },
+    "decodeWhen": "otherwise, or when the manifest forces streaming false",
+    "decodeBudget": {
+      "defaultBytes": 33554432,
+      "maxBytes": 268435456,
+      "bytesFormula": "length * numberOfChannels * 4",
+      "overBudget": {
+        "code": "E_AUDIO_BUDGET",
+        "retainPreviousBuffer": true
+      },
+      "streamedAudioCounted": false
+    },
+    "decodeFailure": {
+      "code": "E_AUDIO_DECODE",
+      "silentForAsset": true
+    },
+    "streamFailure": {
+      "advanceTracks": 1,
+      "thenCode": "E_AUDIO_DECODE",
+      "thenStop": true
+    }
+  },
+  "notes": [
+    "Accepted source formats only; no measured sizes or bitrates.",
+    "The browser performs decoding; engine-audio ships no codec."
+  ]
+}

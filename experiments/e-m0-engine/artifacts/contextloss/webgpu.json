@@ -1,0 +1,858 @@
+{
+  "ok": true,
+  "scene": "m0-textured-cube-v1",
+  "fixture": {
+    "sceneKey": "cube",
+    "instances": 1,
+    "width": 640,
+    "height": 360,
+    "specInstances": 1,
+    "specWidth": 640,
+    "specHeight": 360,
+    "specConformant": true
+  },
+  "requestedBackend": "webgpu",
+  "backend": "webgpu",
+  "case": "contextloss",
+  "dpr": 1,
+  "blocked": false,
+  "bench": false,
+  "engineBuild": {
+    "hash": "a0f13b23ec8ce0725d3b489bc70c9162bf2b9eb998579f9e21b1b5808a0cff3c",
+    "algorithm": "sha256",
+    "fileCount": 136,
+    "bytes": 961532,
+    "root": "packages/engine"
+  },
+  "chrome": "Chrome/155.0.8059.85",
+  "url": "http://127.0.0.1:24128/experiments/e-m0-engine/index.html?backend=webgpu&scene=cube&instances=1&size=640x360&case=contextloss",
+  "durationMs": 1503,
+  "pageStatusText": "PASS  case contextloss (webgpu)\nloss     hook frame 10, lost event frame 10, restored event frame 10, state running -> lost -> running\nrecover  content frame 11 (1 frames after loss, 1 after restore), 63.599999994039536 ms, hashMatch=true, handlesUnchanged=true\nterminal second loss state=failed, beginFrameValid=false, restoreAttempts=1, refused=true (E_DEVICE_LOST), stable=failed, gpuErrors=2\nelapsed  784 ms",
+  "page": {
+    "schema": "m0-engine-demo/v2",
+    "ok": true,
+    "stage": "done",
+    "case": "contextloss",
+    "scene": "m0-textured-cube-v1",
+    "sceneKey": "cube",
+    "requestedBackend": "webgpu",
+    "backend": "webgpu",
+    "fallbackReason": null,
+    "adapter": "nvidia ampere",
+    "features": [
+      "texture-array",
+      "compressed-s3tc"
+    ],
+    "browser": {
+      "name": "Chrome",
+      "version": "155.0.0.0",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+    },
+    "buildHash": "bcc6266cfece27bad08f0769b4eb0b54101dcfa01526effc83adc93ab8e94ecf",
+    "build": {
+      "algorithm": "sha256",
+      "fileCount": 71,
+      "bytes": 452585,
+      "modules": [
+        "/packages/engine/core/dist/index.js",
+        "/packages/engine/core/dist/jobs/JobQueue.js",
+        "/packages/engine/core/dist/jobs/SyncExecutor.js",
+        "/packages/engine/core/dist/jobs/WorkerProtocol.js",
+        "/packages/engine/core/dist/jobs/index.js",
+        "/packages/engine/core/dist/jobs/types.js",
+        "/packages/engine/core/dist/math/Aabb.js",
+        "/packages/engine/core/dist/math/Frustum.js",
+        "/packages/engine/core/dist/math/Mat3.js",
+        "/packages/engine/core/dist/math/Mat4.js",
+        "/packages/engine/core/dist/math/Obb.js",
+        "/packages/engine/core/dist/math/Plane.js",
+        "/packages/engine/core/dist/math/Quat.js",
+        "/packages/engine/core/dist/math/Ray.js",
+        "/packages/engine/core/dist/math/Vec2.js",
+        "/packages/engine/core/dist/math/Vec3.js",
+        "/packages/engine/core/dist/math/Vec4.js",
+        "/packages/engine/core/dist/math/constants.js",
+        "/packages/engine/core/dist/math/index.js",
+        "/packages/engine/core/dist/platform/deviceProfile.js",
+        "/packages/engine/core/dist/platform/frameScheduler.js",
+        "/packages/engine/core/dist/platform/index.js",
+        "/packages/engine/core/dist/save/constants.js",
+        "/packages/engine/core/dist/save/errors.js",
+        "/packages/engine/core/dist/save/file.js",
+        "/packages/engine/core/dist/save/header.js",
+        "/packages/engine/core/dist/save/index.js",
+        "/packages/engine/core/dist/scene/ComponentStore.js",
+        "/packages/engine/core/dist/scene/EntityAllocator.js",
+        "/packages/engine/core/dist/scene/EntityPool.js",
+        "/packages/engine/core/dist/scene/Hierarchy.js",
+        "/packages/engine/core/dist/scene/Prefab.js",
+        "/packages/engine/core/dist/scene/Query.js",
+        "/packages/engine/core/dist/scene/Scene.js",
+        "/packages/engine/core/dist/scene/Serialization.js",
+        "/packages/engine/core/dist/scene/TransformSystem.js",
+        "/packages/engine/core/dist/scene/builtins.js",
+        "/packages/engine/core/dist/scene/component.js",
+        "/packages/engine/core/dist/scene/errors.js",
+        "/packages/engine/core/dist/scene/index.js",
+        "/packages/engine/core/dist/scene/types.js",
+        "/packages/engine/core/dist/time/FixedLoop.js",
+        "/packages/engine/core/dist/time/FrameStats.js",
+        "/packages/engine/core/dist/time/HostTick.js",
+        "/packages/engine/core/dist/time/LoopClock.js",
+        "/packages/engine/core/dist/time/PauseReasons.js",
+        "/packages/engine/core/dist/time/index.js",
+        "/packages/engine/core/dist/time/types.js",
+        "/packages/engine/core/dist/version.js",
+        "/packages/engine/renderer-webgpu/dist/abi.js",
+        "/packages/engine/renderer-webgpu/dist/buffer/InstanceRing.js",
+        "/packages/engine/renderer-webgpu/dist/buffer/UniformRing.js",
+        "/packages/engine/renderer-webgpu/dist/culling/FrustumCuller.js",
+        "/packages/engine/renderer-webgpu/dist/dev.js",
+        "/packages/engine/renderer-webgpu/dist/device/Handles.js",
+        "/packages/engine/renderer-webgpu/dist/device/WebGpuDevice.js",
+        "/packages/engine/renderer-webgpu/dist/device/adapter.js",
+        "/packages/engine/renderer-webgpu/dist/device/capabilities.js",
+        "/packages/engine/renderer-webgpu/dist/device/descriptors.js",
+        "/packages/engine/renderer-webgpu/dist/device/factory.js",
+        "/packages/engine/renderer-webgpu/dist/errors.js",
+        "/packages/engine/renderer-webgpu/dist/index.js",
+        "/packages/engine/renderer-webgpu/dist/pipeline/PipelineCache.js",
+        "/packages/engine/renderer-webgpu/dist/pipeline/ShaderCache.js",
+        "/packages/engine/renderer-webgpu/dist/pipeline/pipelineKey.js",
+        "/packages/engine/renderer-webgpu/dist/profile/Stats.js",
+        "/packages/engine/renderer-webgpu/dist/runtime.js",
+        "/packages/engine/renderer-webgpu/dist/shaders/lit.wgsl.js",
+        "/packages/engine/renderer-webgpu/dist/swapchain/Swapchain.js",
+        "/packages/engine/renderer-webgpu/dist/texture/formats.js",
+        "/packages/engine/renderer-webgpu/dist/version.js"
+      ]
+    },
+    "fixture": {
+      "name": "m0-textured-cube-v1",
+      "specInstances": 1,
+      "instances": 1,
+      "cssWidth": 640,
+      "cssHeight": 360,
+      "captureWarmupFrames": 0,
+      "captureFrame": 11,
+      "conformant": false
+    },
+    "size": {
+      "cssWidth": 640,
+      "cssHeight": 360,
+      "dpr": 1,
+      "width": 640,
+      "height": 360
+    },
+    "texture": {
+      "created": true,
+      "label": "m0-checker-texture",
+      "width": 4,
+      "height": 4,
+      "format": "rgba8unorm-srgb",
+      "usage": [
+        "sample",
+        "copy-dst"
+      ],
+      "bytes": 64
+    },
+    "light": {
+      "kind": "built-in-directional",
+      "configurable": false
+    },
+    "framesRendered": 11,
+    "drawCalls": 1,
+    "triangles": 12,
+    "instances": 1,
+    "textureBytes": 922880,
+    "gpuErrors": 1,
+    "hash": "32312240",
+    "nonClearPixels": 53970,
+    "brightPixels": 26884,
+    "distinctColors": 7,
+    "capture": {
+      "method": "canvas-2d-drawImage+getImageData",
+      "width": 640,
+      "height": 360,
+      "frame": 11,
+      "warmupFrames": 0
+    },
+    "benchmark": null,
+    "stats": {
+      "drawCalls": 1,
+      "triangles": 12,
+      "instances": 1,
+      "culledInstances": 0,
+      "pipelineSwitches": 1,
+      "bindGroupSwitches": 4,
+      "textureBytes": 922880,
+      "bufferBytes": 6295112,
+      "uploadBytes": 2376,
+      "uploadCalls": 5,
+      "gpuErrors": 1,
+      "droppedDraws": 0,
+      "gpuFrameMs": null,
+      "cpuFrameMs": 0.7000000029802322
+    },
+    "caseResult": {
+      "mechanism": "forceWebGpuDeviceLost",
+      "hookAvailable": true,
+      "hook": "@lanpad/engine-renderer-webgpu/dev#forceWebGpuDeviceLost",
+      "hookKind": "dev-only hook destroys the real GPUDevice; the device.lost promise drives the engine loss path",
+      "warmupFrames": 10,
+      "events": {
+        "lost": true,
+        "restored": true,
+        "secondLost": true,
+        "counts": {
+          "lost": 2,
+          "restored": 1
+        },
+        "lossEvents": [
+          {
+            "count": 1,
+            "reason": "destroyed",
+            "message": "Device was destroyed.",
+            "frame": 10,
+            "atMs": 764.8000000119209,
+            "deviceState": "lost"
+          },
+          {
+            "count": 2,
+            "reason": "destroyed",
+            "message": "Device was destroyed.",
+            "frame": 11,
+            "atMs": 829.2000000029802,
+            "deviceState": "failed"
+          }
+        ]
+      },
+      "epoch": null,
+      "epochNote": "WebGPU has no contextEpoch; deviceState is the public lifecycle observable for this backend.",
+      "deviceState": {
+        "before": "running",
+        "afterLoss": "lost",
+        "afterRestore": "running",
+        "afterSecondLoss": "failed",
+        "afterSecondRefusal": "failed"
+      },
+      "beginFrameValidAfterLoss": false,
+      "beginFrameValidAfterSecondLoss": false,
+      "handles": {
+        "before": {
+          "mesh": {
+            "index": 0,
+            "generation": 0
+          },
+          "material": {
+            "index": 0,
+            "generation": 0
+          },
+          "texture": {
+            "index": 0,
+            "generation": 0
+          }
+        },
+        "afterRestore": {
+          "mesh": {
+            "index": 0,
+            "generation": 0
+          },
+          "material": {
+            "index": 0,
+            "generation": 0
+          },
+          "texture": {
+            "index": 0,
+            "generation": 0
+          }
+        },
+        "unchanged": true,
+        "reusedForPostFrame": true
+      },
+      "restoreResult": {
+        "ok": true,
+        "reason": null,
+        "restoredHandles": 3,
+        "staleHandles": 0
+      },
+      "frames": {
+        "total": 11,
+        "loseCallFrame": 10,
+        "lostEventFrame": 10,
+        "restoreCallFrame": 10,
+        "restoredEventFrame": 10,
+        "secondLoseCallFrame": 11,
+        "secondLostEventFrame": 11,
+        "firstValidAfterRestore": 11,
+        "firstContentAfterRestore": 11,
+        "recoveryToContent": 1,
+        "framesFromRestoreToContent": 1,
+        "invalidFramesWhileLost": 1,
+        "invalidFramesAfterRestore": 0,
+        "blankFramesAfterRestore": 0
+      },
+      "timing": {
+        "loseCallAtMs": 763.4000000059605,
+        "lostAtMs": 764.8000000119209,
+        "restoreCallAtMs": 764.8000000119209,
+        "restoredAtMs": 808.8000000119209,
+        "firstContentAtMs": 828.4000000059605,
+        "secondLoseCallAtMs": 828.7000000029802,
+        "secondLostAtMs": 829.2000000029802,
+        "secondRestoreCallAtMs": 829.2000000029802,
+        "secondRestoreRefusedAtMs": 829.6000000089407,
+        "recoveryElapsedMs": 63.599999994039536,
+        "firstLossToRestoredEventMs": 44,
+        "restoreCallToRestoredEventMs": 44,
+        "secondLossToRefusalMs": 0.4000000059604645,
+        "timingBasis": "performance.now() around the real device.lost/onRestored events; frame counts are the primary evidence"
+      },
+      "preCapture": {
+        "width": 640,
+        "height": 360,
+        "hash": "32312240",
+        "nonClearPixels": 53970,
+        "brightPixels": 26884,
+        "distinctColors": 7
+      },
+      "preLossSurface": {
+        "cssWidth": 640,
+        "cssHeight": 360,
+        "dpr": 1,
+        "backingWidth": 640,
+        "backingHeight": 360,
+        "deviceSize": {
+          "width": 0,
+          "height": 0
+        },
+        "deviceSizeMatchesCss": false,
+        "backingMatchesDpr": true,
+        "expectedBackingWidth": 640,
+        "expectedBackingHeight": 360
+      },
+      "postCapture": {
+        "width": 640,
+        "height": 360,
+        "hash": "32312240",
+        "nonClearPixels": 53970,
+        "brightPixels": 26884,
+        "distinctColors": 7
+      },
+      "sizeNote": "device.size is 0x0 before and after restore because this page calls init(surface) but never resize() outside the resize case; the swapchain and canvas backing still use the surface CSS metrics. This is not a restore regression.",
+      "recoveredFramePng": {
+        "dataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAoAAAAFoCAYAAADHMkpRAAAQAElEQVR4AezdPa8kSVYG4GK1SCutAQZ/BZy1MVjN4K/amQ9nHQyMbhMJq6XbBsLDmXHoFgbmCDCw9+fAmqzHbkxOzuatW3UrPyIi40Q8iKyPrMyIc55zkV4Vmuqf/PzP/uL/HQz8Dfgb8Dfgb8DfgL8BfwPj/A385OJ/CBAgQGBAAS0TIDCygAA48vT1ToAAAQIECAwpIAAOOfapaY8ECBAgQIDAmAIC4Jhz1zUBAgQIjCugcwIXAdAfAQECBAgQIEBgMAEBcLCBa5fA9wIeCBAgQGBoAQFw6PFrngABAgQIEBhJYO5VAJwlPBMgQIAAAQIEBhEQAAcZtDYJECAwCXgkQIDAxX8E4o+AAAECBAgQIDCagG8AR5v45XLRMgECBAgQIDC2gAA49vx1T4AAAQLjCOiUwI8CAuCPFF4QIECAAAECBMYQEADHmLMuCUwCHgkQIECAwB8EBMA/IPhfAgQIECBAgEDPAte9CYDXIt4TIECAAAECBDoXEAA7H7D2CBAgMAl4JECAwB8FBMA/WnhFgAABAgQIEBhCQAAcYsxTkx4JECBAgAABAklAAEwKDgIECBAg0K+Azgi8EBAAX5A4QYAAAQIECBDoW0AA7Hu+uiMwCXgkQIAAAQILAQFwgeElAQIEIgj8+le/iFCmGgkQaEDgXgkC4D0Z5wkQINCYQAp+6WisLOUQIBBQQAAMODQlEyAwjkAKfPOx7Ppnv/vt8u0rr31EgACBlwIC4EsTZwgQIHCqwBz40vNrhQiBr+n4jACB1wQEwNd0OvlMGwQItC+Qwt58tF+tCgkQiC4gAEafoPoJEAgrMAe+9Ly3Cd8C7pUb4j5NErgrIADepfEBAQIE8guksDcf+Ve3IgECBNYJCIDrnFxFIKaAqpsQmANfei5RkG8BS6hak0DfAgJg3/PVHQECJwmksDcfNUoQAmso24NAHIFHlQqAj4R8ToAAgZUCc+BLzytvcRkBAgROERAAT2G3KQECvQiksDcfZ/f0/FvAs6uxPwECLQsIgC1PR20ECDQr0ErouwYSAq9FvCdA4JaAAHhLpZNz2iBAIK/AHPrSc96VrUaAAIG6AgJgXW+7ESAQTCCFvfmIUrpvAaNMqlidFibwUEAAfEjkAgIERhOYA196Hq13/RIgMIaAADjGnHU5moB+NwuksDcfm29u8AbfAjY4FCURaEhAAGxoGEohQKCuwBz40nPdnY/v9sWXnz1cRAh8SOQCAt0JrG1IAFwr5ToCBLoQSGFvPrpoSBMECBDYISAA7kBzCwECsQTmwJeeY1W+p9rn9/gW8LmHdwQITAIC4OTgkQCBzgRS2JuPzlrTDgECBA4LCICHCdtbQEUERhWYA196HtXgVt++Bbyl4hyBsQUEwLHnr3sCXQikwJeOLpop1IQQWAi2rWVVQ2C1gAC4msqFBAi0JJAC33y0VJdaCBAgEEFAAIwwJTUSWCvQ+XVz4EvPnbdapD3fAhZhtSiBkAICYMixKZrAOAIp7M3HOF3rlAABAtsEtl4tAG4Vcz0BAsUF5sCXnotvNtgGvgUcbODaJXBHQAC8A+M0AQJ1BVLYm4+6O/ey2/o+hMD1Vq4k0KuAANjrZPVFIIDAHPjSc4BylUiAAIFuBATAbkZ5uWiFQASBFPbmI0K9vdboW8BeJ6svAusEBMB1Tq4iQOCAwBz40vOBZdxKgMBtAWcJbBYQADeTuYEAgTUCKezNx5rrXVNfwLeA9c3tSKAVAQGwlUmog8ARgYbuFfoaGsaKUoTAFUguIdChgADY4VC1RKC2wBz60nPtve1HgACBkQX29i4A7pVzH4HBBf70//73Mh+DU4Rv37eA4UeoAQKbBQTAzWRuIDCuwBz40vO4Cq11nqceITCPo1UIRBEQAKNMSp0EThJIYW8+TirBtgQIECCQWUAAzAx6xnL2JJBbYA586Tn32tZrV8C3gO3ORmUEcgsIgLlFrUcgqEAKe/MRtIXhyv7iy8+G61nDzwS8IbBbQADcTedGAvEF5sCXnuN3o4McAr4FzKFoDQLtCwiA7c9IhQTuC+z4JIW9+dhxu1sGEBACBxiyFocXEACH/xMAMILAHPjSc+5+v/7q89xLWo8AAQIEHggc/VgAPCrofgKNCqSwNx+NlqishgV8C9jwcJRGIIOAAJgB0RIEWhIQ+lqaRslarE2AAIH9AgLgfjt3EmhGYA596bmZohQSXsC3gOFHqAECdwUEwLs07X+gwrEFUtibj7EldF9SQAgsqWttAucJCIDn2duZwGaBOfCl5803u4EAgV4E9EHgsIAAeJjQAgTKCqSwNx9ld7I6gdsCvgW87eIsgcgCAmDk6am9W4E58KXnm006SYAAAQIEDggIgAfw3Eogp0AKe/ORc11rEcgh4FvAHIrWIHBcINcKAmAuSesQ2CEwB770vON2txCoKiAEVuW2GYGiAgJgUV6LE3gpkMLefLz81BkCjwR8ToAAgeMCAuBxQysQeCgwB770/PBiFxBoWMC3gA0PR2kENggIgBuwWrlUHXEEUuBLR5yKVUqAAAECIwgIgCNMWY9VBVLgm4+qG9uMQCUB3wJWgn65jTMEsgkIgNkoLTSywBz40vPIDnofR0AIHGfWOu1TQADsc666qiCQwt58VNhu2sIjAQIECBDIICAAZkC0xDgCc+BLz+N0rVMCtwV8C3jbxVkCJQRyrykA5ha1XncCKezNR3fNaSi8wBdffnZqD//wd788dX+bEyCwT0AA3Ofmrs4F5sCXnjtvVXthBBRKgACBfAICYD5LKxEgQGBIAd8CDjl2TQcXEAADDVCpdQR861fH2S4ECBAgcJ6AAHievZ0JECDQjYBvAYuO0uIEsgsIgNlJLUhgHIGvv/p8nGZ1+lBACHxI5AICzQgIgM2MQiEEXhHwEQECBAgQyCggAGbEtBQBAgRGE3j68OlZy74FfMbhDYHDAqUWEABLyVqXAAECBAgQINCogADY6GCURYAAgUkg3qNvAePNTMXjCQiA481cxwQIECguIAQWJ7YBgUMCAuAhvjo324UAAQIECBAgkFNAAMypaa3wAn4EOvwINdCQgG8BDw/DAgSKCQiAxWgtTIAAAQIECBBoU0AAbHMuqiIwCXgkEFzAt4DBB6j8bgUEwG5HqzECBAi0ISAEtjEHVcQSKF2tAFha2PoECBAgQIAAgcYEBMDGBqIcAgQITAJ9PfoWsK956ia+gAAYf4Y6IECAAAECBAhsEhAAN3HVvdhuBAgQiCDw9OHTqjJ9C7iKyUUEqggIgFWYbRJBwG8ARpiSGqMLCIGrJugiAsUFBMDixDYgQIBAWYEvvvys7AZWJ0CgOwEBsLuRaqgLAU0Q6FjAt4AdD1drYQQEwDCjUigBAgT6ERAC+5mlTvIK1FpNAKwlbR8CBAgQIECAQCMCAmAjg1AGAQIEJoFxHn0LOM6sddqegADY3kxURIAAAQIECBAoKiAAFuXdt7i7CEQQ+PqrzyOUqcbGBXwL2PiAlNetgADY7Wg1RoAAgRgCQuCPc/KCQDUBAbAatY1aFvAj0C1PR20ECBAgkFtAAMwtaj0CRwTcS2BQAd8CDjp4bZ8mIACeRm9jAgQIECBAgMAkUPtRAKwtbj8CBAh0KPD04dPhrnwLeJjQAgRWCwiAq6lcSIAAgZIC1k4CQmBScBAoLyAAlje2AwECBAgQIECgKQEBsKFxKIUAAQIELhffAvorIFBeQAAsb2wHAgQIECDwmoDPCFQXEACrk9uwNQG/AdjaRNRDwLeA/gYIlBYQAEsLW5/AGgHXECDwQsD/K/gFiRMEsgkIgNkoLUSAAAECBAgQ2CZw1tUC4Fny9iVAgAABAgQInCQgAJ4Eb1sCBAhMAnke3719k2chqxAgMISAADjEmDVJgEBvAt98+91lebx/+thbi/ohQKCggABYEHft0q4jQIDAawLLoDe/vnW9bwFvqThHgMAtAQHwlopzBAgQOFFgDnnz85ZSeguBnf+XwFtG61oCWQUEwKycFiNAgMB2gTnozc/bV3h+x1kh8OnDp+eFeEeAQLMCAmCzo1FYDYHTfwS6RpP2aE5gDnrzc4kCzwqBJXqxJgEC+QUEwPymViRAgMAzgTnozc/PPiz4RggsiGtpAgcFzr5dADx7AvYnQKArgTnkLZ/PbFAIPFPf3gTaFRAA252Nygg0K/D1V583W1vtwpZBL71ev78rCRAgcJ6AAHievZ0JEAgokELe8ojQgm8BI0xJjQTqCgiAdb2f7eYNAQLtCyzDXnrdfsW3KxQCb7s4S2BUAQFw1MnrmwCBmwIp5C2PmxcFPSkENjM4hRA4XUAAPH0ECiBA4EyBZdhLr8+spcbeQmANZXsQaF9AAGx/RiosJHDqbwAW6smyrwukgHd9vH5Hn59GC4H+NZA+/w51da6AAHiuv90JECgoIOzdx40WAu934hMCsQRaqVYAbGUS6iBA4LCAwHeY0AIECAwiIAAOMmhtEuhRIGbga2cSvgVsZxYqIVBbQACsLW4/AgR2Cwh8u+nu3pg7BD59+HR3Lx8QINCOgAB4wixsSYDAY4HrsJfeP77LFXsEcofAPTW4hwCBugICYF1vuxEgcEcgBbzlcecypwsJCIGFYJ8v6x2BZgQEwGZGoRACYwksw156PVb3bXYrBLY5F1URKCEgAJZQtSaBewIDn08hb3kMTKF1AgQInC4gAJ4+AgWcIeBHoMurL8Neel1+Rzu8f/p4GMG3gIcJLUDgpkBrJwXA1iaiHgIBBVLAuz4CtqHkHwSEwB8gPBHoWEAA7Hi4WiNQSkDY2yMb657WQqB/Di7W349q2xcQANufkQoJnC7w9VefX5bH6QUpoIpAayGwStM2ITCIgABYcdC2IhBFYBn20usodaszv4AQmN/UigRaEBAAW5iCGgicLJBC3vI4uRzbNyYgBB4eiAUINCcgADY3EgURKC+wDHvpdfkd7UCAAAECLQkIgC1NQy39CpzYWQp418eJ5dg6qIBvAYMOTtkE7ggIgHdgnO5XoPffACwd9tJ/AdzvX4fOXhNYGwKfPnx6bRmfERhKoNVmBcBWJ6MuAisFSge+lWW4bBCBtSFwEA5tEggrIACGHZ3CRxUQ+KJNvr96hcD+Zqqj8QQEwPFmruNgAgJfsIENUq4QOMigtdmtgABYYbS2ILBW4Drspfdr73UdgdoCtUOgfw2k9oTt17OAANjzdPXWvEAKeMuj+YIVSIDAFgHXEmhWQABsdjQK61FgGfbS6x571NNYArW/BRxLV7cEygkIgOVsrUzg8vVXn19S0JsPJAR6FBACe5yqnnoXEAB7n7D+qgrMQW9+rrq5zQicKCAEnohv6yYFWi9KAGx9QurLKpD7R6DnoDc/Zy3WYgSCCQiBwQam3KEFBMChx6/5LQJzyFs+b7nftaMJjNmvEDjm3HUdT0AAjDczFVcSWAa99LrStrYhEF5ACAw/Qg0MICAAFhyypWMJ/dM99wAAEABJREFUpJC3PGJVr1oCbQk8ffjUVkGqIUDgmYAA+IzDm5EElmEvvR6pd732K/D+6WMTzQ3+LWATM1AEgdcEBMDXdHzWnUAKevPRXXMaItCYQIlvAf1rII0NWTlhBQTAsKNTeNMCiiNA4HuBEiHw+4U9ECBwSEAAPMTnZgIECBB4JCAEPhLyeU8CUXoRAKNMSp2HBX79q18cXsMCBAjsExAC97m5i0ApAQGwlKx1CRAYVEDb9wSEwHsyzhOoLyAA1je3IwECBAgQIEDgVAEBsAC/JQkQIEDgtoBvAW+7OEugtoAAWFvcfgQIEBhcoOMQOPhktR9JQACMNC21EjhZ4Jtvvzu5Atv3IiAE9jJJfUQVEACjTk7dbQqoigCB1QJC4GoqFxLILiAAZie1IAECBAisFdgTAv1rIGt1XVdTINpeAmC0iamXAAECQQTevX0TpFJlEhhPQAAcb+ZDduxHoIcce+WmbbdXYM+3gHv3ch8BApOAADg5eCRAgACBEwWEwBPxbT2kgACYceyWIkCAAIH9AkLgfjt3EtgqIABuFXM9AQIECBQTCBoCi3lYmEApAQGwlKx1CRAgQGCXgBC4i81NBDYJCICbuFxM4I6A0wQIZBUQArNyWozACwEB8AWJEwQIECBAgACBdQJRrxIAo05O3QQIEOhcwLeAnQ9Ye6cKCICn8tu8hoDfAKyhPPIe7fX+/ulje0XtrEgI3AnnNgIPBATAB0A+JkCAAIFzBW6FQP8c3LkzsXt8AQEwwwwtQYAAAQJlBW6FwLI7Wp1A3wICYN/z1R0BAgS6EWgwBHZjq5HxBATA8WauYwIECFQTePf2Tda9hMCsnBYbWEAAHHj4Ws8gYAkCBAgQIBBQQAAMODQlEyBAYGQB3wKOPP12eo9eiQAYfYLqJ0CAwIACQuCAQ9dyVgEBMCunxQgQGEdApwQIEIgrIADGnZ3KVwj4EegVSC4hQIAAgeEEBMADI3crgZEEvvn2u5Ha1SsBAgS6FhAAux6v5ggQINCvwM9+99uzmrMvgfACAmD4EWqAAAECBAgQILBNQADc5uVqApOARwIECBAgEFhAAAw8PKUTIECAAAECdQV62U0A7GWS+iBAgAABAgQIrBQQAFdCuYwAAQKTgEcCBAjEFxAA489QB3cE/AbgHRinCVQWePf2TeUdbUeAwCMBAfCR0I3PnSJAgAABAgQIRBYQACNPT+0ECBAgUFPAXgS6ERAAuxmlRggQIECAAAEC6wQEwHVOriIwCXgkEETg/dPHIJUeK9O/BnLMz93jCgiA485e5wQIECBAgMBKgd4uEwB7m6h+CBAgQIAAAQIPBATAB0A+JkCAwCTgkQABAv0ICID9zFInBAgQIECAAIFVAgLgKqbpIo9xBPwIdJxZqZQAAQIE6gsIgPXN7UiAAAECsQRUS6A7AQGwu5FqiAABAgQIECDwuoAA+LqPTwlMAh4JEDgk8O7tm0P3u5kAgbwCAmBeT6sRIECAAAECHQn02ooA2Otk9UWAAIFBBPxrIIMMWptZBQTArJwWI9CnwDffftdnY6u6chEBAgT6ExAA+5upjggQIECAAAECrwoIgK/yTB96jCXgNwBjzUu1BAgQIFBfQACsb25HAgQIEIghoEoC3QoIgN2OVmMECBAgQIAAgdsCAuBtF2cJTAIeCRAgQIBAhwICYIdD1RIBAgQIECBwTKD3uwXA3iesPwIECBAgQIDAlYAAeAXiLQECBCYBjwQIEOhXQADsd7Y6I0CAAAECBAjcFBAAb7JMJz0SIEAgssD7p49Nlf/u7Zti9fjn4IrRWrhTAQGw08GO2pYfgR518vomkFXAYgS6FxAAux+xBgkQIECAAAECzwUEwOce3hGYBDwSIECAAIGOBQTAjoerNQIECBAgQGCbwChXC4CjTFqfBAgQIECAAIEfBATAHyA8ESBAYBLwSIAAgf4FBMD+Z6xDAgQIECBAgMAzAQHwGcf0xiMBAgQIECBAoGcBAbDn6Q7Wm98AHGzg2iWQX8CKBIYREACHGbVGCRAg0LeAfw2k7/nqLq+AAJjX02rRBdT/QuCbb797cc4JAgQIEIgtIADGnp/qCRAgQIAAgQwCoy0hAI42cf0SIEDgRIF3b9+cuLutCRCYBQTAWcIzAQKDC/TR/m/++58vy+Ozv/7LPhrTBQECWQUEwKycFiNAgEA5gWWwu/f61u4pBKbj1mfOESAwpoAAuJi7lwQIEDhL4F6gW54/WlsKgek4uo77CRCILyAAxp+hDggQaFxgGeLuva7ZghD4QtsJAsMJCIDDjbzPhv0IdJ9zjdDVvUC3PN9iHykEpqPF2tREgEB5AQGwvLEdIgiokcANgWWIu/f6xm2hTqUQmI5QRSuWAIHDAgLgYUILECAQUeBeoFuej9jX3ppTCEzH3vtbuc+/BtLKJOLUMWqlAuCok9c3gY4FliHu3uuO2z/UWg8h8BCAmwkMIiAADjJobRLoReBeoFue39arq68FUghMx/V57wkQ6EdAAOxnljohEF5gGeLuvQ7fZKAGUghMR6CSlUqAwEoBAfByuay0chkBAgcE7gW65fkDy7u1oEAKgekouIWlCRCoLCAAVga3HYEeBZYh7t7rHvseracOQ+BoI9QvgR8FBMAfKbyIKuA3AMtO7l6gW54vW4HVWxJIITAdR2p69/bNkdvdS4BABgEBMAOiJQILDF76v//rf1weHX/zy7+/zMfgXNpfCKQQmI7FKS8JEAgkIAAGGpZSCWwReBTs0udb1kvXzkEwPaf3DgIpBKaDBIFoAqPXKwCO/heg/5ACKbw9Oko3lkLgfJTey/rtCwiB7c9IhQSWAgLgUsNrAg0IPAp26fMGynxWwhwE5+dnHzb7RmG5BVIITEfudbeu518D2Srm+hEFBMARp67n0wRSeHt0nFZcxo3nIJieMy5rqSACKQSmI0i5yiQwpMDQAXDIiWu6mMCjYJc+L7Z5wwunEDgfDZeptAICKQSmo8DSliRA4KCAAHgQ0O1jCKTw9ugYQ+JYl3MQTM/HVnJ3JIEUAtPRUM1KITC8gAA4/J9AbIAcvwH4KNilz2MrtVl9CoHz0WaFqsotIATmFrUegf0CAuB+O3cGEEjh7eax+P27AG10X+IcBOfn7hseuMEUAtMxMIHWCTQhIAA2MQZF7BX4l3/7zas/ZLx3XfedKzAHwfR8biV23yqQZrbm+PlP/+SSjq3ru57AUQH3TwIC4OTgMbDA//z0zy/XR+B2lH4lsAwTVx95W0Fg6b/m9daSUghMx9b7XE+AwDEBAfCYn7sbFRAIGx3MwbKWAWT/UmPfuTRc87qWlhBYS9o+BCYBAXBy8Ni5wHUgTO87b7n79q7DS/cN32nw2uHR+zvLNHE6hcB0NFGMIgh0LjBkAOx8ptpbKZBC4PWx8laXNSiwDD4NlreppGUvj15vWjjIxSkEpiNIucokEFJAAAw5NkWXEhAIS8nWXXcZmurufHu3ZT1rXt9eZbyzKQSmY0/nd/45uD1LuYdAlwICYJdj1VQugetAmN7nWts6dQSWgSvXjss117zOte+o6+wNgaN66ZvAGgEBcI2Sa/oRyNBJCoHXR4ZlLVFBYBnWltstz695vbzX6zoCKQSmo85udiHQv4AA2P+MdVhBQCCsgLxhi//6z3+6PDqWy6Vrl++9blcghcB0tFuhyloVUNdzAQHwuYd3BLIIXAfC9D7LwgMvkkLa2mMP03LtPfe7p65ACoHpqLur3Qj0IyAA9jNLnTQukELg9dF4yUXLWwauNa+PF7N+hWU96+9y5RkCKQSm44y97UkgsoAAGHl6ag8v0FMgXIamNa+jDG/ZS5SaR6xTCBxx6no+IjBUADwC5V4CNQSuA2F6X2PfW3ssg8+a17fW6O3c0qG33nroJ4XAdPTQix4IlBYQAEsLW5/AQYEUAq+PvUsuA8yj13v3GOW+a79R+o7QZwqB6VjU6iUBAlcCAuAViLcEIghcB8LrMHLvfYTeota4NI/aQ6S6r/9v4Nb7SP2olUBtAQGwtrj9zhHofNe/+tt/vFwfnbfcdHvC4Lrx3Apta8+t28FVBAjcExAA78k4TyC4wHUgTO+DtxSy/N7D4NrAduu6kANVdDgBBd8WEABvuzhLoEuBFAKXR5dNNtzUMgym1y2VeiugrTnXUg9qIUBgvYAAuN7KlQS6E1iGwfl1d01e2u0ohcD5yFHlmsB275oc+1uDAIE4AgJgnFmplEAVgTkILp+rbDz4JnMQTM/3Qtqj84MTap8AgQ0CQwTADR4uJUDghsAyDKbXNy5x6kogOe09rpbylgABAtkFBMDspBYk0L/ArWDTa9e3el1zrlePYH0plwCBOwIC4B0YpwkQ2CZwKxRtW6Hc1bdqW3uuXFVWJkCAwHkCAuB59nauIWCPUwWuQ9bRYq7XW/v+6L7uJ0CAQG8CAmBvE9UPgYYF1ga2e9c13JrSCBBoTEA5rwsIgK/7+JQAAQIECBAg0J2AANjdSDVEgMAk4JEAAQIE7gkIgPdknCdAgAABAgQIdCrQdQDsdGbaIkCAAAECBAgcEhAAD/G5mQABAgQaFFASAQIPBATAB0A+JkCAAAECBAj0JiAA9jZR/UwCHgkQIECAAIG7AgLgXRofECBAgAABAtEE1LtOQABc5+QqAgQIECBAgEA3AgJgN6PUCAECk4BHAgQIEHgkIAA+EvI5AQIECBAgQKAzgS4DYGcz0g4BAgQIECBAIKuAAJiV02IECBAgcKKArQkQWCkgAK6EchkBAgQIECBAoBcBAbCXSepjEvBIgAABAgQIPBQQAB8SuYAAAQIECBBoXUB92wQEwG1eriZAgAABAgQIhBcQAMOPUAMECEwCHgkQIEBgrYAAuFbKdQQIECBAgACBTgS6CoCdzEQbBAgQIECAAIGiAgJgUV6LEyBAgEAFAVsQILBRQADcCOZyAgQIECBAgEB0AQEw+gTVPwl4JECAAAECBFYLCICrqVxIgAABAgQItCagnn0CAuA+N3cRIECAAAECBMIKCIBhR6dwAgQmAY8ECBAgsFVAANwq5noCBAgQIECAQHCBLgJg8BkonwABAgQIECBQVUAArMptMwIECBDIKGApAgR2CgiAO+HcRoAAAQIECBCIKiAARp2cuicBjwQIECBAgMBmAQFwM5kbCBAgQIAAgbMF7H9MQAA85uduAgQIECBAgEA4AQEw3MgUTIDAJOCRAAECBPYKCIB75dxHgAABAgQIEAgqEDoABjVXNgECBAgQIEDgVAEB8FR+mxMgQIDADgG3ECBwUEAAPAjodgIECBAgQIBANAEBMNrE1DsJeCRAgAABAgR2CwiAu+ncSIAAAQIECNQWsF8eAQEwj6NVCBAgQIAAAQJhBATAMKNSKAECk4BHAgQIEDgqIAAeFXQ/AQIECBAgQCCYQMgAGMxYuQQIECBAgACBpgQEwKbGoRgCBAgQeEXARwQIZBIQAJ208SMAAAHFSURBVDNBWoYAAQIECBAgEEVAAIwyKXVOAh4JECBAgACBwwIC4GFCCxAgQIAAAQKlBayfV0AAzOtpNQIECBAgQIBA8wICYPMjUiABApOARwIECBDIJSAA5pK0DgECBAgQIEAgiECoABjEVJkECBAgQIAAgaYFBMCmx6M4AgQIELhcLhAIEMgsIABmBrUcAQIECBAgQKB1AQGw9QmpbxLwSIAAAQIECGQTEACzUVqIAAECBAgQyC1gvTICAmAZV6sSIECAAAECBJoVEACbHY3CCBCYBDwSIECAQG4BATC3qPUIECBAgAABAo0LhAiAjRsqjwABAgQIECAQSkAADDUuxRIgQGAoAc0SIFBIQAAsBGtZAgQIECBAgECrAgJgq5NR1yTgkQABAgQIEMguIABmJ7UgAQIECBAgcFTA/WUFBMCyvlYnQIAAAQIECDQnIAA2NxIFESAwCXgkQIAAgVICAmApWesSIECAAAECBBoVaDoANmqmLAIECBAgQIBAaAEBMPT4FE+AAIEuBTRFgEBhAQGwMLDlCRAgQIAAAQKtCQiArU1EPZOARwIECBAgQKCYgABYjNbCBAgQIECAwFYB19cR+D0AAAD//08haNcAAAAGSURBVAMA0n5T58uoJmoAAAAASUVORK5CYII=",
+        "width": 640,
+        "height": 360,
+        "frame": 11,
+        "capturedAfterRestore": true,
+        "capturedBeforeSecondLoss": true,
+        "note": "2D canvas snapshot of the real WebGPU canvas after the first restore and before the terminal second loss, so the recovered frame survives in the artifact."
+      },
+      "hashMatchesPreLoss": true,
+      "unobserved": {
+        "noAssetRefetch": null,
+        "noGameRestart": null,
+        "reason": "This page loads no network assets for the case and runs no game/runtime loop, so asset refetch and game restart cannot be observed; both stay PENDING rather than claimed true."
+      },
+      "secondLoss": {
+        "triggered": true,
+        "eventObserved": true,
+        "event": {
+          "count": 2,
+          "reason": "destroyed",
+          "message": "Device was destroyed.",
+          "frame": 11,
+          "atMs": 829.2000000029802,
+          "deviceState": "failed"
+        },
+        "stateAfterLoss": "failed",
+        "beginFrameValid": false,
+        "restoreAttempts": 1,
+        "restoreRefused": true,
+        "error": {
+          "name": "WebGpuRendererError",
+          "code": "E_DEVICE_LOST",
+          "message": "device restore already failed"
+        },
+        "restoreResult": null,
+        "stateAfterRefusal": "failed",
+        "gpuErrorsAtTerminal": 2,
+        "note": "The terminal failed state ends the run; restore() was called once and refused, not retried."
+      },
+      "firstLossStats": {
+        "drawCalls": 1,
+        "triangles": 12,
+        "instances": 1,
+        "culledInstances": 0,
+        "pipelineSwitches": 1,
+        "bindGroupSwitches": 4,
+        "textureBytes": 922880,
+        "bufferBytes": 6295112,
+        "uploadBytes": 2376,
+        "uploadCalls": 5,
+        "gpuErrors": 1,
+        "droppedDraws": 0,
+        "gpuFrameMs": null,
+        "cpuFrameMs": 0.7000000029802322
+      },
+      "terminalStats": {
+        "drawCalls": 0,
+        "triangles": 0,
+        "instances": 0,
+        "culledInstances": 0,
+        "pipelineSwitches": 0,
+        "bindGroupSwitches": 0,
+        "textureBytes": 0,
+        "bufferBytes": 0,
+        "uploadBytes": 0,
+        "uploadCalls": 0,
+        "gpuErrors": 2,
+        "droppedDraws": 0,
+        "gpuFrameMs": null,
+        "cpuFrameMs": 0
+      },
+      "finalStats": {
+        "drawCalls": 1,
+        "triangles": 12,
+        "instances": 1,
+        "culledInstances": 0,
+        "pipelineSwitches": 1,
+        "bindGroupSwitches": 4,
+        "textureBytes": 922880,
+        "bufferBytes": 6295112,
+        "uploadBytes": 2376,
+        "uploadCalls": 5,
+        "gpuErrors": 1,
+        "droppedDraws": 0,
+        "gpuFrameMs": null,
+        "cpuFrameMs": 0.7000000029802322
+      },
+      "afterFrame": {
+        "cssWidth": 640,
+        "cssHeight": 360,
+        "dpr": 1,
+        "backingWidth": 640,
+        "backingHeight": 360,
+        "deviceSize": {
+          "width": 0,
+          "height": 0
+        },
+        "deviceSizeMatchesCss": false,
+        "backingMatchesDpr": true,
+        "expectedBackingWidth": 640,
+        "expectedBackingHeight": 360,
+        "validFrame": true,
+        "stats": {
+          "drawCalls": 1,
+          "triangles": 12,
+          "instances": 1,
+          "culledInstances": 0,
+          "pipelineSwitches": 1,
+          "bindGroupSwitches": 4,
+          "textureBytes": 922880,
+          "bufferBytes": 6295112,
+          "uploadBytes": 2376,
+          "uploadCalls": 5,
+          "gpuErrors": 1,
+          "droppedDraws": 0,
+          "gpuFrameMs": null,
+          "cpuFrameMs": 0.7000000029802322
+        }
+      },
+      "uncaughtErrors": 0,
+      "pass": {
+        "hookAvailable": true,
+        "hookTriggered": true,
+        "lossEventObserved": true,
+        "deviceLostStateObserved": true,
+        "invalidFrameWhileLost": true,
+        "restoreResultOk": true,
+        "restoreEventObserved": true,
+        "runningAfterRestore": true,
+        "handlesUnchanged": true,
+        "postRestoreContent": true,
+        "hashMatchesPreLoss": true,
+        "recoveryWithin60Frames": true,
+        "recoveryWithin2Seconds": true,
+        "blackFramesAtMostOne": true,
+        "secondHookTriggered": true,
+        "secondLossEventObserved": true,
+        "secondLossTerminal": true,
+        "secondLossInvalidFrame": true,
+        "restoreRefused": true,
+        "restoreAttemptsExactlyOne": true,
+        "failedStateStable": true,
+        "gpuErrorsMatchLosses": true,
+        "noUncaughtErrors": true,
+        "all": true
+      }
+    },
+    "notes": [
+      "The directional light is fixed inside the M0 shader; the built public API has no light object.",
+      "Texture usage is sample+copy-dst because the WebGPU validator requires copy-dst for supplied bytes.",
+      "Build hash is SHA-256 over the engine JS modules the page actually loaded, sorted by path.",
+      "The real GPUDevice was destroyed through the dev-only forceWebGpuDeviceLost hook; the device.lost promise drove loss and restore. The second loss is terminal, restore() was called once and refused, and the run ended. Frame counts, not fabricated milliseconds, are the primary evidence."
+    ],
+    "elapsedMs": 784
+  },
+  "caseResult": {
+    "mechanism": "forceWebGpuDeviceLost",
+    "hookAvailable": true,
+    "hook": "@lanpad/engine-renderer-webgpu/dev#forceWebGpuDeviceLost",
+    "hookKind": "dev-only hook destroys the real GPUDevice; the device.lost promise drives the engine loss path",
+    "warmupFrames": 10,
+    "events": {
+      "lost": true,
+      "restored": true,
+      "secondLost": true,
+      "counts": {
+        "lost": 2,
+        "restored": 1
+      },
+      "lossEvents": [
+        {
+          "count": 1,
+          "reason": "destroyed",
+          "message": "Device was destroyed.",
+          "frame": 10,
+          "atMs": 764.8000000119209,
+          "deviceState": "lost"
+        },
+        {
+          "count": 2,
+          "reason": "destroyed",
+          "message": "Device was destroyed.",
+          "frame": 11,
+          "atMs": 829.2000000029802,
+          "deviceState": "failed"
+        }
+      ]
+    },
+    "epoch": null,
+    "epochNote": "WebGPU has no contextEpoch; deviceState is the public lifecycle observable for this backend.",
+    "deviceState": {
+      "before": "running",
+      "afterLoss": "lost",
+      "afterRestore": "running",
+      "afterSecondLoss": "failed",
+      "afterSecondRefusal": "failed"
+    },
+    "beginFrameValidAfterLoss": false,
+    "beginFrameValidAfterSecondLoss": false,
+    "handles": {
+      "before": {
+        "mesh": {
+          "index": 0,
+          "generation": 0
+        },
+        "material": {
+          "index": 0,
+          "generation": 0
+        },
+        "texture": {
+          "index": 0,
+          "generation": 0
+        }
+      },
+      "afterRestore": {
+        "mesh": {
+          "index": 0,
+          "generation": 0
+        },
+        "material": {
+          "index": 0,
+          "generation": 0
+        },
+        "texture": {
+          "index": 0,
+          "generation": 0
+        }
+      },
+      "unchanged": true,
+      "reusedForPostFrame": true
+    },
+    "restoreResult": {
+      "ok": true,
+      "reason": null,
+      "restoredHandles": 3,
+      "staleHandles": 0
+    },
+    "frames": {
+      "total": 11,
+      "loseCallFrame": 10,
+      "lostEventFrame": 10,
+      "restoreCallFrame": 10,
+      "restoredEventFrame": 10,
+      "secondLoseCallFrame": 11,
+      "secondLostEventFrame": 11,
+      "firstValidAfterRestore": 11,
+      "firstContentAfterRestore": 11,
+      "recoveryToContent": 1,
+      "framesFromRestoreToContent": 1,
+      "invalidFramesWhileLost": 1,
+      "invalidFramesAfterRestore": 0,
+      "blankFramesAfterRestore": 0
+    },
+    "timing": {
+      "loseCallAtMs": 763.4000000059605,
+      "lostAtMs": 764.8000000119209,
+      "restoreCallAtMs": 764.8000000119209,
+      "restoredAtMs": 808.8000000119209,
+      "firstContentAtMs": 828.4000000059605,
+      "secondLoseCallAtMs": 828.7000000029802,
+      "secondLostAtMs": 829.2000000029802,
+      "secondRestoreCallAtMs": 829.2000000029802,
+      "secondRestoreRefusedAtMs": 829.6000000089407,
+      "recoveryElapsedMs": 63.599999994039536,
+      "firstLossToRestoredEventMs": 44,
+      "restoreCallToRestoredEventMs": 44,
+      "secondLossToRefusalMs": 0.4000000059604645,
+      "timingBasis": "performance.now() around the real device.lost/onRestored events; frame counts are the primary evidence"
+    },
+    "preCapture": {
+      "width": 640,
+      "height": 360,
+      "hash": "32312240",
+      "nonClearPixels": 53970,
+      "brightPixels": 26884,
+      "distinctColors": 7
+    },
+    "preLossSurface": {
+      "cssWidth": 640,
+      "cssHeight": 360,
+      "dpr": 1,
+      "backingWidth": 640,
+      "backingHeight": 360,
+      "deviceSize": {
+        "width": 0,
+        "height": 0
+      },
+      "deviceSizeMatchesCss": false,
+      "backingMatchesDpr": true,
+      "expectedBackingWidth": 640,
+      "expectedBackingHeight": 360
+    },
+    "postCapture": {
+      "width": 640,
+      "height": 360,
+      "hash": "32312240",
+      "nonClearPixels": 53970,
+      "brightPixels": 26884,
+      "distinctColors": 7
+    },
+    "sizeNote": "device.size is 0x0 before and after restore because this page calls init(surface) but never resize() outside the resize case; the swapchain and canvas backing still use the surface CSS metrics. This is not a restore regression.",
+    "recoveredFramePng": {
+      "dataUrl": "data:image/png;base64,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",
+      "width": 640,
+      "height": 360,
+      "frame": 11,
+      "capturedAfterRestore": true,
+      "capturedBeforeSecondLoss": true,
+      "note": "2D canvas snapshot of the real WebGPU canvas after the first restore and before the terminal second loss, so the recovered frame survives in the artifact."
+    },
+    "hashMatchesPreLoss": true,
+    "unobserved": {
+      "noAssetRefetch": null,
+      "noGameRestart": null,
+      "reason": "This page loads no network assets for the case and runs no game/runtime loop, so asset refetch and game restart cannot be observed; both stay PENDING rather than claimed true."
+    },
+    "secondLoss": {
+      "triggered": true,
+      "eventObserved": true,
+      "event": {
+        "count": 2,
+        "reason": "destroyed",
+        "message": "Device was destroyed.",
+        "frame": 11,
+        "atMs": 829.2000000029802,
+        "deviceState": "failed"
+      },
+      "stateAfterLoss": "failed",
+      "beginFrameValid": false,
+      "restoreAttempts": 1,
+      "restoreRefused": true,
+      "error": {
+        "name": "WebGpuRendererError",
+        "code": "E_DEVICE_LOST",
+        "message": "device restore already failed"
+      },
+      "restoreResult": null,
+      "stateAfterRefusal": "failed",
+      "gpuErrorsAtTerminal": 2,
+      "note": "The terminal failed state ends the run; restore() was called once and refused, not retried."
+    },
+    "firstLossStats": {
+      "drawCalls": 1,
+      "triangles": 12,
+      "instances": 1,
+      "culledInstances": 0,
+      "pipelineSwitches": 1,
+      "bindGroupSwitches": 4,
+      "textureBytes": 922880,
+      "bufferBytes": 6295112,
+      "uploadBytes": 2376,
+      "uploadCalls": 5,
+      "gpuErrors": 1,
+      "droppedDraws": 0,
+      "gpuFrameMs": null,
+      "cpuFrameMs": 0.7000000029802322
+    },
+    "terminalStats": {
+      "drawCalls": 0,
+      "triangles": 0,
+      "instances": 0,
+      "culledInstances": 0,
+      "pipelineSwitches": 0,
+      "bindGroupSwitches": 0,
+      "textureBytes": 0,
+      "bufferBytes": 0,
+      "uploadBytes": 0,
+      "uploadCalls": 0,
+      "gpuErrors": 2,
+      "droppedDraws": 0,
+      "gpuFrameMs": null,
+      "cpuFrameMs": 0
+    },
+    "finalStats": {
+      "drawCalls": 1,
+      "triangles": 12,
+      "instances": 1,
+      "culledInstances": 0,
+      "pipelineSwitches": 1,
+      "bindGroupSwitches": 4,
+      "textureBytes": 922880,
+      "bufferBytes": 6295112,
+      "uploadBytes": 2376,
+      "uploadCalls": 5,
+      "gpuErrors": 1,
+      "droppedDraws": 0,
+      "gpuFrameMs": null,
+      "cpuFrameMs": 0.7000000029802322
+    },
+    "afterFrame": {
+      "cssWidth": 640,
+      "cssHeight": 360,
+      "dpr": 1,
+      "backingWidth": 640,
+      "backingHeight": 360,
+      "deviceSize": {
+        "width": 0,
+        "height": 0
+      },
+      "deviceSizeMatchesCss": false,
+      "backingMatchesDpr": true,
+      "expectedBackingWidth": 640,
+      "expectedBackingHeight": 360,
+      "validFrame": true,
+      "stats": {
+        "drawCalls": 1,
+        "triangles": 12,
+        "instances": 1,
+        "culledInstances": 0,
+        "pipelineSwitches": 1,
+        "bindGroupSwitches": 4,
+        "textureBytes": 922880,
+        "bufferBytes": 6295112,
+        "uploadBytes": 2376,
+        "uploadCalls": 5,
+        "gpuErrors": 1,
+        "droppedDraws": 0,
+        "gpuFrameMs": null,
+        "cpuFrameMs": 0.7000000029802322
+      }
+    },
+    "uncaughtErrors": 0,
+    "pass": {
+      "hookAvailable": true,
+      "hookTriggered": true,
+      "lossEventObserved": true,
+      "deviceLostStateObserved": true,
+      "invalidFrameWhileLost": true,
+      "restoreResultOk": true,
+      "restoreEventObserved": true,
+      "runningAfterRestore": true,
+      "handlesUnchanged": true,
+      "postRestoreContent": true,
+      "hashMatchesPreLoss": true,
+      "recoveryWithin60Frames": true,
+      "recoveryWithin2Seconds": true,
+      "blackFramesAtMostOne": true,
+      "secondHookTriggered": true,
+      "secondLossEventObserved": true,
+      "secondLossTerminal": true,
+      "secondLossInvalidFrame": true,
+      "restoreRefused": true,
+      "restoreAttemptsExactlyOne": true,
+      "failedStateStable": true,
+      "gpuErrorsMatchLosses": true,
+      "noUncaughtErrors": true,
+      "all": true
+    }
+  },
+  "benchmark": null,
+  "screenshot": {
+    "path": "E:\\PROJECTS 2026\\PocketPad\\experiments\\e-m0-engine\\artifacts\\contextloss\\webgpu.png",
+    "bytes": 8744,
+    "sha256": "4455dc8877745d65d2f0fe5b4dccd125ab18bf293a614c4e319582697ad0492d",
+    "width": 640,
+    "height": 360,
+    "png": {
+      "width": 640,
+      "height": 360,
+      "colorType": 6,
+      "bitDepth": 8
+    },
+    "source": "page 2D canvas PNG of the recovered WebGPU frame before the second loss",
+    "capturedBeforeSecondLoss": true,
+    "captureError": null,
+    "decodeError": null,
+    "error": null
+  },
+  "terminalScreenshot": {
+    "path": "E:\\PROJECTS 2026\\PocketPad\\experiments\\e-m0-engine\\artifacts\\contextloss\\webgpu-terminal.png",
+    "bytes": 1923,
+    "sha256": "161496aa09bbad05b72096c325a5482275f3f6b3fa236758bc65bd8d898a8f69",
+    "width": 640,
+    "height": 360,
+    "png": {
+      "width": 640,
+      "height": 360,
+      "colorType": 2,
+      "bitDepth": 8
+    },
+    "source": "CDP Page.captureScreenshot after the terminal second loss",
+    "capturedBeforeSecondLoss": false,
+    "captureError": null,
+    "note": "The device is terminal after the second loss; this screenshot is supplementary and is not used as recovery evidence."
+  },
+  "crossBackendDiff": null,
+  "acceptance": {
+    "case": "contextloss",
+    "specConformant": false,
+    "functionalPass": true,
+    "casePass": true,
+    "blocked": false,
+    "goldenPass": null,
+    "crossBackendParityPass": null,
+    "benchmarkTargetMet": null,
+    "benchmarkHardMet": null,
+    "textureBytesWithinSpecExpected": null,
+    "gpuErrorsZero": false
+  },
+  "golden": {
+    "path": "E:\\PROJECTS 2026\\PocketPad\\experiments\\e-m0-engine\\golden.json",
+    "fixtureKey": "m0-textured-cube-v1|1|640x360",
+    "status": "not-applicable",
+    "expectedHash": null,
+    "updated": false
+  },
+  "diagnostics": [
+    "log-warning: rendering The powerPreference option is currently ignored when calling requestAdapter() on Windows. See https://crbug.com/369219127",
+    "log-warning: rendering The powerPreference option is currently ignored when calling requestAdapter() on Windows. See https://crbug.com/369219127"
+  ],
+  "blocker": null,
+  "functionalError": null,
+  "parityError": null,
+  "error": null
+}

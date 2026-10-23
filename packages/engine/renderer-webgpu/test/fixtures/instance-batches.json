@@ -1,0 +1,62 @@
+{
+  "formatVersion": 1,
+  "synthetic": true,
+  "instanceStrideBytes": 64,
+  "ringCapacityBytes": 4194304,
+  "ringCapacityInstances": 65536,
+  "maxInstancesPerFrame": 65536,
+  "maxObjectsPerFrame": 8192,
+  "smallRing": {
+    "capacityBytes": 8192,
+    "capacityInstances": 128,
+    "allocations": [
+      { "id": "exact", "requests": [128], "accepted": [128], "offsets": [0] },
+      {
+        "id": "split-and-full",
+        "requests": [100, 100, 1],
+        "accepted": [100, 28, 0],
+        "offsets": [0, 6400, 8192]
+      },
+      {
+        "id": "exact-then-full",
+        "requests": [128, 1],
+        "accepted": [128, 0],
+        "offsets": [0, 8192]
+      },
+      {
+        "id": "single-over-capacity",
+        "requests": [200],
+        "accepted": [128],
+        "offsets": [0]
+      },
+      {
+        "id": "zero-then-full",
+        "requests": [0, 128],
+        "accepted": [0, 128],
+        "offsets": [0, 0]
+      }
+    ]
+  },
+  "deviceCases": [
+    {
+      "id": "maximum-single-draw",
+      "counts": [65536],
+      "drawCalls": 1,
+      "accepted": [65536],
+      "droppedDraws": 0
+    },
+    {
+      "id": "split-across-ring",
+      "counts": [60000, 10000],
+      "drawCalls": 2,
+      "accepted": [60000, 5536],
+      "droppedDraws": 2
+    }
+  ],
+  "overCapacity": {
+    "count": 65537,
+    "devError": "E_UNSUPPORTED_FEATURE",
+    "productionAccepted": 65536,
+    "productionDroppedDraws": 1
+  }
+}

@@ -1,7 +1,7 @@
 # ADR-0001: Custom WebGL2 renderer with a Canvas2D fallback
 
-- **Status:** Accepted — desktop-provisional. The TV half of E12 (frame time,
-  memory) is PENDING, so this is not a final hardware verdict.
+- **Status:** **Superseded by [ADR-0002](ADR-0002-webgpu-engine.md) on
+  2026-10-22.** Kept for history; do not use as the current renderer decision.
 - **Date:** 2026-10-22
 - **Decision owner:** `D3-RT-02`, `D3-EXP-01` (E12)
 - **Scope:** `packages/runtime` renderer and every game that draws through
