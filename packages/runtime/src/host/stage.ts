@@ -10,7 +10,17 @@
  * and debug counters. Games only ever see the `GameContext` (FR-7.17).
  */
 import { createCanvas2DDevice } from "@lanpad/engine-renderer-webgl2/canvas2d";
-import type { GameManifest, GameWorld3D } from "@lanpad/sdk";
+import type {
+  AssetDeclaration,
+  AssetLibrary,
+  GameManifest,
+  GameWorld3D,
+} from "@lanpad/sdk";
+import type { BabylonGameRenderer } from "../babylon/BabylonGameRenderer.js";
+import type {
+  BabylonModelProvider,
+  BabylonModelSource,
+} from "../babylon/world3d/types.js";
 import type { AssetProgress } from "../assets/AssetLoader.js";
 import { AudioBus } from "../audio/AudioBus.js";
 import { createGameAssetLibrary, toLoadProgress } from "../assets/gameAssets.js";
@@ -139,10 +149,14 @@ export type GameRendererChoice =
       readonly usedFallback: boolean;
       /**
        * Babylon only: creates the single spec-22 `GameWorld3D` on the already
-       * initialized renderer. The stage installs it as `ctx.world` and the
-       * host disposes it with the renderer.
+       * initialized renderer. When the game declares GLB mesh assets, their
+       * assets are wrapped in a model provider first (spec 22/23 seam). The
+       * stage installs the result as `ctx.world`; the host disposes it.
        */
-      readonly createWorld?: () => GameWorld3D;
+      readonly createWorld?: (input?: {
+        readonly library: AssetLibrary;
+        readonly declarations: readonly AssetDeclaration[];
+      }) => GameWorld3D | Promise<GameWorld3D>;
     }
   | {
       readonly ok: false;
@@ -151,6 +165,11 @@ export type GameRendererChoice =
       readonly message: string;
       readonly canvas: HTMLCanvasElement;
     };
+
+type GameRendererOk = Extract<GameRendererChoice, { ok: true }>;
+
+/** Babylon world factory carried by a successful renderer choice. */
+type GameWorldFactory = NonNullable<GameRendererOk["createWorld"]>;
 
 /**
  * Selects and initializes the renderer a manifest asks for.
@@ -198,9 +217,7 @@ export async function createGameRenderer(
       canvas: choice.canvas,
       usedFallback: choice.usedFallback,
       // Spec 22: one world per renderer, created only after init succeeds.
-      // Model support needs a GLB -> AssetContainer provider; the host cannot
-      // build one until the Babylon adapter exposes its scene (follow-up).
-      createWorld: () => choice.renderer.createWorld(),
+      createWorld: (input) => createBabylonWorld(choice.renderer, input),
     };
   }
 
@@ -271,6 +288,78 @@ export async function createGameRenderer(
   };
 }
 
+/**
+ * Creates the Babylon world, first wrapping the game's ready GLB mesh assets
+ * as spec-22 model sources. Handles that are not ready (lazy groups) are left
+ * alone, so boot never fetches an asset the game did not declare eager.
+ */
+async function createBabylonWorld(
+  renderer: BabylonGameRenderer,
+  input?: {
+    readonly library: AssetLibrary;
+    readonly declarations: readonly AssetDeclaration[];
+  },
+): Promise<GameWorld3D> {
+  const provider =
+    input === undefined
+      ? null
+      : await loadBabylonModelProvider(
+          renderer,
+          input.library,
+          input.declarations,
+        );
+  return provider === null
+    ? renderer.createWorld()
+    : renderer.createWorld({ provider });
+}
+
+async function loadBabylonModelProvider(
+  renderer: BabylonGameRenderer,
+  library: AssetLibrary,
+  declarations: readonly AssetDeclaration[],
+): Promise<BabylonModelProvider | null> {
+  const meshDeclarations = declarations.filter(
+    (declaration) => declaration.kind === "mesh",
+  );
+  if (meshDeclarations.length === 0) return null;
+  const scene = renderer.babylonScene;
+  if (scene === null) {
+    throw new Error("The Babylon scene is not ready for model loading.");
+  }
+
+  // Both the glTF plugin and the loader are lazy chunks: 2D games and
+  // asset-free Babylon games never download them (ER-21-08, spec-23 cap).
+  await import("@babylonjs/loaders/glTF/index.js");
+  const { LoadAssetContainerAsync } = await import(
+    "@babylonjs/core/Loading/sceneLoader"
+  );
+  const { createAssetContainerModelSource } = await import(
+    "../babylon/babylonBindings.js"
+  );
+
+  const sources = new Map<string, BabylonModelSource>();
+  for (const declaration of meshDeclarations) {
+    // `get` returns only ready handles, so a lazy mesh is skipped here; the
+    // game's own `ctx.assets.load` still owns that fetch decision.
+    const handle = library.get(declaration.id);
+    if (handle === undefined) continue;
+    const bytes = handle.value;
+    if (!(bytes instanceof Uint8Array)) {
+      throw new Error(`Mesh asset "${declaration.id}" did not decode to bytes.`);
+    }
+    const container = await LoadAssetContainerAsync(bytes, scene, {
+      pluginExtension: declaration.path.endsWith(".gltf") ? ".gltf" : ".glb",
+      name: declaration.id,
+    });
+    sources.set(declaration.id, createAssetContainerModelSource(container));
+  }
+
+  return {
+    hasModel: (assetId) => sources.has(assetId),
+    getModel: (assetId) => sources.get(assetId) ?? null,
+  };
+}
+
 export interface HostStage {
   openGame(slug: string, options?: OpenGameOptions): Promise<void>;
   /** Stops the current game but keeps the room, roster and socket (HP-04). */
@@ -305,7 +394,7 @@ export function createStage(deps: StageDeps): HostStage {
   /** Spec-22 world created by the renderer for a Babylon manifest. */
   let world: GameWorld3D | null = null;
   /** One-shot world factory from the renderer choice, before the world exists. */
-  let createWorld: (() => GameWorld3D) | null = null;
+  let createWorld: GameWorldFactory | null = null;
   let renderer: Renderer3D | null = null;
   let backend: RendererBackend | null = null;
   let canvas: HTMLCanvasElement | null = null;
@@ -550,20 +639,6 @@ export function createStage(deps: StageDeps): HostStage {
 
     if (active === null || canvas === null) return;
 
-    // Spec 22: a Babylon manifest gets exactly one world, created after the
-    // renderer initialized. 2D/engine manifests leave `ctx.world` absent.
-    if (createWorld !== null) {
-      const buildWorld = createWorld;
-      createWorld = null;
-      try {
-        world = buildWorld();
-      } catch (error) {
-        if (generation !== gameGeneration) return;
-        deps.notices.showError(error);
-        return;
-      }
-    }
-
     const contextRecovery = new ContextLossRecovery({
       controller: resolution,
       onRestored: applySize,
@@ -616,6 +691,34 @@ export function createStage(deps: StageDeps): HostStage {
       if (generation !== gameGeneration) return;
       deps.notices.showError(error);
       return;
+    }
+
+    // Spec 22: a Babylon manifest gets exactly one world. It is created after
+    // the eager asset load so GLB meshes in the eager group can become model
+    // sources, and before the start gesture so `ctx.world` is ready at init.
+    // A 2D/engine manifest never gets a `createWorld` seam and stays absent.
+    if (createWorld !== null) {
+      const buildWorld = createWorld;
+      createWorld = null;
+      const assetInput =
+        assetLibrary === null || loaded.assets === null
+          ? undefined
+          : {
+              library: assetLibrary,
+              declarations: loaded.assets.manifest.assets,
+            };
+      try {
+        const created = await buildWorld(assetInput);
+        if (generation !== gameGeneration) {
+          created.dispose();
+          return;
+        }
+        world = created;
+      } catch (error) {
+        if (generation !== gameGeneration) return;
+        deps.notices.showError(error);
+        return;
+      }
     }
 
     if (generation !== gameGeneration) return;
