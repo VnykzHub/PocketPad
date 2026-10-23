@@ -67,11 +67,16 @@ import {
   type ControlRenderer,
   type SurfaceSize,
 } from "../controls/control.js";
-import type { ControlEventSink } from "../controls/eventSink.js";
+import { emitControlEvent, type ControlEventSink } from "../controls/eventSink.js";
 import type { GyroControlRuntime } from "../controls/gyro.js";
+import { LauncherRemoteInput } from "../controls/launcherRemoteInput.js";
 import { isPanelRenderer } from "../controls/panel.js";
 import { createControl } from "../controls/registry.js";
 import { EventQueue, type EventQueueStats } from "../events/EventQueue.js";
+import {
+  LAUNCHER_REMOTE_EVENT,
+  LAUNCHER_REMOTE_LAYOUT_ID,
+} from "../layout/launcherRemote.js";
 import {
   MOTION_STRIP_ID,
   createMotionStatusStrip,
@@ -425,6 +430,8 @@ export class ControllerLayoutView {
   private readonly events: ControlEventSink | undefined;
   private readonly viewport: ViewportTracker | undefined;
   private readonly motionRuntime: GyroControlRuntime | undefined;
+  /** Launcher-only bit sink; its bits never reach the wire input store. */
+  private readonly launcherInput: LauncherRemoteInput;
 
   private engine: TouchEngine | null = null;
   private renderers: Array<{
@@ -453,6 +460,9 @@ export class ControllerLayoutView {
     this.events = options.events;
     this.viewport = options.viewport;
     this.motionRuntime = options.motionRuntime;
+    this.launcherInput = new LauncherRemoteInput((button) => {
+      emitControlEvent(this.events, LAUNCHER_REMOTE_EVENT, button, "normal");
+    });
   }
 
   /** Active touch bindings, for the debug overlay. */
@@ -526,8 +536,15 @@ export class ControllerLayoutView {
     this.disposeRenderers();
     this.size = this.resolveSize();
 
+    // Spec 25 §2.7: only the live launcher layout turns its bits into remote
+    // events. Passing a separate store guarantees those bits never become
+    // binary game input, so a running game cannot see duplicate presses.
+    const isLauncher = layout.id === LAUNCHER_REMOTE_LAYOUT_ID;
+    if (isLauncher) {
+      this.launcherInput.reset();
+    }
     const ctx: ControlContext = {
-      input: this.input,
+      input: isLauncher ? this.launcherInput : this.input,
       surfaceSize: this.size,
     };
     if (this.debugOutline) {
