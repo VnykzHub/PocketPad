@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "id": "bt-lanes-v1",
+  "orientation": "landscape",
+  "background": "#08080c",
+  "controls": [
+    {
+      "type": "button",
+      "id": "lane-1",
+      "x": "14%",
+      "y": "74%",
+      "label": "Lane 1",
+      "symbol": "1",
+      "shape": "circle",
+      "r": "10%",
+      "bit": 0
+    },
+    {
+      "type": "button",
+      "id": "lane-2",
+      "x": "38%",
+      "y": "74%",
+      "label": "Lane 2",
+      "symbol": "2",
+      "shape": "circle",
+      "r": "10%",
+      "bit": 1
+    },
+    {
+      "type": "button",
+      "id": "lane-3",
+      "x": "62%",
+      "y": "74%",
+      "label": "Lane 3",
+      "symbol": "3",
+      "shape": "circle",
+      "r": "10%",
+      "bit": 2
+    },
+    {
+      "type": "button",
+      "id": "lane-4",
+      "x": "86%",
+      "y": "74%",
+      "label": "Lane 4",
+      "symbol": "4",
+      "shape": "circle",
+      "r": "10%",
+      "bit": 3
+    },
+    {
+      "type": "button",
+      "id": "calibrate",
+      "x": "88%",
+      "y": "14%",
+      "label": "CAL",
+      "shape": "circle",
+      "r": "7%",
+      "bit": 15
+    }
+  ]
+}
