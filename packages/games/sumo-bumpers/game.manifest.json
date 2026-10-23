@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "name": "Sumo Bumpers",
+  "description": "Shove rivals off a shrinking arena; last bumper standing takes the round.",
+  "entry": "index.js",
+  "layouts": ["layouts/sb-stick-v1.json", "layouts/sb-stick-dash-v1.json"],
+  "assetBudget": {
+    "initialBytes": 524288,
+    "totalBytes": 2097152
+  },
+  "minPlayers": 2,
+  "maxPlayers": 8,
+  "needsGyro": false,
+  "renderer": "canvas2d",
+  "presentation": {
+    "tagline": "Shove everyone off the shrinking floor.",
+    "accent": "#ff6b6b",
+    "categories": ["party", "arena", "action"],
+    "inputBadges": ["stick", "buttons", "haptics"]
+  }
+}

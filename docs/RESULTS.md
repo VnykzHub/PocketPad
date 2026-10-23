@@ -993,3 +993,27 @@ by 2D games.
 - The automated start used a trusted CDP mouse click and
   `--autoplay-policy=no-user-gesture-required`; neither changes rendering cost.
 - The debug overlay was visible (`?debug=1`) and is included in the screenshots.
+
+## Babylon world adapter — stream A (2026-10-23)
+
+Spec-22 `ctx.world` implementation, measured on the standalone
+`experiments/babylon-world/` page (not the host yet). Evidence:
+`experiments/babylon-world/results.json`, screenshots `world-webgpu.png`
+(192,201 B) and `world-webgl2.png` (122,177 B).
+
+**Environment:** Chrome HeadlessChrome 155.0.8059.85, 1280×720, NVIDIA Ampere
+WebGPU adapter (RTX 3050 Ti), COOP/COEP isolated. Scene: `ped.glb` loaded
+through the provider seam, the walk clip playing, 8 instances and all five
+primitive kinds. Frame intervals are an independent uncapped rAF probe.
+
+| Backend | Tier | Post | Samples | p50 ms | p95 ms | max ms | Engine fps | Errors |
+|---|---|---|---:|---:|---:|---:|---:|---:|
+| webgpu | high | yes | 640 | 3.07 | 3.865 | 6.08 | 303 | 0 |
+| webgl2 | reduced | no | 790 | 2.49 | 3.185 | 10.995 | 448 | 0 |
+
+**What this proves and what it does not:** models, pooled rigged instances,
+animation, scene/camera and primitives render on both backends with no page
+errors; follow error was 0 in both runs. The numbers are headless desktop dev
+values at 720p, not the 1080p M1 target and not target hardware. Animation is
+proven by still screenshots, not video. ER-22-05 per-tick allocation remains
+PENDING. The host integration of `ctx.world` is stream G's work.

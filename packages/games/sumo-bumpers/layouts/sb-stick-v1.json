@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "sb-stick-v1",
+  "orientation": "any",
+  "background": "#000000",
+  "controls": [
+    {
+      "type": "stick",
+      "id": "move",
+      "x": "50%",
+      "y": "70%",
+      "label": "Move",
+      "size": "46%",
+      "axis": "left",
+      "mode": "floating",
+      "deadzone": 0.08
+    }
+  ]
+}

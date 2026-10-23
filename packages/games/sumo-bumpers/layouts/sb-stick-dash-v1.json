@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "sb-stick-dash-v1",
+  "orientation": "any",
+  "background": "#000000",
+  "controls": [
+    {
+      "type": "stick",
+      "id": "move",
+      "x": "26%",
+      "y": "72%",
+      "label": "Move",
+      "size": "44%",
+      "axis": "left",
+      "mode": "floating",
+      "deadzone": 0.08
+    },
+    {
+      "type": "button",
+      "id": "dash",
+      "x": "82%",
+      "y": "72%",
+      "label": "Dash",
+      "symbol": "»",
+      "shape": "circle",
+      "r": "12%",
+      "bit": 0,
+      "haptic": [25]
+    },
+    {
+      "type": "panel",
+      "id": "status",
+      "x": "50%",
+      "y": "12%",
+      "w": "88%",
+      "h": "16%",
+      "z": 10
+    }
+  ]
+}
