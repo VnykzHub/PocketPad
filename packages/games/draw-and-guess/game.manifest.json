@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "name": "Draw and Guess",
+  "description": "One phone draws, everyone else races to guess the secret word.",
+  "entry": "index.js",
+  "layouts": [
+    "layouts/dg-drawer-v1.json",
+    "layouts/dg-guesser-v1.json",
+    "layouts/dg-results-v1.json"
+  ],
+  "assetBudget": {
+    "initialBytes": 262144,
+    "totalBytes": 1048576
+  },
+  "minPlayers": 2,
+  "maxPlayers": 8,
+  "needsGyro": false,
+  "presentation": {
+    "tagline": "Draw it. Guess it. Laugh at the result.",
+    "accent": "#4cb3f0",
+    "categories": ["party", "puzzle"],
+    "inputBadges": ["canvas", "text", "choice"]
+  }
+}

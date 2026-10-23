@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "dg-drawer-v1",
+  "orientation": "portrait",
+  "background": "#101014",
+  "controls": [
+    {
+      "type": "panel",
+      "id": "word",
+      "x": "50%",
+      "y": "9%",
+      "w": "92%",
+      "h": "12%"
+    },
+    {
+      "type": "canvas",
+      "id": "draw",
+      "x": "50%",
+      "y": "53%",
+      "w": "96%",
+      "h": "70%",
+      "event": "kit.canvas",
+      "maxStrokePoints": 512
+    }
+  ]
+}

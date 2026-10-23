@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "dg-results-v1",
+  "orientation": "portrait",
+  "background": "#101014",
+  "controls": [
+    {
+      "type": "panel",
+      "id": "standings",
+      "x": "50%",
+      "y": "27%",
+      "w": "92%",
+      "h": "42%"
+    },
+    {
+      "type": "choice",
+      "id": "actions",
+      "x": "50%",
+      "y": "66%",
+      "w": "92%",
+      "h": "28%",
+      "event": "kit.choice",
+      "options": [
+        {
+          "value": "rematch",
+          "label": "Play again"
+        }
+      ]
+    }
+  ]
+}
