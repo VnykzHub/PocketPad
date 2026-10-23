@@ -1,0 +1,9 @@
+file,source,author,licence,date,attribution
+ground.glb,generated in-repo,PocketPad,CC0 1.0,2026-10-23,none required
+building.glb,generated in-repo,PocketPad,CC0 1.0,2026-10-23,none required
+car.glb,Game-assets/kenney_car-kit/Models/GLB format/sedan.glb (+ Textures/colormap.png),Kenney,CC0 1.0,2026-10-23,none required
+ped.glb,Game-assets/Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb,Quaternius,CC0 1.0,2026-10-23,none required
+facade.png,generated in-repo,PocketPad,CC0 1.0,2026-10-23,none required
+layout.json,generated in-repo,PocketPad,CC0 1.0,2026-10-23,none required
+LICENSES.csv,generated in-repo,PocketPad,CC0 1.0,2026-10-23,none required
+MANIFEST.json,generated in-repo,PocketPad,CC0 1.0,2026-10-23,none required

@@ -1,6 +1,6 @@
 # ADR-0002: Custom WebGPU-first browser engine with a WebGL2 fallback
 
-- **Status:** Accepted. Supersedes [ADR-0001](ADR-0001-renderer.md).
+- **Status:** Superseded for the engine-base choice by [ADR-0003](ADR-0003-engine-base.md) (Babylon.js adopted, 2026-10-23). Retained as the record of the custom-renderer decision; its renderer packages remain in the repo.
 - **Date:** 2026-10-22
 - **Decision owner:** engine program (user decision)
 - **Scope:** renderer, engine packages, host runtime, games

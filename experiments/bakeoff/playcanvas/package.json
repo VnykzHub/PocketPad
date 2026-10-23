@@ -1,0 +1,21 @@
+{
+  "name": "pocketpad-bakeoff-playcanvas",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "PlayCanvas contender for the PocketPad engine bake-off (2026-10-23)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "audio": "node scripts/make-engine-audio.mjs",
+    "sim:vehicle": "node scripts/vehicle-sim.mjs"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "0.21.0",
+    "playcanvas": "2.23.3"
+  },
+  "devDependencies": {
+    "vite": "8.3.5"
+  }
+}

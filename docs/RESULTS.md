@@ -804,3 +804,142 @@ no-Rapier package. It is amended to 80 KB gzip for the physics package JS
 **excluding** the Rapier payload, ≤ 2 MiB gzip for the lazy Rapier payload,
 and the unchanged ≤ 5 MB host + game total. The package-size gate stays
 PENDING until the runtime imports physics.
+
+---
+
+## Engine bake-off — ADR-0003 input (2026-10-23)
+
+> Measured bake-off for the engine-base decision. One row per contender/run.
+> Every row is transcribed from `experiments/bakeoff/runner/results.json`
+> (official shared matrix, generated `2026-10-23T06:40:26.604Z`); nothing is
+> estimated. The contender-local files remain supplementary and are recorded
+> below. The decision and fairness caveats are in
+> [`docs/ADR-0003-engine-base.md`](ADR-0003-engine-base.md).
+
+**Environment:** Windows 11 Home Single Language 10.0.26300 x64; Intel Core
+i7-11800H (16 logical processors); 16,931,676,160 B RAM; NVIDIA GeForce RTX
+3050 Ti Laptop GPU via ANGLE Direct3D11
+(`ANGLE (NVIDIA, NVIDIA GeForce RTX 3050 Ti Laptop GPU (0x000025A0) Direct3D11 vs_5_0 ps_5_0, D3D11)`);
+Google Chrome 155.0.8059.85 headless (`HeadlessChrome/155.0.0.0`); 1920×1080 at
+DPR 1; Node v22.14.0; COOP/COEP present and `crossOriginIsolated: true` in every
+official run; date 2026-10-23.
+
+**Scene (shared contract):** 3×3 grid of 64 m cells; 14 buildings in the centre
+cell; 50 skinned pedestrians; 1 car; 1 directional light with shadows and a sky;
+per-cell streaming; 60 s camera path. All contenders consume the same shared
+glTF assets in `experiments/bakeoff/assets/`.
+
+**Protocol:** 5 s warm-up + 60 s sampled, 3 runs per contender, WebGPU
+preferred with WebGL2 fallback. Frame intervals come from the runner's
+independent **uncapped** `requestAnimationFrame` probe
+(`--disable-frame-rate-limit`, `--disable-gpu-vsync`): they are render work, not
+display cadence and not GPU timestamp queries. Percentiles are nearest-rank.
+Cold boot is the production build measured with zlib gzip level 9 per file,
+summed, source maps excluded. Draw calls, triangles and instances are the
+runner's **final-frame snapshot**, not peak-scene values.
+
+| Contender | Run | Backend | p50 ms | p95 ms | max ms | First frame ms | Draw calls | Triangles | Instances | Act / Deact | Cold boot gzip | Verdict |
+|---|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| PlayCanvas 2.23.3 | 1 | — | — | — | — | — | — | — | — | — | 2,223,430 B (2.120 MiB) | **error — rAF sampler captured no frame intervals** |
+| PlayCanvas 2.23.3 | 2 | webgpu | 3.745 | 13.96 | 35.355 | 794.1 | 65 | 8,658 | 20 | 30 / 29 | 2,223,430 B (2.120 MiB) | measured |
+| PlayCanvas 2.23.3 | 3 | webgpu | 3.995 | 13.09 | 35.32 | 1,148.7 | 65 | 8,658 | 20 | 30 / 29 | 2,223,430 B (2.120 MiB) | measured |
+| Babylon.js 9.32.0 | 1 | webgpu | 1.725 | 7.39 | 75.955 | 1,216.005 | 61 | 2,218 | 15 | 214 / 200 | 1,730,261 B (1.650 MiB) | measured |
+| Babylon.js 9.32.0 | 2 | webgpu | 1.895 | 10.865 | 56.07 | 932.88 | 61 | 2,218 | 15 | 214 / 200 | 1,730,261 B (1.650 MiB) | measured |
+| Babylon.js 9.32.0 | 3 | webgpu | 1.045 | 7.835 | 18.07 | 1,197.235 | 61 | 2,218 | 15 | 214 / 200 | 1,730,261 B (1.650 MiB) | measured |
+| Custom (current engine) | 1 | webgpu | 0.37 | 0.735 | 32 | 823.73 | 36 | 607,970 | 160 | 64 / 0 | 1,766,889 B (1.685 MiB) | measured |
+| Custom (current engine) | 2 | webgpu | 0.39 | 0.79 | 33.81 | 842.535 | 36 | 607,970 | 160 | 64 / 0 | 1,766,889 B (1.685 MiB) | measured |
+| Custom (current engine) | 3 | webgpu | 0.415 | 0.845 | 19.435 | 1,102.425 | 36 | 621,714 | 162 | 64 / 0 | 1,766,889 B (1.685 MiB) | measured |
+
+**Per-contender aggregates (measured runs only, no best-run selection):**
+
+| Contender | p50 min / median / max ms | p95 min / median / max ms | Max frame ms | Cold boot gzip |
+|---|---|---|---|---:|---:|
+| PlayCanvas 2.23.3 | 3.745 / 3.87 / 3.995 | 13.09 / 13.525 / 13.96 | 35.355 | 2,223,430 B (2.120 MiB) |
+| Babylon.js 9.32.0 | 1.045 / 1.725 / 1.895 | 7.39 / 7.835 / 10.865 | 75.955 | 1,730,261 B (1.650 MiB) |
+| Custom (current engine) | 0.37 / 0.39 / 0.415 | 0.735 / 0.79 / 0.845 | 33.81 | 1,766,889 B (1.685 MiB) |
+
+PlayCanvas's aggregate covers 2 measured runs; run 1 produced no frame
+intervals. Babylon and custom each cover 3 measured runs.
+
+**Notes and caveats:**
+
+- All eight measured rows are `webgpu`, Chrome 155.0.8059.85, 2026-10-23, on
+  the RTX 3050 Ti above. No software renderer was used. PlayCanvas run 1 is
+  `error`, not a measurement: reason "the rAF sampler captured no frame
+  intervals", runner errors "sampler did not finish within 135 s" and
+  "window.__BAKEOFF__ disappeared before the final snapshot", no screenshot.
+- Every measured run meets the 14 ms p95 target. PlayCanvas's two measured runs
+  are 13.96 and 13.09 ms (headroom 0.04 and 0.91 ms). Babylon is 7.39 / 10.865 /
+  7.835 ms (worst run 3.135 ms below target). Custom is 0.735 / 0.79 / 0.845 ms.
+  PlayCanvas run 1 is a harness error, not a p95 miss.
+- The earlier contender-local PlayCanvas file
+  (`experiments/bakeoff/playcanvas/results.json`, generated
+  `2026-10-23T05:55:16.933Z`) recorded a conflicting result: p95 15.55 / 15.345
+  / 12.255 ms, p50 2.96 / 3.645 / 4.275 ms, maxima 40.58 / 56.86 / 324.28 ms,
+  first frame 1,043.5 / 1,307.8 / 1,309.6 ms, 65–67 draw calls and
+  8,658–8,682 triangles. The official matrix is authoritative and records
+  13.96 / 13.09 ms over two measured runs. The difference is run-to-run
+  variance, recorded rather than smoothed; the decision is unaffected because
+  Babylon's headroom is far larger under either file.
+- The end-of-run snapshots are not peak loads. PlayCanvas ended with the
+  pedestrian cells streamed out: 20 instances, 65 draw calls, 8,658 triangles.
+  Its separate 10 s full-active diagnostic (not an official row) recorded 70
+  instances, 120 draw calls and 448,358 triangles (HUD 121 / 462,090) with p95
+  8.815 ms. Babylon ended with pedestrian cells deactivated: 15 instances, 61
+  draw calls, 2,218 triangles (214 activations / 200 deactivations); a 6 s
+  smoke run saw `peakActivePeds: 50`, but peak draw calls and triangles were not
+  measured. Custom ended with 160–162 instances, 36 draw calls and
+  607,970–621,714 triangles (64 / 0). Do not compare these columns as
+  peak-scene values.
+- Cold boot covers the contender `dist` only. Shared scene assets are common and
+  excluded. Babylon's checklist records the combined `dist` + shared-scene gzip
+  as 2,137,756 B (2.04 MiB); all contender-only figures are far below the
+  5,242,880 B hard budget. PlayCanvas's measured cold boot is its profiler
+  build, which is larger than the normal entry; Babylon's includes 662,067 B
+  gzip of Havok WASM. Custom's 1,766,889 B is its full contender build.
+- WebGL2 was a forced smoke test, not a 3-run measurement: PlayCanvas reported
+  97 draw calls / 269,722 triangles / 70 instances and needed `antialias: false`
+  to avoid an ANGLE/D3D11 MSAA resolve error; Babylon reported 711 samples with
+  p50 8.325 / p95 10.215 ms and no errors; custom's `?backend=webgl2` probe
+  rendered the full city with 0 dropped draws and 0 page errors. None is a
+  3-run fallback result.
+- One unified run now exists: `runner/results.json` (9,381,691 B, generated
+  `2026-10-23T06:40:26.604Z`) covers all three contenders from one
+  serial invocation, one Chrome at a time, order PlayCanvas → Babylon → custom.
+  It is not interleaved or randomised, so thermal or machine-state drift is not
+  controlled. The earlier per-contender files (`playcanvas/results.json` at
+  `05:55:16Z`, `babylon/results-babylon.json` at `06:13:47Z`,
+  `custom/results.json` at `06:28:19Z`) are supplementary; run-to-run variance
+  exists between them and the matrix.
+- Audio playback is not verified for any contender: the runner uses
+  `--mute-audio` and headless Chrome blocks the AudioContext before a user
+  gesture. PlayCanvas's positional-audio checklist item is PENDING; Babylon's
+  is PASS for wiring only; custom's is PENDING (`state: "locked"`, fixed pitch).
+- Babylon's `GameContext` end-to-end integration and allocation-free operation
+  are PENDING; PlayCanvas's `GameContext` PASS is a structural import-graph
+  check, and its hot-path PASS is a documented substitute. Custom's
+  `GameContext` item is FAILED (the page is built directly on engine packages),
+  and its allocation-free item is a code-level claim with no counter.
+- The custom frame time is not like-for-like. Its checklist records #4
+  (directional/cascaded shadows) **FAILED** — `shadowCascades: 0`, no shadow
+  maps, contact discs instead; #3 (skeletal animation) as a documented
+  equivalent — CPU pose-bucket switching, not GPU skinning or weighted
+  blending; #10 (`GameContext`) **FAILED**; #12 (licence) PENDING; #7 (audio)
+  PENDING; #8 streaming deactivation unobserved (`deactivations: 0`); and #2
+  glTF loading as static GLB only, with the car and skinned ped parsed by the
+  contender's own `src/glb.js`. Its geometry is also heavier
+  (607,970–621,714 end-snapshot triangles vs 2,218–8,658), so its p95 measures
+  a different workload, not the same scene at a faster speed.
+- The custom checklist's cold-boot per-file figures do not sum to its stated
+  total: 1,395 + 1,764,018 + 9,249 + 227 = 1,774,889 B, while it states
+  1,766,889 B. The matrix's per-file figures do sum correctly (227 + 9,258 +
+  1,756,017 + 1,387 = 1,766,889 B); the matrix is authoritative.
+- Exact build identity is the content-hashed bundle filename; no git commit hash
+  is recorded in the results files. PlayCanvas `dist/assets/index-D-OM44cV.js`
+  (2,180,392 B gzip); Babylon `dist/assets/index-C7XQw-5e.js` (615,949 B gzip)
+  plus Havok WASM (662,067 B gzip); custom `dist/assets/index-Dx8GrSMK.js`
+  (1,756,017 B gzip) plus `dist/assets/decode.worker-C_a7vKHJ.js` (9,258 B
+  gzip).
+- Runner-recorded non-blank source lines: PlayCanvas 1,522; Babylon 1,544;
+  custom 2,981. This counts contender-folder source, not shared assets or
+  engine source.

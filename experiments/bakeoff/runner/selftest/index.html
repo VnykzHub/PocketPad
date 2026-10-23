@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bake-off runner self-test</title>
+    <style>
+      :root { color-scheme: dark; }
+      html, body { margin: 0; height: 100%; background: #0d1015; overflow: hidden; }
+      canvas { display: block; width: 100vw; height: 100vh; }
+      .hud {
+        position: fixed;
+        top: 18px;
+        left: 18px;
+        padding: 12px 16px;
+        border: 1px solid #2a3444;
+        border-radius: 8px;
+        background: rgba(13, 16, 21, 0.82);
+        color: #e8edf5;
+        font: 12px/1.6 ui-monospace, Consolas, monospace;
+        pointer-events: none;
+      }
+      .hud strong { color: #6ea8ff; font-weight: 600; }
+      .hud .muted { color: #93a0b4; }
+    </style>
+  </head>
+  <body data-selftest="true">
+    <canvas id="canvas"></canvas>
+    <div class="hud" id="hud">
+      <div><strong>runner self-test</strong> — Canvas2D probe, not a contender</div>
+      <div class="muted" id="line1">loading layout…</div>
+      <div class="muted" id="line2">frames 0</div>
+    </div>
+    <script>
+      (function () {
+        "use strict";
+
+        // The runner's contract object. ready flips after the first frame.
+        window.__BAKEOFF__ = {
+          ready: false,
+          backend: "unknown",
+          frameTimesMs: [],
+          drawCalls: 1,
+          triangles: 2,
+          instances: 0,
+          firstFrameMs: 0,
+          activations: 0,
+          deactivations: 0,
+          errors: []
+        };
+
+        const state = window.__BAKEOFF__;
+        const canvas = document.getElementById("canvas");
+        const context = canvas.getContext("2d");
+        const line1 = document.getElementById("line1");
+        const line2 = document.getElementById("line2");
+        if (!context) {
+          state.errors.push("Canvas2D context unavailable");
+          return;
+        }
+
+        let width = 0;
+        let height = 0;
+        let started = false;
+        let lastFrame = 0;
+        let drawnFrames = 0;
+        let phase = 0;
+
+        function resize() {
+          const ratio = window.devicePixelRatio || 1;
+          width = Math.max(1, Math.round(window.innerWidth * ratio));
+          height = Math.max(1, Math.round(window.innerHeight * ratio));
+          canvas.width = width;
+          canvas.height = height;
+        }
+        window.addEventListener("resize", resize);
+        resize();
+
+        fetch("../../assets/layout.json", { cache: "no-store" })
+          .then(function (response) {
+            if (!response.ok) throw new Error("HTTP " + response.status);
+            return response.json();
+          })
+          .then(function (value) {
+            state.instances = Array.isArray(value.pedestrians)
+              ? value.pedestrians.length
+              : 0;
+            line1.textContent =
+              "buildings " + (value.buildings ? value.buildings.length : "?") +
+              " · pedestrians " + (value.pedestrians ? value.pedestrians.length : "?") +
+              " · cameraPath " + (value.cameraPath ? value.cameraPath.length : "?") +
+              " · cell " + value.cellSizeMeters + " m";
+          })
+          .catch(function (error) {
+            state.errors.push("layout.json: " + (error && error.message ? error.message : String(error)));
+            line1.textContent = "layout.json failed — see __BAKEOFF__.errors";
+          });
+
+        function draw(now) {
+          if (lastFrame !== 0) {
+            state.frameTimesMs.push(now - lastFrame);
+            if (state.frameTimesMs.length > 20000) {
+              state.frameTimesMs.shift();
+            }
+          }
+          lastFrame = now;
+
+          phase = (now / 1000) % 6;
+
+          context.fillStyle = "#0d1015";
+          context.fillRect(0, 0, width, height);
+
+          context.strokeStyle = "#1b2230";
+          context.lineWidth = 1;
+          const grid = Math.max(32, Math.round(width / 24));
+          context.beginPath();
+          for (let x = 0; x <= width; x += grid) {
+            context.moveTo(x + 0.5, 0);
+            context.lineTo(x + 0.5, height);
+          }
+          for (let y = 0; y <= height; y += grid) {
+            context.moveTo(0, y + 0.5);
+            context.lineTo(width, y + 0.5);
+          }
+          context.stroke();
+
+          const barWidth = Math.max(24, width * 0.03);
+          const travel = width - barWidth * 2;
+          const offset = (Math.sin(phase) * 0.5 + 0.5) * travel;
+          context.fillStyle = "#6ea8ff";
+          context.fillRect(barWidth / 2 + offset, height * 0.45, barWidth, height * 0.1);
+
+          context.fillStyle = "#3ddc84";
+          context.fillRect(width * 0.5 - barWidth / 2, height * (0.5 + Math.cos(phase) * 0.18), barWidth, height * 0.04);
+
+          drawnFrames += 1;
+          if (drawnFrames % 30 === 0) {
+            line2.textContent =
+              "frames " + state.frameTimesMs.length +
+              " · isolated " + (self.crossOriginIsolated === true) +
+              " · " + Math.round(width) + "x" + Math.round(height);
+          }
+
+          if (!started) {
+            started = true;
+            state.firstFrameMs = now;
+            state.ready = true;
+          }
+          requestAnimationFrame(draw);
+        }
+
+        requestAnimationFrame(draw);
+      })();
+    </script>
+  </body>
+</html>

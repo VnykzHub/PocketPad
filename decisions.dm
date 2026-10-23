@@ -890,3 +890,34 @@
 - **Chose:** no new work stream until these two hand back. Animation's integration is complete; the host 3D path (RV-49) starts after the wave, not in parallel with it.
 - **Tree note:** the last full gate is green; streaming is outside root configs, and the physics fixture tags still lack traceability rows until its hand-back.
 - **Next:** hand-backs → rows → wire streaming → remove `_probe.test.ts` if it survives → full gate.
+
+### 2026-10-23 — engine breadth frozen; bake-off started immediately
+
+- **User decision:** run the bake-off from `references/decision we need.md` now, not a week-long plan. Freeze custom-engine breadth until the result: no new PBR, shadows, UI/text, editor or navigation work on the custom engine.
+- **Contract:** `experiments/bakeoff/README.md` fixes one shared scene (3×3 cells, 14 buildings, car, 50 skinned peds, shadowed directional light, sky, cell activation), one metrics interface (`window.__BAKEOFF__`), one measurement protocol (1080p, 5 s warm-up + 60 s, three runs, all runs reported) and a 12-item capability checklist.
+- **Owners (disjoint):** shared assets + runner; custom contender; PlayCanvas contender (`playcanvas@2.23.3` + Rapier); Babylon contender (`@babylonjs/core@9.32.0` + Havok/Rapier). No commits; no root config edits.
+- **Assets:** generated in-repo (CC0), including a minimal skinned `ped.glb`; no Mixamo/bitmoji/restricted assets. `LICENSES.csv` required.
+- **Decision rule:** adopt PlayCanvas or Babylon unless custom meets p95 14 ms at 1080p and both alternatives miss, or both have an unfixable blocking gap, or a bundle breaks 5 MiB gz.
+- **What is frozen:** all custom-engine feature work, including the `ctx.world`/Block 7 plan, until ADR-0003 is written. Existing work stays in the repo and the green commit stands.
+- **Next:** hand-backs → run the shared harness → ADR-0003 from measured results, not preference.
+
+### 2026-10-23 — bake-off complete: Babylon.js adopted
+
+- **Official matrix** (`experiments/bakeoff/runner/results.json`, sha256 `3f635a05…`, 11:58:35→12:10:26, one Chrome at a time, 3×60 s uncapped at 1080p):
+  - Babylon: 3/3, p95 **7.39 / 10.865 / 7.835 ms**, boot **1,730,261 B gz**.
+  - PlayCanvas: 2/3, p95 **13.96 / 13.09 ms**, boot **2,223,430 B gz**, run 1 lost the page context.
+  - Custom: 3/3, p95 **0.735 / 0.79 / 0.845 ms**, boot **1,766,889 B gz**, but a reduced scene (no shadows, CPU pose buckets, no GameContext).
+- **Decision rule applied:** custom cannot win because the clause requires both alternatives to miss 14 ms, and both measured alternatives meet it. No blocking-gap or bundle exception is met. Tie-break: Babylon has the lowest worst-case p95, the smallest boot, and 3 clean runs; **Babylon.js 9.32.0 is adopted as the engine base** (`docs/ADR-0003-engine-base.md`).
+- **Not decided:** physics. A15 still selects Rapier; the bake-off used Havok, so Babylon+Rapier vs Havok needs its own integration/amendment. No migration code has been written.
+- **Preserved:** protocol, broker/dev-server, controller, host lifecycle, SDK/GameContext, phone/room flow, layouts/panels/haptics, save/streaming design, all custom engine packages in the repo.
+- **Freeze:** custom-engine feature work remains frozen. Migration planning may start; implementation waits for the user's explicit go.
+- **Caveats:** uncapped rAF (not 60 Hz vsync), non-identical scenes, final-frame snapshots, PlayCanvas run 1 not rerun, desktop RTX 3050 Ti only, audio not audibly verified. Audit pending.
+- **No commits.** The bake-off evidence and ADR are untracked/working-tree changes.
+
+### 2026-10-23 — bake-off audit complete
+
+- **Verdict unchanged:** `experiments/bakeoff/AUDIT.md` independently recomputed all official percentiles from raw frame arrays (within 0.005 ms storage rounding), verified cold-boot sums, confirmed 8/8 measured screenshots are 1920×1080 and non-blank, and found no per-contender harness leakage into `runner/results.json`. No exception fires; the rule triggers adoption, and Babylon has the strongest measured case (3/3, worst p95 10.865 ms, lowest boot, shadows present, shared 704 m path followed).
+- **PlayCanvas not disqualified but not fairly rankable:** 2/3 runs, one context loss, and its car drove a 221.65 m ring rather than the shared 704 m path. A clean 3/3 shared-path run would be needed before ranking it fairly.
+- **Paper-trail discrepancies recorded, none decision-changing:** stale unreferenced `runner/screenshots/playcanvas-run1.png`; PlayCanvas local heap range understated; custom checklist gzip component sum typo (matrix total 1,766,889 B is correct); ped clip is 1.333 s vs README 1.0 s; no build-hash field in runner results.
+- **ADR updated** with the audit reference and ADR-0002's superseded status; `docs/RESULTS.md` keeps the measured matrix.
+- **State:** custom-engine breadth remains frozen; no migration code; no commits. Migration starts only on the user's explicit go.

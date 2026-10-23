@@ -1,0 +1,25 @@
+{
+  "name": "pocketpad-bakeoff-custom",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Bake-off contender: the PocketPad custom engine on the shared scene",
+  "scripts": {
+    "build": "node scripts/gen-assets-manifest.mjs && vite build",
+    "serve": "node serve.mjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@lanpad/engine-animation": "file:../../../packages/engine/animation",
+    "@lanpad/engine-assets": "file:../../../packages/engine/assets",
+    "@lanpad/engine-audio": "file:../../../packages/engine/audio",
+    "@lanpad/engine-core": "file:../../../packages/engine/core",
+    "@lanpad/engine-physics": "file:../../../packages/engine/physics",
+    "@lanpad/engine-renderer-webgl2": "file:../../../packages/engine/renderer-webgl2",
+    "@lanpad/engine-renderer-webgpu": "file:../../../packages/engine/renderer-webgpu",
+    "@lanpad/engine-streaming": "file:../../../packages/engine/streaming"
+  },
+  "devDependencies": {
+    "vite": "7.3.7"
+  }
+}

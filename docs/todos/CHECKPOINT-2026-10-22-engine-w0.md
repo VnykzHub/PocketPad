@@ -41,6 +41,7 @@ W0 is the reset-and-contracts wave from `docs/engine/README.md` §8.1. Its exit 
 | M1 target spec | **written** | `docs/engine/20-m1-vertical-slice.md`: “Block 7 courier run”, 3×3 cells, one sedan, 12 peds, one mission, audio, save; 12 PENDING acceptance rows. Indexed in README §6 |
 | Import boundary | **done** | `packages/engine/core/test/boundaries.test.ts` enforces 00 §5.2 D1–D3 from source text (ER-00-02); core tests 12/12, trace exit 0 with ER 3/3. ESLint boundary deferred because the config is protected |
 | Core world contracts | **done** | `CellKey`/`WorldCell`/`CellState` now in `engine-core`; 32 streaming error codes added additively (union 71). Streaming re-exports, no duplicates. Core 40 files / 290 tests, streaming 108, tsc/lint/build clean. RV-61/62 closed |
+| Engine bake-off | **decided + audited** | Official 3×3 matrix at 1080p: Babylon p95 7.39/10.865/7.835 ms, boot 1.73 MB gz, 3/3; PlayCanvas 13.96/13.09 ms, 2.23 MB, 2/3 (one context loss); custom 0.735–0.845 ms but no shadows/GPU skinning/GameContext. Rule triggers adoption; **Babylon.js 9.32.0 adopted** in ADR-0003. Audit recomputed percentiles/boot and found no decision-changing discrepancy. No migration code; custom packages stay |
 
 ## In flight
 

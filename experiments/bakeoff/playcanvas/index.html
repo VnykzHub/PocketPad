@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PlayCanvas 2.23.3 — PocketPad bake-off</title>
+    <style>
+        html, body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #0b1018;
+        }
+        #app {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        #hud {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            background: rgba(8, 12, 18, 0.62);
+            color: #e8eef6;
+            font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+            pointer-events: none;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="app"></canvas>
+    <div id="hud">PlayCanvas bake-off — booting</div>
+    <script>
+        // The metrics contract object exists before the module loads. The runner
+        // reads it after the run, so it must never be replaced, only mutated.
+        window.__BAKEOFF__ = {
+            ready: false,
+            backend: 'unknown',
+            frameTimesMs: [],
+            drawCalls: 0,
+            triangles: 0,
+            instances: 0,
+            firstFrameMs: 0,
+            activations: 0,
+            deactivations: 0,
+            errors: []
+        };
+        window.__pushBakeoffError = function (value) {
+            var text = String(value && (value.stack || value.message) || value || 'unknown error');
+            if (text.length > 300) {
+                text = text.slice(0, 297) + '...';
+            }
+            var errors = window.__BAKEOFF__.errors;
+            if (errors.indexOf(text) === -1) {
+                errors.push(text);
+            }
+        };
+        window.addEventListener('error', function (event) {
+            window.__pushBakeoffError(event.error || event.message);
+        });
+        window.addEventListener('unhandledrejection', function (event) {
+            window.__pushBakeoffError(event.reason);
+        });
+    </script>
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>

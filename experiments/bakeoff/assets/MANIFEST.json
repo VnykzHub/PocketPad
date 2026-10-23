@@ -1,0 +1,173 @@
+{
+  "schema": "pocketpad-bakeoff-assets/v1",
+  "date": "2026-10-23",
+  "generator": "experiments/bakeoff/assets/generate.mjs",
+  "units": "metres",
+  "coordinateSystem": "right-handed, +Y up, glTF convention",
+  "files": {
+    "ground.glb": {
+      "bytes": 1196,
+      "sha256": "38b4ed24b784de94f286bb101476957e32b608cf3f2dd816d835e173b4a041a2"
+    },
+    "building.glb": {
+      "bytes": 27468,
+      "sha256": "e4e3b51f2111b2dfdf370d47091ac648d34778b3d11fb1b87549c6d64ae52eee"
+    },
+    "car.glb": {
+      "bytes": 182296,
+      "sha256": "966bac5206e25f29540215ffbff229a9831ee005bb3ca60803d237e82da3994c"
+    },
+    "ped.glb": {
+      "bytes": 621112,
+      "sha256": "bcc5e6178fbe0a80db0d684c6028a6a279f20ea063a79cf17928529b063e6f29"
+    },
+    "facade.png": {
+      "bytes": 25308,
+      "sha256": "9d247efcad2303f35346995ef0523cf0ae11a1e85f6815286d78e85b2ffb1450"
+    },
+    "layout.json": {
+      "bytes": 6502,
+      "sha256": "852d6a7a48d14db8c1e7be4bf4cad4e49f02fb0f92993fe7138e41a2ced5f20e"
+    },
+    "LICENSES.csv": {
+      "bytes": 746,
+      "sha256": "fcc7ebcf17dad23fd03475ec0fc250282d5a02ed4211b76201183e124cfc250f"
+    }
+  },
+  "verification": {
+    "png": {
+      "width": 256,
+      "height": 256,
+      "colorType": 2,
+      "bitDepth": 8,
+      "chunksValidated": true,
+      "inflatedBytes": 196864
+    },
+    "layout": {
+      "topLevelFields": [
+        "buildings",
+        "cameraPath",
+        "car",
+        "cellSizeMeters",
+        "origin",
+        "pedestrians",
+        "runSeconds"
+      ],
+      "buildings": 14,
+      "buildingCells": [
+        "1,1"
+      ],
+      "pedestrians": 50,
+      "pedestrianCells": [
+        "0,2",
+        "1,2",
+        "2,2"
+      ],
+      "car": {
+        "x": 0,
+        "y": 0.5,
+        "z": 32,
+        "yaw": 0
+      },
+      "cameraPathPoints": 15,
+      "cameraPathSpanX": [
+        -64,
+        64
+      ],
+      "cameraPathSpanZ": [
+        -64,
+        64
+      ],
+      "runSeconds": 60
+    },
+    "gltf": {
+      "ground.glb": {
+        "jsonNodes": 1,
+        "jsonMeshes": 1,
+        "accessors": 4,
+        "bufferViews": 4
+      },
+      "building.glb": {
+        "jsonNodes": 1,
+        "jsonMeshes": 1,
+        "accessors": 4,
+        "bufferViews": 5
+      },
+      "car.glb": {
+        "jsonNodes": 6,
+        "jsonMeshes": 5,
+        "accessors": 25,
+        "bufferViews": 7
+      },
+      "ped.glb": {
+        "jsonNodes": 67,
+        "jsonMeshes": 1,
+        "accessors": 207,
+        "bufferViews": 5
+      }
+    },
+    "checks": {
+      "ground.glb": {
+        "parsed": true,
+        "documentRead": true,
+        "positionVertices": 4,
+        "hasUvs": true,
+        "hasNormals": true
+      },
+      "building.glb": {
+        "parsed": true,
+        "documentRead": true,
+        "nodes": 1,
+        "hasUvs": true,
+        "embeddedTextureBytes": 25308
+      },
+      "car.glb": {
+        "parsed": true,
+        "documentRead": true,
+        "wheelNodes": [
+          "wheel-fl",
+          "wheel-fr",
+          "wheel-rl",
+          "wheel-rr"
+        ],
+        "meshes": 5,
+        "embeddedTextureBytes": 12371,
+        "rootRotation": "identity; parts baked to local forward -Z"
+      },
+      "ped.glb": {
+        "parsed": true,
+        "documentRead": true,
+        "skinJoints": 65,
+        "vertices": 8546,
+        "primitives": 2,
+        "animation": "walk",
+        "sourceClip": "Walk_Loop",
+        "durationSeconds": 1.3333333730697632,
+        "rootMotion": "none (in place)"
+      }
+    },
+    "gltfTransform": "@gltf-transform/core 4.5.1; @gltf-transform/functions 4.5.1"
+  },
+  "provenance": {
+    "pedestrian": {
+      "source": "Game-assets/Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb",
+      "author": "Quaternius",
+      "licence": "CC0 1.0",
+      "change": "kept only Walk_Loop and renamed it walk; removed the other 42 clips"
+    },
+    "car": {
+      "source": "Game-assets/kenney_car-kit/Models/GLB format/sedan.glb (+ Textures/colormap.png)",
+      "author": "Kenney",
+      "licence": "CC0 1.0",
+      "change": "wheel nodes renamed wheel-fl/fr/rl/rr; 180 deg turn baked into each part; parts shifted -0.5 m; colormap embedded"
+    },
+    "other": "ground.glb, building.glb, facade.png and layout.json are generated in-repo"
+  },
+  "conventions": {
+    "building": "mesh is 8 x 8 x 1 m with its base at y = 0; set node.scale.y = layout height",
+    "car": "Kenney sedan: root origin is the chassis centre at layout y = 0.5; local forward is -Z; wheel axles are local X; wheel bottoms touch y = 0; nodes wheel-fl/fr/rl/rr",
+    "pedestrian": "Quaternius UAL mannequin: 1.83 m tall, 65 joints, 8546 vertices over 2 primitives; in-place walk clip (source Walk_Loop) loops every 1.333 s",
+    "layout": "building and pedestrian x/z are cell-local; car and cameraPath are world-space metres",
+    "facade": "building.glb embeds facade.png as its base-colour texture"
+  }
+}

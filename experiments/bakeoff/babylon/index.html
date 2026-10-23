@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PocketPad bake-off · Babylon.js</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #0b1020; }
+      #renderCanvas { display: block; width: 100%; height: 100%; outline: none; touch-action: none; }
+      #hud {
+        position: fixed; left: 12px; top: 10px; z-index: 2;
+        font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        color: #e8eefc; background: rgba(10, 16, 32, 0.62);
+        border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 6px;
+        padding: 6px 9px; pointer-events: none; white-space: pre;
+      }
+      #hud b { color: #9ad4ff; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <canvas id="renderCanvas"></canvas>
+    <div id="hud"><b>Babylon.js 9.32.0</b> · <span id="status">boot…</span></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

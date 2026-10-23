@@ -1,0 +1,14 @@
+{
+  "name": "pocketpad-bakeoff-assets",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Generated CC0 benchmark assets for the PocketPad engine bake-off",
+  "scripts": {
+    "generate": "node generate.mjs"
+  },
+  "devDependencies": {
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/functions": "4.5.1"
+  }
+}

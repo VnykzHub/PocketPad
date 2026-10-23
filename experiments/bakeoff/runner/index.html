@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PocketPad engine bake-off — results</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0d1015;
+        --panel: #141922;
+        --panel-2: #1b2230;
+        --line: #2a3444;
+        --text: #e8edf5;
+        --muted: #93a0b4;
+        --good: #3ddc84;
+        --warn: #f2b544;
+        --bad: #ff6b6b;
+        --accent: #6ea8ff;
+        --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+        --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 32px 28px 64px;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.5 var(--sans);
+      }
+      header { max-width: 1400px; margin: 0 auto 28px; }
+      h1 { margin: 0 0 4px; font-size: 26px; letter-spacing: -0.02em; }
+      .subtitle { color: var(--muted); margin: 0 0 14px; }
+      .meta { color: var(--muted); font: 12px/1.6 var(--mono); }
+      .meta strong { color: var(--text); font-weight: 600; }
+      .note {
+        max-width: 1400px;
+        margin: 0 auto 24px;
+        padding: 12px 16px;
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--accent);
+        border-radius: 6px;
+        background: var(--panel);
+        color: var(--muted);
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 14px;
+        max-width: 1400px;
+        margin: 0 auto 28px;
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 16px 18px;
+      }
+      .card h2 { margin: 0 0 2px; font-size: 16px; }
+      .card .dir { color: var(--muted); font: 11px/1.5 var(--mono); margin-bottom: 12px; }
+      .status {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font: 11px/1.6 var(--mono);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border: 1px solid transparent;
+      }
+      .status.measured { color: var(--good); border-color: #1f5c3b; background: #10251a; }
+      .status.not-run { color: var(--muted); border-color: var(--line); background: var(--panel-2); }
+      .status.error, .status.partial { color: var(--bad); border-color: #57262a; background: #241315; }
+      .metric { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-top: 1px solid var(--line); }
+      .metric:first-of-type { border-top: 0; }
+      .metric .label { color: var(--muted); }
+      .metric .value { font-family: var(--mono); text-align: right; }
+      .good { color: var(--good); }
+      .warn { color: var(--warn); }
+      .bad { color: var(--bad); }
+      .muted { color: var(--muted); }
+      .reason { color: var(--bad); font-size: 12px; margin-top: 10px; word-break: break-word; }
+      .table-wrap {
+        max-width: 1400px;
+        margin: 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: auto;
+        background: var(--panel);
+      }
+      table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+      caption {
+        text-align: left;
+        padding: 14px 16px;
+        color: var(--text);
+        font-weight: 600;
+        border-bottom: 1px solid var(--line);
+      }
+      th, td { padding: 8px 10px; text-align: right; white-space: nowrap; }
+      th {
+        position: sticky;
+        top: 0;
+        background: var(--panel-2);
+        color: var(--muted);
+        font-weight: 500;
+        border-bottom: 1px solid var(--line);
+      }
+      th:first-child, td:first-child { text-align: left; }
+      tbody tr { border-bottom: 1px solid #1d2532; }
+      tbody tr:last-child { border-bottom: 0; }
+      tbody tr:hover { background: #182030; }
+      td.mono, th.mono { font-family: var(--mono); }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .legend { max-width: 1400px; margin: 18px auto 0; color: var(--muted); font-size: 12px; }
+      .empty {
+        max-width: 1400px;
+        margin: 40px auto;
+        padding: 24px;
+        border: 1px dashed var(--line);
+        border-radius: 8px;
+        color: var(--muted);
+        text-align: center;
+      }
+      code { font-family: var(--mono); color: var(--text); background: var(--panel-2); padding: 1px 5px; border-radius: 4px; }
+      @media (max-width: 760px) {
+        body { padding: 20px 14px 48px; }
+        .cards { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>PocketPad engine bake-off — results</h1>
+      <p class="subtitle">Custom engine vs PlayCanvas vs Babylon.js, measured on one machine.</p>
+      <div class="meta" id="meta">Loading <code>results.json</code>…</div>
+    </header>
+
+    <div class="note">
+      Every number below was measured by <code>runner/run.mjs</code> on this machine.
+      Frame intervals come from the runner's own requestAnimationFrame probe, sampled after a
+      5 s warm-up for 60 s. Page-reported <code>frameTimesMs</code> is recorded separately.
+      Missing values are shown as <code>—</code> and are never replaced with an estimate.
+      A contender that did not run is marked <code>not-run</code> with the reason.
+    </div>
+
+    <section class="cards" id="cards"></section>
+    <section class="table-wrap" id="table-wrap">
+      <table>
+        <caption>All runs (never best-run-only)</caption>
+        <thead>
+          <tr>
+            <th>Contender</th>
+            <th>Run</th>
+            <th>Status</th>
+            <th>Backend</th>
+            <th>p50 ms</th>
+            <th>p95 ms</th>
+            <th>p99 ms</th>
+            <th>max ms</th>
+            <th>FPS</th>
+            <th>Draws</th>
+            <th>Triangles</th>
+            <th>Instances</th>
+            <th>Act / Deact</th>
+            <th>First frame ms</th>
+            <th>Ready ms</th>
+            <th>Heap MB</th>
+            <th>Shot</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+
+    <p class="legend">
+      Budgets: frame p95 target 14 ms, hard cap 20 ms (1080p). Cold boot budget 5 MiB gzip
+      (production build). <span class="good">Green</span> meets the target,
+      <span class="warn">amber</span> is between target and hard cap,
+      <span class="bad">red</span> is over the hard cap.
+    </p>
+
+    <div class="empty" id="empty" hidden>
+      No <code>results.json</code> found. Run <code>node experiments/bakeoff/runner/run.mjs</code>,
+      then <code>node experiments/bakeoff/runner/run.mjs --serve-only</code> and open the printed
+      results URL.
+    </div>
+
+    <script>
+      const BUDGET = { targetMs: 14, hardMs: 20, bootBytes: 5 * 1024 * 1024 };
+
+      function el(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+      }
+
+      function formatNumber(value, digits) {
+        if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+        return value.toFixed(digits ?? 1);
+      }
+
+      function formatBytes(bytes) {
+        if (typeof bytes !== "number" || !Number.isFinite(bytes)) return "—";
+        return (bytes / (1024 * 1024)).toFixed(2) + " MiB gz";
+      }
+
+      function frameClass(p95) {
+        if (typeof p95 !== "number") return "muted";
+        if (p95 <= BUDGET.targetMs) return "good";
+        if (p95 <= BUDGET.hardMs) return "warn";
+        return "bad";
+      }
+
+      function bootClass(bytes) {
+        if (typeof bytes !== "number") return "muted";
+        return bytes <= BUDGET.bootBytes ? "good" : "bad";
+      }
+
+      function statusBadge(status) {
+        return el("span", "status " + status, status);
+      }
+
+      function metric(label, valueNode) {
+        const row = el("div", "metric");
+        row.append(el("span", "label", label));
+        const value = el("span", "value");
+        if (valueNode instanceof Node) value.append(valueNode);
+        else value.textContent = valueNode;
+        row.append(value);
+        return row;
+      }
+
+      function card(contender) {
+        const node = el("article", "card");
+        node.append(el("h2", "", contender.label || contender.id));
+        node.append(el("div", "dir", contender.dir || ""));
+        node.append(statusBadge(contender.status));
+
+        if (contender.status === "not-run") {
+          node.append(el("div", "reason", contender.reason || "no reason recorded"));
+          return node;
+        }
+
+        const aggregate = contender.aggregate;
+        const p95 = aggregate && aggregate.p95Ms ? aggregate.p95Ms.median : null;
+        const p95Text = aggregate && aggregate.p95Ms
+          ? `${formatNumber(aggregate.p95Ms.min)} / ${formatNumber(aggregate.p95Ms.median)} / ${formatNumber(aggregate.p95Ms.max)}`
+          : "—";
+        node.append(metric("p95 min / median / max", el("span", frameClass(p95), p95Text + " ms")));
+
+        const boot = contender.coldBootGzip;
+        if (boot && boot.status === "measured") {
+          node.append(metric("cold boot gzip", el("span", bootClass(boot.totalGzipBytes), formatBytes(boot.totalGzipBytes))));
+        } else {
+          node.append(metric("cold boot gzip", el("span", "muted", "PENDING")));
+        }
+
+        const runs = Array.isArray(contender.runs) ? contender.runs : [];
+        const measured = runs.filter((run) => run.status === "measured");
+        node.append(metric("runs measured", `${measured.length} / ${runs.length}`));
+
+        const backends = [...new Set(measured.map((run) => run.backend).filter(Boolean))];
+        node.append(metric("backend", backends.length > 0 ? backends.join(", ") : "—"));
+
+        if (contender.sourceLines) {
+          node.append(metric("JS/TS source lines", String(contender.sourceLines.nonBlankLines)));
+        }
+        if (contender.status === "error" || contender.status === "partial") {
+          const firstError = runs.find((run) => run.status === "error");
+          if (firstError && firstError.reason) {
+            node.append(el("div", "reason", firstError.reason));
+          }
+        }
+        return node;
+      }
+
+      function runRow(contender, run) {
+        const row = document.createElement("tr");
+        row.append(el("td", "", contender.label || contender.id));
+        row.append(el("td", "mono", String(run.run)));
+        const status = el("td", "");
+        status.append(statusBadge(run.status));
+        row.append(status);
+        row.append(el("td", "mono", run.backend || "—"));
+
+        if (run.status !== "measured" || !run.frames) {
+          const reason = el("td", "mono muted", run.reason || "—");
+          reason.colSpan = 13;
+          reason.style.textAlign = "left";
+          reason.style.whiteSpace = "normal";
+          row.append(reason);
+          return row;
+        }
+
+        const frames = run.frames;
+        row.append(el("td", "mono", formatNumber(frames.p50Ms)));
+        row.append(el("td", "mono " + frameClass(frames.p95Ms), formatNumber(frames.p95Ms)));
+        row.append(el("td", "mono", formatNumber(frames.p99Ms)));
+        row.append(el("td", "mono", formatNumber(frames.maxMs)));
+        row.append(el("td", "mono", formatNumber(frames.observedFps, 0)));
+        row.append(el("td", "mono", formatNumber(run.drawCalls, 0)));
+        row.append(el("td", "mono", formatNumber(run.triangles, 0)));
+        row.append(el("td", "mono", formatNumber(run.instances, 0)));
+        row.append(el("td", "mono", `${formatNumber(run.activations, 0)} / ${formatNumber(run.deactivations, 0)}`));
+        row.append(el("td", "mono", formatNumber(run.firstFrameMs)));
+        row.append(el("td", "mono", formatNumber(run.readyAfterMs, 0)));
+
+        const heap = Array.isArray(run.heapSamples) && run.heapSamples.length > 0
+          ? run.heapSamples[run.heapSamples.length - 1].usedBytes / (1024 * 1024)
+          : null;
+        row.append(el("td", "mono", formatNumber(heap)));
+
+        const shotCell = el("td", "");
+        if (run.screenshot) {
+          const link = el("a", "", "png");
+          link.href = run.screenshot;
+          link.target = "_blank";
+          link.rel = "noopener";
+          shotCell.append(link);
+        } else {
+          shotCell.textContent = "—";
+        }
+        row.append(shotCell);
+        return row;
+      }
+
+      function render(results) {
+        const meta = document.getElementById("meta");
+        meta.innerHTML = "";
+        meta.append(document.createTextNode("Generated "));
+        meta.append(el("strong", "", results.generatedAt || "unknown"));
+        meta.append(document.createTextNode("  ·  "));
+        meta.append(el("strong", "", results.environment?.platform || "unknown platform"));
+        meta.append(document.createTextNode("  ·  CPU "));
+        meta.append(el("strong", "", results.environment?.cpu || "unknown"));
+        meta.append(document.createTextNode(` (${results.environment?.cpuCount ?? "?"} threads)  ·  Node ${results.environment?.node || "?"}`));
+        meta.append(document.createElement("br"));
+        const pacing = results.protocol?.framePacing === "display-paced"
+          ? "display-paced rAF (8.33 ms floor at 119 Hz on this machine)"
+          : "uncapped rAF (render work per frame)";
+        meta.append(document.createTextNode(
+          `${results.protocol?.runsPerContender ?? "?"} runs per contender, ` +
+          `${results.protocol?.measuredSeconds ?? "?"} s sampled after ` +
+          `${results.protocol?.warmupSeconds ?? "?"} s warm-up, ` +
+          `${results.protocol?.viewport?.width ?? "?"}x${results.protocol?.viewport?.height ?? "?"} DPR ${results.protocol?.deviceScaleFactor ?? "?"}. ` +
+          `Frame pacing: ${pacing}.`
+        ));
+
+        const cards = document.getElementById("cards");
+        cards.innerHTML = "";
+        const rows = document.getElementById("rows");
+        rows.innerHTML = "";
+        const contenders = Array.isArray(results.contenders) ? results.contenders : [];
+        for (const contender of contenders) {
+          cards.append(card(contender));
+          const runs = Array.isArray(contender.runs) ? contender.runs : [];
+          if (runs.length === 0) {
+            const row = document.createElement("tr");
+            row.append(el("td", "", contender.label || contender.id));
+            const status = el("td", "");
+            status.append(statusBadge(contender.status));
+            row.append(status);
+            const reason = el("td", "mono muted", contender.reason || "not run");
+            reason.colSpan = 15;
+            reason.style.textAlign = "left";
+            reason.style.whiteSpace = "normal";
+            row.append(reason);
+            rows.append(row);
+            continue;
+          }
+          for (const run of runs) {
+            rows.append(runRow(contender, run));
+          }
+        }
+        document.getElementById("empty").hidden = contenders.length > 0;
+      }
+
+      fetch("./results.json", { cache: "no-store" })
+        .then((response) => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.json();
+        })
+        .then(render)
+        .catch((error) => {
+          document.getElementById("meta").textContent = `Could not load results.json: ${error.message}`;
+          document.getElementById("cards").innerHTML = "";
+          document.getElementById("rows").innerHTML = "";
+          document.getElementById("empty").hidden = false;
+        });
+    </script>
+  </body>
+</html>

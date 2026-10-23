@@ -1,0 +1,31 @@
+{
+  "formatVersion": 1,
+  "id": "bakeoff",
+  "budget": {
+    "initialBytes": 53972,
+    "totalBytes": 53972
+  },
+  "assets": [
+    {
+      "id": "ground",
+      "kind": "mesh",
+      "url": "assets/ground.glb",
+      "bytes": 1196,
+      "initial": true
+    },
+    {
+      "id": "building",
+      "kind": "mesh",
+      "url": "assets/building.glb",
+      "bytes": 27468,
+      "initial": true
+    },
+    {
+      "id": "facade",
+      "kind": "texture",
+      "url": "assets/facade.png",
+      "bytes": 25308,
+      "initial": true
+    }
+  ]
+}
