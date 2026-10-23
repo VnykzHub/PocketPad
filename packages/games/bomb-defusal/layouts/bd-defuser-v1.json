@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "bd-defuser-v1",
+  "orientation": "any",
+  "background": "#0b0b0f",
+  "controls": [
+    {
+      "type": "panel",
+      "id": "status",
+      "x": "50%",
+      "y": "10%",
+      "w": "92%",
+      "h": "14%"
+    },
+    {
+      "type": "choice",
+      "id": "cut-wire",
+      "x": "50%",
+      "y": "50%",
+      "w": "92%",
+      "h": "52%",
+      "event": "kit.choice",
+      "options": [
+        { "value": "red", "label": "RED wire" },
+        { "value": "blue", "label": "BLUE wire" },
+        { "value": "yellow", "label": "YELLOW wire" },
+        { "value": "white", "label": "WHITE wire" },
+        { "value": "black", "label": "BLACK wire" },
+        { "value": "green", "label": "GREEN wire" }
+      ]
+    },
+    {
+      "type": "button",
+      "id": "hold-button",
+      "x": "76%",
+      "y": "88%",
+      "r": "11%",
+      "bit": 1,
+      "label": "HOLD",
+      "shape": "circle"
+    },
+    {
+      "type": "text",
+      "id": "keypad",
+      "x": "24%",
+      "y": "88%",
+      "w": "40%",
+      "h": "15%",
+      "event": "kit.text",
+      "maxLen": 4
+    }
+  ]
+}
