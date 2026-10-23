@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "tm-stick-v1",
+  "orientation": "any",
+  "background": "#08080c",
+  "controls": [
+    {
+      "type": "panel",
+      "id": "status",
+      "x": "50%",
+      "y": "12%",
+      "w": "90%",
+      "h": "18%",
+      "z": 10
+    },
+    {
+      "type": "stick",
+      "id": "move",
+      "x": "50%",
+      "y": "70%",
+      "size": "50%",
+      "axis": "left",
+      "mode": "floating",
+      "deadzone": 0.08
+    }
+  ]
+}
