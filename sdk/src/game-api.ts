@@ -21,6 +21,7 @@
  */
 import type { LayoutDocument } from "./layout.js";
 import type { GameManifest } from "./manifest.js";
+import type { GameWorld3D } from "./world3d.js";
 
 /** Opaque JSON payload (controller events, panel content, layouts). */
 export type JsonValue =
@@ -573,7 +574,7 @@ export interface StreamStats {
 
 /**
  * World streamer projection (spec 12 owns residency, budgets and LOD).
- * `ctx.world === undefined` for non-streaming games. The game never calls
+ * `ctx.streaming === undefined` for non-streaming games. The game never calls
  * `update`; the host advances residency once per fixed tick.
  */
 export interface WorldStreamer {
@@ -776,7 +777,9 @@ export interface GameContext {
   /** Animation (spec 08). `undefined` before the animation package lands. */
   readonly animation?: AnimationApi;
   /** World streaming (spec 12). `undefined` for non-streaming games. */
-  readonly world?: WorldStreamer;
+  readonly streaming?: WorldStreamer;
+  /** Game-facing 3D world (spec 22). `undefined` on 2D-only hosts. */
+  readonly world?: GameWorld3D;
   /** Engine UI (spec 13). `undefined` when the game uses only `renderer`. */
   readonly ui?: GameUi;
   /** Action-mapped input (spec 10; reserved by 18 §3.4). Do not depend on it. */
@@ -790,7 +793,15 @@ export interface GameContext {
 type ContractAssert<T extends true> = T;
 type IsAssignable<From, To> = [From] extends [To] ? true : false;
 
-type AdditiveMember = "assets" | "scene" | "animation" | "world" | "ui" | "actions" | "save";
+type AdditiveMember =
+  | "assets"
+  | "scene"
+  | "animation"
+  | "streaming"
+  | "world"
+  | "ui"
+  | "actions"
+  | "save";
 
 type FrozenMember =
   | "manifest"

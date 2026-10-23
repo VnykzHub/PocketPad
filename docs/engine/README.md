@@ -91,6 +91,10 @@ Each spec lives at `docs/engine/<nn>-<name>.md` and follows the template in §7.
 | `19-testing-benchmarks.md` | Unit/property/golden/integration/benchmark harness, acceptance scenes | all |
 | `20-m1-vertical-slice.md` | The M1 “Block 7 courier run” target: world, vehicle, pedestrians, mission, audio, save, acceptance rows | 07, 08, 09, 12, 15, 18 |
 | `21-babylon-migration.md` | Babylon.js engine-base migration: boundary, adapter contract, waves B1–B4, acceptance rows ER-21 | 04, 06, 08, 09, 18 |
+| `22-world3d-api.md` | Game-facing `ctx.world`: models, instances, clips, scene, camera, primitives, fake and conformance | 04, 06, 08, 18 |
+| `23-assets-audio.md` | Per-game `assets.json`, ledger validation, boot budgets, load flow and audio registration | 06, 09, 18 |
+| `24-game-kit.md` | `@lanpad/game-kit`: match, scores, identity, packs, pools, panel/event helpers | 18 |
+| `25-console-shell.md` | Manifest `presentation` fields, launcher contract and the console-shell motion tier | 18 |
 
 This index is the plan. A spec that does not exist yet is not a contract; write it before implementing.
 

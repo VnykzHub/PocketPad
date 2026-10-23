@@ -24,7 +24,8 @@ const RUN_DIR = path.dirname(fileURLToPath(import.meta.url));
 const BASE_URL = process.env.POCKETPAD_HOST_URL ?? "http://localhost:8080";
 const VIEWPORT = { width: 1920, height: 1080 };
 const WARMUP_MS = 5000;
-const SAMPLE_MS = 60000;
+const SAMPLE_MS = Number(process.env["POCKETPAD_SAMPLE_MS"] ?? 60000);
+const CDP_TIMEOUT_MS = 15000;
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -171,7 +172,21 @@ class Cdp {
   send(method, params = {}) {
     const id = this.nextId++;
     return new Promise((resolve, reject) => {
-      this.pending.set(id, { resolve, reject, method });
+      const timer = setTimeout(() => {
+        this.pending.delete(id);
+        reject(new Error(`CDP ${method} timed out after ${CDP_TIMEOUT_MS} ms`));
+      }, CDP_TIMEOUT_MS);
+      this.pending.set(id, {
+        resolve: (value) => {
+          clearTimeout(timer);
+          resolve(value);
+        },
+        reject: (error) => {
+          clearTimeout(timer);
+          reject(error);
+        },
+        method,
+      });
       this.socket.send(JSON.stringify({ id, method, params }));
     });
   }
@@ -282,18 +297,46 @@ function readHostState() {
 }
 
 async function capture(cdp, name) {
-  const { data } = await cdp.send("Page.captureScreenshot", {
-    format: "png",
-    fromSurface: true,
-    captureBeyondViewport: false,
-  });
-  const bytes = Buffer.from(data, "base64");
-  const file = path.join(RUN_DIR, name);
-  await writeFile(file, bytes);
-  return { file, bytes: bytes.length };
+  try {
+    const { data } = await cdp.send("Page.captureScreenshot", {
+      format: "png",
+      fromSurface: true,
+      captureBeyondViewport: false,
+    });
+    const bytes = Buffer.from(data, "base64");
+    const file = path.join(RUN_DIR, name);
+    await writeFile(file, bytes);
+    return { file, bytes: bytes.length };
+  } catch (error) {
+    return { file: null, bytes: 0, error: String(error) };
+  }
+}
+
+/** WebGL2 canvases can be read directly; avoids intermittent CDP hangs. */
+async function captureCanvasViaPage(cdp, name) {
+  try {
+    const dataUrl = await evaluate(
+      cdp,
+      `(() => {
+        const canvas = document.querySelector("canvas.lanpad-canvas");
+        if (!canvas) return null;
+        return canvas.toDataURL("image/png");
+      })()`,
+    );
+    if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:image/png;base64,")) {
+      return capture(cdp, name);
+    }
+    const bytes = Buffer.from(dataUrl.split(",", 2)[1], "base64");
+    const file = path.join(RUN_DIR, name);
+    await writeFile(file, bytes);
+    return { file, bytes: bytes.length };
+  } catch (error) {
+    return { file: null, bytes: 0, error: String(error) };
+  }
 }
 
 async function runCase(cdp, { label, url, sampleMs }) {
+  console.log(`[case] ${label} start ${url}`);
   const errors = [];
   cdp.onEvent((message) => {
     if (message.method === "Runtime.exceptionThrown") {
@@ -395,8 +438,115 @@ async function runCase(cdp, { label, url, sampleMs }) {
     })()`,
   );
   const samples = sampleMs > 0 ? await sampleFrames(cdp, sampleMs) : null;
-  const screenshot = await capture(cdp, `${label}.png`);
+  const screenshot = label.includes("webgl2")
+    ? await captureCanvasViaPage(cdp, `${label}.png`)
+    : await capture(cdp, `${label}.png`);
+  console.log(`[case] ${label} done backend=${host.backend} draws=${host.drawCalls}`);
   return { label, url, host, gpu, samples, screenshot, errors };
+}
+
+async function runContextLossCase(cdp) {
+  console.log("[case] cube-webgl2-loss start");
+  const errors = [];
+  cdp.onEvent((message) => {
+    if (message.method === "Runtime.exceptionThrown") {
+      errors.push(
+        message.params?.exceptionDetails?.exception?.description ??
+          message.params?.exceptionDetails?.text ??
+          "exception",
+      );
+    }
+  });
+  const url = `${BASE_URL}/games/engine-cube/?debug=1&babylon-backend=webgl2`;
+  await cdp.send("Page.navigate", { url });
+  await waitFor(
+    cdp,
+    `document.readyState === "complete" && document.querySelector(".lanpad-start__button") !== null`,
+    30000,
+    "context-loss start screen",
+  );
+  const button = await evaluate(
+    cdp,
+    `(() => {
+      const element = document.querySelector(".lanpad-start__button");
+      const rect = element.getBoundingClientRect();
+      return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+    })()`,
+  );
+  for (const type of ["mousePressed", "mouseReleased"]) {
+    await cdp.send("Input.dispatchMouseEvent", {
+      type,
+      x: button.x,
+      y: button.y,
+      button: "left",
+      clickCount: 1,
+    });
+  }
+  await waitFor(
+    cdp,
+    `(() => {
+      const draws = document.querySelector('[data-field="drawCalls"]');
+      return Boolean(draws && Number(draws.textContent) > 0);
+    })()`,
+    30000,
+    "context-loss first frames",
+  );
+  await delay(1000);
+  const setup = await evaluate(
+    cdp,
+    `(() => {
+      const canvas = document.querySelector("canvas.lanpad-canvas");
+      if (!canvas) return { ok: false, reason: "no-canvas" };
+      const gl = canvas.getContext("webgl2");
+      if (!gl) return { ok: false, reason: "no-webgl2" };
+      const ext = gl.getExtension("WEBGL_lose_context");
+      if (!ext) return { ok: false, reason: "no-lose-extension" };
+      window.__BABYLON_LOSS__ = { lost: false, restored: false, ext };
+      canvas.addEventListener("webglcontextlost", () => {
+        window.__BABYLON_LOSS__.lost = true;
+      }, { once: true });
+      canvas.addEventListener("webglcontextrestored", () => {
+        window.__BABYLON_LOSS__.restored = true;
+      }, { once: true });
+      ext.loseContext();
+      return { ok: true };
+    })()`,
+  );
+  await delay(2000);
+  const afterLoss = await evaluate(
+    cdp,
+    `(() => {
+      const field = (name) => document.querySelector('[data-field="' + name + '"]')?.textContent?.trim() ?? null;
+      return {
+        lost: window.__BABYLON_LOSS__?.lost === true,
+        restored: window.__BABYLON_LOSS__?.restored === true,
+        backend: field("backend"),
+        draws: Number(field("drawCalls") ?? ""),
+      };
+    })()`,
+  ).catch((error) => ({ error: String(error) }));
+  await evaluate(
+    cdp,
+    `(() => {
+      try { window.__BABYLON_LOSS__?.ext?.restoreContext(); } catch {}
+      return true;
+    })()`,
+  ).catch(() => null);
+  await delay(2500);
+  const afterRestore = await evaluate(
+    cdp,
+    `(() => {
+      const field = (name) => document.querySelector('[data-field="' + name + '"]')?.textContent?.trim() ?? null;
+      return {
+        lost: window.__BABYLON_LOSS__?.lost === true,
+        restored: window.__BABYLON_LOSS__?.restored === true,
+        backend: field("backend"),
+        draws: Number(field("drawCalls") ?? ""),
+      };
+    })()`,
+  ).catch((error) => ({ error: String(error) }));
+  const screenshot = await captureCanvasViaPage(cdp, "cube-webgl2-loss.png");
+  return { label: "cube-webgl2-loss", url, setup, afterLoss, afterRestore, screenshot, errors };
 }
 
 async function main() {
@@ -432,6 +582,7 @@ async function main() {
         sampleMs: 0,
       }),
     );
+    results.contextLoss = await runContextLossCase(cdp);
   } finally {
     await writeFile(
       path.join(RUN_DIR, "results.json"),
@@ -447,6 +598,9 @@ async function main() {
         `p95=${entry.samples?.p95Ms ?? "-"}ms screenshot=${entry.screenshot.bytes}B ` +
         `errors=${entry.errors.length}`,
     );
+  }
+  if (results.contextLoss) {
+    console.log(`context-loss: ${JSON.stringify(results.contextLoss.afterRestore)}`);
   }
 }
 

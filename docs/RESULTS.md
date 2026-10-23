@@ -948,8 +948,9 @@ intervals. Babylon and custom each cover 3 measured runs.
 
 First measured run of the host itself on the Babylon engine base (A19/ADR-0003,
 spec 21). Evidence: `experiments/babylon-host/results.json`, generated
-`2026-10-23T08:18:47.901Z`; screenshots `cube-webgpu.png` (71,168 B) and
-`cube-webgl2.png` (70,426 B).
+`2026-10-23T09:15:39.474Z`; screenshots `cube-webgpu.png` (71,263 B),
+`cube-webgl2.png` (50,574 B, canvas-only) and `cube-webgl2-loss.png` (52,647 B,
+after restore).
 
 **Environment:** Windows 11 10.0.26300, Intel i7-11800H, NVIDIA RTX 3050 Ti
 Laptop (ANGLE D3D11), Chrome HeadlessChrome 155.0.8059.85, `crossOriginIsolated:
@@ -961,15 +962,21 @@ Nearest-rank percentiles over one 60 s sample after a 5 s warm-up.
 
 | Scene | Backend | Draw calls | Canvas | Samples | p50 ms | p95 ms | max ms | Errors |
 |---|---|---|---:|---|---:|---:|---:|---:|---:|
-| engine-cube through `GameContext` | webgpu | 3 | 1920×1080 | 335,560 | 0.15 | 0.26 | 19.055 | 0 |
+| engine-cube through `GameContext` | webgpu | 3 | 1920×1080 | 326,518 | 0.16 | 0.275 | 17.75 | 0 |
 | engine-cube through `GameContext`, forced fallback | webgl2 | 3 | 1920×1080 | — | — | — | — | 0 |
+| WebGL2 context lost, then restored (`WEBGL_lose_context`) | webgl2 | 3 after restore | 1920×1080 | — | — | — | — | 0 |
 
-**Boot size (dev gate, gzip):** host 613,530 B over 58 files (dev budget
-3,145,728 B, 19.5%); controller unchanged at 40,794 / 40,960 B. The lazy
-Babylon path in this build is three chunks:
-`babylonBindings-Bx0_kgbU.js` 773,883 B raw / 185,237 B gzip,
-`createBabylonEngines-B_eK9ftf.js` 350,975 B / 87,705 B gzip and
-`createBabylonRenderer-DtdPAFFV.js` 7,005 B / 2,698 B gzip. None is downloaded
+**Context loss:** the WebGL2 case lost the context and Babylon's own handler
+restored it; after restore the overlay still reported `webgl2`, 3 draw calls and
+no console errors, and the post-restore screenshot is non-blank. This closes the
+spec 21 §4 verification for the WebGL2 path; WebGPU loss remains PENDING.
+
+**Boot size (dev gate, gzip):** host 614,816 B over 59 files (dev budget
+3,145,728 B, 19.5%); controller 40,794 / 51,200 B (D4). The lazy Babylon path in
+this build is three chunks:
+`babylonBindings-DnkM0s0p.js` 773,883 B raw / 185,237 B gzip,
+`createBabylonEngines-EamDRnG6.js` 350,975 B / 87,703 B gzip and
+`createBabylonRenderer-BFzfskFR.js` 7,005 B / 2,697 B gzip. None is downloaded
 by 2D games.
 
 **What this proves and what it does not:**
@@ -977,7 +984,7 @@ by 2D games.
 - The host lifecycle, fixed loop, `GameContext`, room, layout and overlay paths
   run unchanged with Babylon drawing the frame. Three cubes are visible in both
   screenshots with 0 page errors.
-- The 0.26 ms p95 is the throughput of a three-cube scene under an uncapped
+- The 0.275 ms p95 is the throughput of a three-cube scene under an uncapped
   headless rAF; it is **not** a frame budget for the M1 city scene and must not
   be quoted as one. The bake-off scene (14 buildings, 50 skinned pedestrians,
   shadows) remains the comparable measurement.

@@ -933,3 +933,12 @@
 - **Measured:** headless Chrome 155 / RTX 3050 Ti, canvas 1920×1080; WebGPU 3 draw calls, 335,560 rAF samples, p95 0.26 ms (uncapped; trivial scene), 0 errors; forced WebGL2 3 draw calls, 0 errors. Full gate exit 0: 267 files / 2,980 tests. Host dev boot 613,530 B gz (19.5% of budget); lazy Babylon chunks 185,237 + 87,705 + 2,698 B gz. Evidence in `experiments/babylon-host/`.
 - **Not claimed:** no phone input run, no assets/animation/shadows/physics, no M1 frame budget. The 0.28 ms number is not a city-scene result.
 - **No commit on this branch yet:** the user asked to branch, not to commit the migration spike.
+
+### 2026-10-23 — Wave 0 contracts complete (PS5 build brief)
+
+- **Defaults accepted:** D1–D8 exactly as written; recorded in `docs/ADR-0004-ps5-build.md`. Havok is try-first behind `Physics3D`; Rapier stays the fallback until stream H's vehicle test.
+- **Contracts:** spec 22 `ctx.world` (`GameWorld3D`), spec 23 `assets.json` + validator, spec 24 `@lanpad/game-kit`, spec 25 `presentation` + console-shell `DESIGN.md` tier. The spec-12 streamer moved from `ctx.world` to `ctx.streaming` because no game consumed it (ADR-0004 clarification 1, amendment A20).
+- **Shipped:** `sdk/src/world3d.ts`, `sdk/src/assets.ts`, `sdk/src/testing.ts` (`@lanpad/sdk/testing`), manifest presentation validation/schema, glob-based game discovery, `npm run play`, opt-in TLS, controller dev budget 50 KB (D4), debug-gated `?babylon-backend`, deadzone signed-zero fix, WebGL2 Babylon context-loss test, `template-game` fixture.
+- **Evidence:** gate exit 0 — 269 files / 2,995 tests; controller 40,794 / 51,200 B gz; host 614,816 / 3,145,728 B gz; trace 0 unknown. Template Game appears in the launcher DOM with zero root-file edits. WebGL2 context loss: lost + restored, 3 draw calls, 0 errors.
+- **Open:** WebGPU loss PENDING; TLS not exercised with a real cert/phone; `npm run play` not run end to end; template game to retire; all hardware rows PENDING.
+- **Next:** Wave 1 streams A, B, C, F in parallel; G after A/B; D, E, H next.

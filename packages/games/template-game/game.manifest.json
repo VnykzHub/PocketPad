@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "name": "Template Game",
+  "description": "Minimal Wave 0 game proving folder-only registration.",
+  "entry": "index.js",
+  "layouts": ["layouts/tg-default-v1.json"],
+  "assetBudget": { "initialBytes": 4096, "totalBytes": 65536 },
+  "minPlayers": 1,
+  "maxPlayers": 2,
+  "needsGyro": false,
+  "presentation": {
+    "tagline": "A folder, a manifest, a tile.",
+    "accent": "#4fd1a1",
+    "categories": ["solo"],
+    "inputBadges": ["buttons"]
+  }
+}

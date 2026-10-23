@@ -4,6 +4,8 @@
 **Authority:** [`SPEC.md`](../SPEC.md) is the contract; this guide explains the implementation. Where the two differ, the spec wins until an amendment is recorded in [`docs/todos/README.md`](todos/README.md).
 
 > **Engine base:** A19/ADR-0003 adopts **Babylon.js 9.32.0** as the host engine base. `engine-cube` now runs through a Babylon `Renderer3D` adapter on WebGPU and WebGL2 ([spec 21](engine/21-babylon-migration.md)). The custom `packages/engine/*` renderer packages remain in the tree but are frozen for feature work; the rest of this guide still describes the custom engine, audio, assets and runtime layers.
+>
+> **Wave 0 contracts (2026-10-23):** `ctx.world` is the game-facing 3D API ([spec 22](engine/22-world3d-api.md)); the spec-12 streamer is `ctx.streaming`; games may ship `assets.json` ([spec 23](engine/23-assets-audio.md)); `@lanpad/game-kit` is the shared lifecycle ([spec 24](engine/24-game-kit.md)); manifests may carry additive `presentation` metadata for the console shell ([spec 25](engine/25-console-shell.md)). Streams have not implemented the runtime wiring yet; `GAME_ASSETS` is still empty.
 
 ---
 

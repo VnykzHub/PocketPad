@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pocketpad.dev/schema/game-assets.schema.json",
+  "title": "PocketPad game assets manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "groups", "assets"],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "mode"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?(?:/[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?)*$"
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["eager", "lazy"]
+          }
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "path", "kind", "bytes", "group", "ledger"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?(?:/[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?)*$"
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^(?!/)(?!.*\\\\)(?!.*\\.\\.)(?!.*://)(?!^[A-Za-z]:).+$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["mesh", "texture", "material", "audio", "font", "json", "scene", "animation"]
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "group": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ledger": {
+            "type": "string",
+            "minLength": 1
+          },
+          "clips": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

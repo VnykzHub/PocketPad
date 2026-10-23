@@ -31,14 +31,17 @@ export function radialDeadzoneInto(
     return;
   }
   const magnitude = Math.hypot(x, y);
-  if (!(magnitude > dz)) {
-    out.x = 0;
-    out.y = 0;
-    return;
-  }
+  // Exact pass-through at deadzone 0, including signed zero. The zero-magnitude
+  // branch below would otherwise turn a -0 input into +0 and break the
+  // property that deadzone 0 is bit-exact.
   if (dz === 0) {
     out.x = x;
     out.y = y;
+    return;
+  }
+  if (!(magnitude > dz)) {
+    out.x = 0;
+    out.y = 0;
     return;
   }
   const scaled = (magnitude - dz) / (1 - dz);

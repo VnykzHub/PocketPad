@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "tg-default-v1",
+  "orientation": "landscape",
+  "background": "#0b0d12",
+  "controls": [
+    {
+      "type": "button",
+      "id": "start",
+      "x": "50%",
+      "y": "70%",
+      "label": "Start",
+      "symbol": "GO",
+      "shape": "circle",
+      "r": "16%",
+      "bit": 0
+    }
+  ]
+}

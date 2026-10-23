@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-23T08:18:47.901Z",
+  "generatedAt": "2026-10-23T09:15:39.474Z",
   "viewport": {
     "width": 1920,
     "height": 1080
@@ -11,7 +11,7 @@
       "host": {
         "backend": "webgpu",
         "drawCalls": 3,
-        "frameP95": "0.28 ms",
+        "frameP95": "0.30 ms",
         "canvasSize": "1920×1080",
         "canvas": {
           "width": 1920,
@@ -26,15 +26,15 @@
         "crossOriginIsolated": true
       },
       "samples": {
-        "count": 335560,
-        "p50Ms": 0.15,
-        "p95Ms": 0.26,
-        "maxMs": 19.055,
-        "meanMs": 0.179
+        "count": 326518,
+        "p50Ms": 0.16,
+        "p95Ms": 0.275,
+        "maxMs": 17.75,
+        "meanMs": 0.184
       },
       "screenshot": {
         "file": "E:\\PROJECTS 2026\\PocketPad\\experiments\\babylon-host\\cube-webgpu.png",
-        "bytes": 71168
+        "bytes": 71263
       },
       "errors": []
     },
@@ -44,7 +44,7 @@
       "host": {
         "backend": "webgl2",
         "drawCalls": 3,
-        "frameP95": "0.31 ms",
+        "frameP95": "0.24 ms",
         "canvasSize": "1920×1080",
         "canvas": {
           "width": 1920,
@@ -61,9 +61,33 @@
       "samples": null,
       "screenshot": {
         "file": "E:\\PROJECTS 2026\\PocketPad\\experiments\\babylon-host\\cube-webgl2.png",
-        "bytes": 70426
+        "bytes": 50574
       },
       "errors": []
     }
-  ]
+  ],
+  "contextLoss": {
+    "label": "cube-webgl2-loss",
+    "url": "http://localhost:8080/games/engine-cube/?debug=1&babylon-backend=webgl2",
+    "setup": {
+      "ok": true
+    },
+    "afterLoss": {
+      "lost": true,
+      "restored": false,
+      "backend": "webgl2",
+      "draws": 3
+    },
+    "afterRestore": {
+      "lost": true,
+      "restored": true,
+      "backend": "webgl2",
+      "draws": 3
+    },
+    "screenshot": {
+      "file": "E:\\PROJECTS 2026\\PocketPad\\experiments\\babylon-host\\cube-webgl2-loss.png",
+      "bytes": 52647
+    },
+    "errors": []
+  }
 }

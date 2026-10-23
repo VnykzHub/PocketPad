@@ -244,6 +244,28 @@ Every control shares one grammar so a player can move between games without rele
 | `text` | Field + system keyboard | Focus ring on the field | Free text, `inputmode` from the layout |
 | `canvas` | Card with a drawing area | Stroke trail | Free drawing; strokes batch |
 
+## Console shell tier (D3, 2026-10-23)
+
+The launcher home screen is the one surface allowed a **console shell** treatment. This tier is additive and scoped to the host launcher; it does not loosen the rules for in-game HUD, room panels, notices or the controller.
+
+**Scope:** the home screen only — start gate, top bar, game row, backdrop, hint bar, player panel. The focused tile is the single element that may glow or scale.
+
+**Full tier** (capable device, motion allowed):
+- Focus scale up to `1.08`; neighbouring tiles stay at `1.0` with no movement.
+- Parallax on tile art up to `8px`, implemented with `transform` only.
+- A soft accent glow on the focused tile only; it must not read as a shadow on a resting surface.
+- A full-screen backdrop may use a static gradient or the focused game's accent; it crossfades at `--dur-panel`.
+- Animation uses only `transform` and `opacity` and the existing duration/easing tokens.
+- Input is immediate: focus changes state on keydown, and motion only decorates the new state. No transition may gate a launch, back action or focus move.
+- Backdrop frame cost ≤ 4 ms on the dev machine; it pauses while a game runs.
+
+**Reduced tier** (`prefers-reduced-motion: reduce`, low-tier device, or TV class):
+- Instant focus with no scale, parallax or crossfade.
+- A static backdrop; no glow.
+- The same navigation tests must pass with animations off.
+
+**Still banned on every tier:** glass, backdrop blur, shadows on resting cards, animated remote focus beyond the focused tile's scale, colour-only state, tracked uppercase labels, and any PlayStation or Rockstar trade dress (logos, icons, sounds, fonts, names or assets). Gradients are allowed on the launcher backdrop only; they remain banned on controls, cards and host chrome.
+
 ## Accessibility
 
 - Minimum touch target 44px; the design uses 48px on the phone and 64px on the host.

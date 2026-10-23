@@ -120,6 +120,12 @@ const finite = fc.double({ min: -1, max: 1, noNaN: true, noDefaultInfinity: true
 const deadzone = fc.double({ min: 0, max: 0.9, noNaN: true });
 
 describe("deadzone properties", () => {
+  test("[ER-10-05] deadzone 0 is bit-exact for signed zero", () => {
+    const out = applyRadialDeadzone(-0, -0, 0);
+    expect(Object.is(out.x, -0)).toBe(true);
+    expect(Object.is(out.y, -0)).toBe(true);
+  });
+
   test(
     "[ER-10-05] 10,000 radial inputs stay finite, bounded and exact at deadzone 0",
     () => {

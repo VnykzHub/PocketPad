@@ -69,7 +69,7 @@ describe("budgets file (D0-TOOL-02)", () => {
   test("[G7] every browser bundle has a budget entry", () => {
     const budgets = loadBudgets(defaultBudgetsPath());
     expect(Object.keys(budgets.targets).sort()).toEqual(["controller", "engineCore", "host"]);
-    expect(budgets.targets["controller"]).toEqual({ dev: 40960, prod: 51200, hard: 61440 });
+    expect(budgets.targets["controller"]).toEqual({ dev: 51200, prod: 51200, hard: 61440 });
     expect(budgets.targets["host"]).toEqual({
       dev: 3145728,
       prod: 3670016,
@@ -133,7 +133,7 @@ describe("gzip budget gate (D0-TOOL-02)", () => {
     expect(report.results[0]?.status).toBe("hard-breach");
     expect(report.results[0]?.gzipBytes).toBeGreaterThan(61440);
     expect(report.results[0]?.hardBytes).toBe(61440);
-    expect(report.results[0]?.budgetBytes).toBe(40960);
+    expect(report.results[0]?.budgetBytes).toBe(51200);
   });
 
   test("[NR-6.3] 60 KB passes with a warning and 61 KB breaches", () => {
@@ -143,7 +143,7 @@ describe("gzip budget gate (D0-TOOL-02)", () => {
     expect(classifySize(61440, controller, "dev").status).toBe("warn");
     expect(classifySize(61440, controller, "dev").hardBytes).toBe(61440);
     expect(classifySize(61441, controller, "dev").status).toBe("hard-breach");
-    expect(classifySize(40960, controller, "dev").status).toBe("ok");
+    expect(classifySize(51200, controller, "dev").status).toBe("ok");
   });
 
   test("[G7] a small controller bundle passes and reports deterministic numbers", () => {

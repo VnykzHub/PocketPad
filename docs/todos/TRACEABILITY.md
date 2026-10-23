@@ -387,6 +387,14 @@ Engine acceptance IDs are Gate-audited, not owned by a phone-platform stage. A r
 | ER-21-08 | Babylon imports stay inside `packages/runtime/src/babylon/**` and no runtime file starts a Babylon render loop | Engine/QA | W8-BABYLON | B1 |
 | ER-21-09 | Both Babylon backends unavailable returns fixed copy with no adapter or driver text in the result | Engine/QA | W8-BABYLON | B1 |
 | ER-21-10 | `BabylonGameRenderer.dispose()` is idempotent and frees the engine exactly once; drawing before `init` is a programming error | Engine/QA | W8-BABYLON | B1 |
+| ER-22-01 | The SDK fake world satisfies the 3D world contract without a GPU | Engine/QA | W0-CONTRACTS | Wave 0 |
+| ER-22-08 | `spawnModel` with a missing asset throws `E_WORLD_ASSET` and creates no actor | Engine/QA | W0-CONTRACTS | Wave 0 |
+| ER-22-09 | Exceeding the instance limit throws `E_WORLD_LIMIT` | Engine/QA | W0-CONTRACTS | Wave 0 |
+| ER-22-10 | World `dispose` is idempotent and later updates fail with `E_WORLD_DISPOSED` | Engine/QA | W0-CONTRACTS | Wave 0 |
+| ER-23-01 | A valid `assets.json` loads; missing ledger rows, duplicate ids, path escapes and over-budget sets fail with codes and JSON paths | Engine/QA | W0-CONTRACTS | Wave 0 |
+| ER-25-01 | `presentation` is optional; a fully-populated manifest validates | Engine/QA | W0-CONTRACTS | Wave 0 |
+| ER-25-02 | Invalid presentation fields fail with their JSON path | Engine/QA | W0-CONTRACTS | Wave 0 |
+| ER-25-03 | A game folder with a manifest, layout, entry and tsconfig registers without any root-file edit | Engine/QA | W0-CONTRACTS | Wave 0 |
 
 ---
 

@@ -326,7 +326,7 @@ describe("[NR-6.3] controller gzip budget", () => {
   it("[NR-6.3] [G3] built controller JS fits the 60 KB gz hard cap", () => {
     const tiers = readControllerBudget();
     expect(tiers.hard).toBe(61440);
-    expect(tiers.dev).toBe(40960);
+    expect(tiers.dev).toBe(51200);
     expect(tiers.prod).toBe(51200);
 
     const measured = measureBuiltController();

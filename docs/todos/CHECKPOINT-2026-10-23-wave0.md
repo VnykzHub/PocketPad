@@ -1,0 +1,44 @@
+# Checkpoint — Wave 0 contracts (2026-10-23)
+
+**Branch:** `feat/babylon-engine`.
+**Gate:** `npm run check` exit 0 — 269 test files / 2,995 tests; controller 40,794 / 51,200 B gz; host 614,816 / 3,145,728 B gz; trace 0 unknown.
+
+## Shipped
+
+| Item | Evidence |
+|---|---|
+| Build brief saved | `docs/todos/BUILD-BRIEF.md` |
+| ADR-0004 (D1–D8 accepted as defaults) | `docs/ADR-0004-ps5-build.md`; `decisions.dm` entry |
+| Spec 22 — `ctx.world` | `docs/engine/22-world3d-api.md`; `sdk/src/world3d.ts` |
+| Spec 23 — assets/audio | `docs/engine/23-assets-audio.md`; `sdk/src/assets.ts`, `sdk/schema/game-assets.schema.json` |
+| Spec 24 — game kit | `docs/engine/24-game-kit.md` (stream F implements) |
+| Spec 25 — console shell | `docs/engine/25-console-shell.md`; `presentation` in manifest type, validator and schema; `DESIGN.md` console-shell tier |
+| Streamer rename | `ctx.world?: WorldStreamer` → `ctx.streaming`; `ctx.world?: GameWorld3D` (ADR-0004 clarification 1) |
+| Headless test kit | `@lanpad/sdk/testing` → `createFakeWorld`, `createFakeInput`, `createFakeAudio`, `createFakeAssets`, `createFakeContext` |
+| Glob registration | `tools/game-registry.mjs`; dynamic Vitest game projects; template game appears in the launcher DOM with zero root edits |
+| `npm run play` | root script: build all, then start the dev server (prints URLs + QR) |
+| Opt-in TLS | `LANPAD_TLS_CERT` + `LANPAD_TLS_KEY`; HTTPS banner warning; unit tests |
+| Controller budget | dev 40,960 → 51,200 B (D4); hard 61,440 unchanged |
+| Flaky deadzone | signed-zero ordering fixed in `radialDeadzoneInto`; deadzone 0 is now bit-exact |
+| Babylon override | `?babylon-backend=webgl2` only works with `?debug=1` |
+| Babylon context loss | WebGL2 lost + restored in Chrome; 3 draw calls, 0 errors, non-blank screenshot |
+| Template game | `packages/games/template-game/` — manifest, layout, entry, tsconfig, test; no root-file edit |
+
+## Contract clarifications recorded
+
+1. The spec-12 streamer member moved to `ctx.streaming`; `ctx.world` is the spec-22 3D world. No game consumed the old name.
+2. `assets.json` is optional per game; absent means no assets.
+3. `presentation` is optional; existing manifests validate unchanged.
+4. `@lanpad/game-kit` is a new package depending on `@lanpad/sdk` only.
+
+## Open / PENDING
+
+- WebGPU context loss is PENDING; only the WebGL2 loss path was exercised.
+- TLS was unit-tested but not exercised with a real certificate on a phone.
+- `npm run play` was not run end to end after the build (the gate builds every workspace and the dev server starts).
+- The template game is a Wave 0 fixture; retire it once a real game proves registration.
+- Hardware rows (phones, TV, gyro, haptics) remain PENDING.
+
+## Next
+
+Wave 1: streams A (Babylon world), B (assets/audio), C (curation), F (game kit) start in parallel; G (host integration) after A and B; D/E/H next. Merge order per the brief.

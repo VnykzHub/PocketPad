@@ -54,18 +54,17 @@ import type { HostRoster } from "./roster.js";
 const GAME_ASSETS: readonly AssetEntry[] = [];
 
 /**
- * Benchmark affordance: `?babylon-backend=webgl2` forces the WebGL2 path so
- * the fallback can be measured on a machine whose WebGPU works. Never read
- * from game data; unknown values are ignored.
+ * Benchmark affordance: `?debug=1&babylon-backend=webgl2` forces the WebGL2
+ * path so the fallback can be measured on a machine whose WebGPU works. It is
+ * debug-only (no effect without `?debug=1`) and never read from game data.
  */
 function readBabylonBackendOverride(
   window: Window,
 ): "webgl2" | undefined {
   try {
-    const value = new URLSearchParams(window.location.search).get(
-      "babylon-backend",
-    );
-    return value === "webgl2" ? "webgl2" : undefined;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("debug") !== "1") return undefined;
+    return params.get("babylon-backend") === "webgl2" ? "webgl2" : undefined;
   } catch {
     return undefined;
   }

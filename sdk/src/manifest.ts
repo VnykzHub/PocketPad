@@ -11,6 +11,43 @@
  * in sync when the contract changes.
  */
 
+export type GameCategory =
+  | "party"
+  | "arena"
+  | "puzzle"
+  | "racing"
+  | "action"
+  | "co-op"
+  | "solo";
+
+export type InputBadge =
+  | "stick"
+  | "dpad"
+  | "buttons"
+  | "triggers"
+  | "gyro"
+  | "haptics"
+  | "text"
+  | "canvas"
+  | "choice";
+
+/** Launcher metadata (spec 25). Absent fields use generated fallbacks. */
+export interface GamePresentation {
+  /** 1..80 chars, no control characters. */
+  readonly tagline?: string;
+  /** `#rrggbb` with at least 3:1 contrast against black. */
+  readonly accent?: string;
+  /** Asset id from `assets.json`; launcher thumbnail. */
+  readonly thumbnail?: string;
+  /** Asset id; Wave 2 launcher backdrop model. */
+  readonly heroModel?: string;
+  /** Max 3 unique values. */
+  readonly categories?: readonly GameCategory[];
+  /** Max 5 unique values; what a player needs to play. */
+  readonly inputBadges?: readonly InputBadge[];
+  readonly featured?: boolean;
+}
+
 export interface GameManifest {
   schemaVersion?: 1;
   name: string;
@@ -45,6 +82,8 @@ export interface GameManifest {
    * game to supply `gameVersion` explicitly.
    */
   version?: string;
+  /** Additive launcher metadata (spec 25); may be absent. */
+  presentation?: GamePresentation;
 }
 
 const NAME_MIN_CHARS = 1;
@@ -54,6 +93,56 @@ const MAX_LAYOUTS = 16;
 const MIN_PLAYERS = 1;
 const MAX_PLAYERS = 8;
 const MIN_LOD_TIERS = 3;
+const MAX_TAGLINE_CHARS = 80;
+const MAX_CATEGORIES = 3;
+const MAX_INPUT_BADGES = 5;
+const MAX_ASSET_ID_CHARS = 64;
+
+const CATEGORY_VALUES: ReadonlySet<string> = new Set([
+  "party",
+  "arena",
+  "puzzle",
+  "racing",
+  "action",
+  "co-op",
+  "solo",
+]);
+const INPUT_BADGE_VALUES: ReadonlySet<string> = new Set([
+  "stick",
+  "dpad",
+  "buttons",
+  "triggers",
+  "gyro",
+  "haptics",
+  "text",
+  "canvas",
+  "choice",
+]);
+const PRESENTATION_KEYS: ReadonlySet<string> = new Set([
+  "tagline",
+  "accent",
+  "thumbnail",
+  "heroModel",
+  "categories",
+  "inputBadges",
+  "featured",
+]);
+const ASSET_ID_PATTERN =
+  /^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?(?:\/[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?)*$/;
+const CONTROL_CHARACTER = /[\u0000-\u001f\u007f]/;
+
+/** WCAG relative luminance for `#rrggbb`; 0..1. */
+function relativeLuminance(hex: string): number {
+  const channel = (offset: number): number => {
+    const value = Number.parseInt(hex.slice(offset, offset + 2), 16) / 255;
+    return value <= 0.03928
+      ? value / 12.92
+      : ((value + 0.055) / 1.055) ** 2.4;
+  };
+  return (
+    0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5)
+  );
+}
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -115,6 +204,117 @@ function validateAssetPath(label: string, path: string, errors: string[]): void 
  * run. Unknown extra properties are preserved, matching the schema's additive
  * policy.
  */
+function validateAssetId(
+  path: string,
+  value: unknown,
+  errors: string[],
+): void {
+  if (typeof value !== "string") {
+    errors.push(`${path}: must be an asset id string`);
+    return;
+  }
+  if (value.length < 1 || value.length > MAX_ASSET_ID_CHARS) {
+    errors.push(`${path}: must be 1..${MAX_ASSET_ID_CHARS} characters`);
+    return;
+  }
+  if (!ASSET_ID_PATTERN.test(value)) {
+    errors.push(`${path}: must be a lower-case asset id`);
+  }
+}
+
+function validatePresentation(value: unknown, errors: string[]): void {
+  if (!isRecord(value)) {
+    errors.push("presentation: must be an object");
+    return;
+  }
+  for (const key of Object.keys(value)) {
+    if (!PRESENTATION_KEYS.has(key)) {
+      errors.push(`presentation.${key}: unknown field`);
+    }
+  }
+
+  if (value.tagline !== undefined) {
+    if (typeof value.tagline !== "string") {
+      errors.push("presentation.tagline: must be a string");
+    } else {
+      const tagline = value.tagline.trim();
+      if (tagline.length < 1 || tagline.length > MAX_TAGLINE_CHARS) {
+        errors.push(
+          `presentation.tagline: must be 1..${MAX_TAGLINE_CHARS} characters`,
+        );
+      } else if (CONTROL_CHARACTER.test(tagline)) {
+        errors.push("presentation.tagline: must not contain control characters");
+      }
+    }
+  }
+
+  if (value.accent !== undefined) {
+    if (
+      typeof value.accent !== "string" ||
+      !/^#[0-9a-fA-F]{6}$/.test(value.accent)
+    ) {
+      errors.push("presentation.accent: must be #rrggbb");
+    } else if (
+      (relativeLuminance(value.accent) + 0.05) / 0.05 < 3
+    ) {
+      errors.push("presentation.accent: must have at least 3:1 contrast on black");
+    }
+  }
+
+  if (value.thumbnail !== undefined) {
+    validateAssetId("presentation.thumbnail", value.thumbnail, errors);
+  }
+  if (value.heroModel !== undefined) {
+    validateAssetId("presentation.heroModel", value.heroModel, errors);
+  }
+
+  if (value.categories !== undefined) {
+    if (!Array.isArray(value.categories)) {
+      errors.push("presentation.categories: must be an array");
+    } else if (value.categories.length > MAX_CATEGORIES) {
+      errors.push(
+        `presentation.categories: must contain at most ${MAX_CATEGORIES} values`,
+      );
+    } else {
+      const seen = new Set<unknown>();
+      for (let index = 0; index < value.categories.length; index += 1) {
+        const category = value.categories[index];
+        if (typeof category !== "string" || !CATEGORY_VALUES.has(category)) {
+          errors.push(`presentation.categories[${index}]: unknown category`);
+        } else if (seen.has(category)) {
+          errors.push(`presentation.categories[${index}]: duplicate category`);
+        }
+        seen.add(category);
+      }
+    }
+  }
+
+  if (value.inputBadges !== undefined) {
+    if (!Array.isArray(value.inputBadges)) {
+      errors.push("presentation.inputBadges: must be an array");
+    } else if (value.inputBadges.length > MAX_INPUT_BADGES) {
+      errors.push(
+        `presentation.inputBadges: must contain at most ${MAX_INPUT_BADGES} values`,
+      );
+    } else {
+      const seen = new Set<unknown>();
+      for (let index = 0; index < value.inputBadges.length; index += 1) {
+        const badge = value.inputBadges[index];
+        if (typeof badge !== "string" || !INPUT_BADGE_VALUES.has(badge)) {
+          errors.push(`presentation.inputBadges[${index}]: unknown badge`);
+        } else if (seen.has(badge)) {
+          errors.push(`presentation.inputBadges[${index}]: duplicate badge`);
+        }
+        seen.add(badge);
+      }
+    }
+  }
+
+  if (value.featured !== undefined && typeof value.featured !== "boolean") {
+    errors.push("presentation.featured: must be a boolean");
+  }
+}
+
 export function validateManifest(
   value: unknown,
 ): { ok: true; manifest: GameManifest } | { ok: false; errors: string[] } {
@@ -229,6 +429,10 @@ export function validateManifest(
     value.renderer !== "babylon"
   ) {
     errors.push('renderer: must be "canvas2d", "engine" or "babylon"');
+  }
+
+  if (value.presentation !== undefined) {
+    validatePresentation(value.presentation, errors);
   }
 
   if (value.chunkConfig !== undefined) {

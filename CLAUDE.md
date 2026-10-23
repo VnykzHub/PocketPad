@@ -16,6 +16,7 @@ The host page is authoritative: it runs the simulation and renders the game. Pho
 
 - **Renderer:** **Babylon.js 9.32.0 is the engine base** (A19, ADR-0003), WebGPU-first with its WebGL2 fallback, behind the host's `Renderer3D`/`GameContext` contracts. No Three.js. The custom WebGPU/WebGL2 packages remain frozen in the tree, not deleted; spec 21 governs the migration.
 - **Inputs:** phones **and** keyboard/mouse **and** gamepad. Phones are the signature local-multiplayer controller, not the only input.
+- **Game boundary (Wave 0, A20):** games see `GameContext`/`@lanpad/game-kit` only. `ctx.world` is the 3D world API (spec 22); `ctx.streaming` is the spec-12 streamer; assets come from a per-game `assets.json` (spec 23); manifest `presentation` (spec 25) feeds the console shell. No Babylon type crosses into `@lanpad/sdk` or a game.
 - **Multiplayer:** local-first (same room / LAN). Online relay and state sync are a later engine layer.
 - **Benchmark:** GTA Vice City is the north star. A vertical slice proves the architecture; full parity is a multi-year program.
 - **Platform:** browser-only. No native app, no Electron requirement for players.
@@ -130,7 +131,10 @@ npm test -- --project packages/controller -t "hot-swap"
 npm run build --workspace @lanpad/controller
 node tools/trace-check/dist/cli.js --stage D7
 node packages/dev-server/dist/main.js        # after npm run build
+npm run play                                 # build all, start, print join URL + QR
 ```
+
+For phone motion sensors (secure context): set `LANPAD_TLS_CERT` and `LANPAD_TLS_KEY` to a certificate/key pair (mkcert is fine) before `npm run play`; the banner switches to HTTPS. A tunnel that terminates TLS in front of the same dev server is also supported for remote phone testing. This is still a LAN-only dev server with no production hardening.
 
 There is no `npm run dev`.
 
@@ -142,7 +146,7 @@ There is no `npm run dev`.
 - Sessions: 30 s slot/host reservation; rooms expire after 10 min idle or 4 h; reconnect backoff 250 ms → 4 s; heartbeat 2 s / dead after 5 s.
 - Layouts: ≤ 16 KB JSON, ≤ 24 controls, unique ids/bits/channels, all 11 control types, hot-swap per slot or all.
 - Events: 30/s sustained, burst 60, 4 KB per frame; strokes batch.
-- Budgets: controller ≤ 60 KB gz hard (40 dev / 50 prod target); host + game ≤ 5 MB gz hard; input-to-canvas p95 < 25 ms LAN / < 35 ms prod; 8 controllers; join < 5 s.
+- Budgets: controller ≤ 60 KB gz hard (50 KB dev / 50 KB prod target, A19/D4); host + game ≤ 5 MB gz hard; input-to-canvas p95 < 25 ms LAN / < 35 ms prod; 8 controllers; join < 5 s.
 - 3D targets (once the engine exists): 1080p, frame p95 14 ms (hard 20 ms), ≤ 120 draw calls, ≤ 128 MB texture memory provisional, no per-frame allocations.
 - Security: tokens never logged, never in a URL except the room token in the QR fragment; UGC text/canvas only; no PII or analytics; Origin allowlist and CSP.
 - iOS is out of v1 acceptance: feature-detect motion/haptics, keep a playable fallback.
@@ -186,7 +190,7 @@ Live status is `docs/todos/IMPLEMENTATION-ORDER.md` §6/§8 plus the newest `doc
 - Host reconnect uses 250 ms → 4 s with no jitter; controller reconnect uses ±20%. Confirm before changing either.
 - Host layout uses JS-set `stage-active` / `room-empty` / `connection-bad` classes; do not reintroduce `:has()` for host layout. Older TV browsers do not support it.
 - The dev server alone sets `allowMissingOrigin` for bots. Production must not.
-- `npm run dev` does not exist. Build, then run `node packages/dev-server/dist/main.js`.
+- `npm run play` builds all workspaces, starts the dev server and prints the join URL/QR; `npm run dev` does not exist. Build, then run `node packages/dev-server/dist/main.js` for a bare start.
 
 ## Engine program milestones
 

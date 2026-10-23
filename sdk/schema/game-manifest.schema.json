@@ -79,6 +79,57 @@
       "enum": ["canvas2d", "engine", "babylon"],
       "description": "Renderer family to select. Absent means \"canvas2d\". \"engine\" and \"babylon\" require WebGPU or WebGL2 and are refused on the Canvas2D fallback."
     },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Additive launcher metadata (spec 25). Absent fields fall back to a generated gradient and monogram.",
+      "properties": {
+        "tagline": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+        },
+        "accent": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "3:1 contrast against black is enforced by validateManifest."
+        },
+        "thumbnail": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?(?:/[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?)*$"
+        },
+        "heroModel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?(?:/[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?)*$"
+        },
+        "categories": {
+          "type": "array",
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["party", "arena", "puzzle", "racing", "action", "co-op", "solo"]
+          }
+        },
+        "inputBadges": {
+          "type": "array",
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["stick", "dpad", "buttons", "triggers", "gyro", "haptics", "text", "canvas", "choice"]
+          }
+        },
+        "featured": {
+          "type": "boolean"
+        }
+      }
+    },
     "version": {
       "type": "string",
       "minLength": 1,

@@ -12,3 +12,5 @@ export * from "./layout-validate.js";
 export * from "./panel.js";
 export * from "./ugc.js";
 export * from "./game-api.js";
+export * from "./world3d.js";
+export * from "./assets.js";

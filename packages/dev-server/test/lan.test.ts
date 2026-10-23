@@ -5,11 +5,13 @@ import type { NetworkInterfaceInfo } from "node:os";
 import { describe, expect, test } from "vitest";
 import {
   LAN_ONLY_WARNING,
+  TLS_DEV_WARNING,
   allowedOriginsFromUrls,
   formatBanner,
   formatQr,
   lanUrls,
   printBootInfo,
+  resolveTlsConfig,
 } from "../src/index.js";
 
 function iface(
@@ -81,6 +83,29 @@ describe("boot banner and QR", () => {
     expect(banner).toContain(LAN_ONLY_WARNING);
     expect(banner).toContain("WARNING: LAN only. This server has no TLS and no production hardening.");
     expect(banner).toContain("Do not expose it to a public network. (SR-3)");
+  });
+
+  test("[SR-3] the TLS banner replaces the no-TLS warning", () => {
+    const banner = formatBanner(["https://192.168.1.20:8080"], { tls: true });
+    expect(banner).toContain(TLS_DEV_WARNING);
+    expect(banner).not.toContain(LAN_ONLY_WARNING);
+    expect(banner).toContain("https://192.168.1.20:8080/");
+  });
+
+  test("[SR-3] TLS needs both certificate and key paths", () => {
+    expect(resolveTlsConfig({})).toBeUndefined();
+    expect(() =>
+      resolveTlsConfig({ LANPAD_TLS_CERT: "cert.pem" }),
+    ).toThrowError(/LANPAD_TLS_KEY/);
+    expect(() =>
+      resolveTlsConfig({ LANPAD_TLS_KEY: "key.pem" }),
+    ).toThrowError(/LANPAD_TLS_CERT/);
+    expect(
+      resolveTlsConfig({
+        LANPAD_TLS_CERT: "cert.pem",
+        LANPAD_TLS_KEY: "key.pem",
+      }),
+    ).toEqual({ certPath: "cert.pem", keyPath: "key.pem" });
   });
 
   test("[SR-3] a room code can be shown in the controller URL", () => {

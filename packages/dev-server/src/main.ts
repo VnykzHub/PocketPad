@@ -8,13 +8,14 @@
  * production origins are config-driven.
  */
 import { randomBytes as secureRandomBytes } from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import {
   createServer,
   type IncomingMessage,
   type Server,
   type ServerResponse,
 } from "node:http";
+import { createServer as createHttpsServer } from "node:https";
 import { networkInterfaces } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -51,6 +52,14 @@ export interface DevServerConfig {
   };
   /** Derived at boot from LAN IPs + localhost; never `*`. */
   allowedOrigins: string[];
+  /**
+   * Opt-in HTTPS (D5) for phone motion sensors, which require a secure
+   * context. The files are read at server creation; nothing is committed.
+   */
+  tls?: {
+    certPath: string;
+    keyPath: string;
+  };
 }
 
 export interface DevServerDeps {
@@ -85,8 +94,30 @@ export function defaultRepoRoot(): string {
   return resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 }
 
+/** Opt-in TLS from `LANPAD_TLS_CERT` + `LANPAD_TLS_KEY`; both are required. */
+export function resolveTlsConfig(
+  env: NodeJS.ProcessEnv,
+): { certPath: string; keyPath: string } | undefined {
+  const certPath = env["LANPAD_TLS_CERT"];
+  const keyPath = env["LANPAD_TLS_KEY"];
+  if (
+    (certPath === undefined || certPath.length === 0) &&
+    (keyPath === undefined || keyPath.length === 0)
+  ) {
+    return undefined;
+  }
+  if (certPath === undefined || certPath.length === 0) {
+    throw new Error("LANPAD_TLS_CERT is required when TLS is enabled");
+  }
+  if (keyPath === undefined || keyPath.length === 0) {
+    throw new Error("LANPAD_TLS_KEY is required when TLS is enabled");
+  }
+  return { certPath, keyPath };
+}
+
 export function defaultConfig(repoRoot = defaultRepoRoot()): DevServerConfig {
   const urls = lanUrls(DEFAULT_PORT, networkInterfaces());
+  const tls = resolveTlsConfig(process.env);
   return {
     host: DEFAULT_HOST,
     port: DEFAULT_PORT,
@@ -98,6 +129,7 @@ export function defaultConfig(repoRoot = defaultRepoRoot()): DevServerConfig {
       experiments: join(repoRoot, "experiments"),
     },
     allowedOrigins: allowedOriginsFromUrls(urls),
+    ...(tls !== undefined ? { tls } : {}),
   };
 }
 
@@ -283,7 +315,16 @@ export function createDevServer(config: DevServerConfig, deps: DevServerDeps = {
     sendText(res, 404, "Not found");
   }
 
-  const server = createServer(handleRequest);
+  const server =
+    config.tls === undefined
+      ? createServer(handleRequest)
+      : createHttpsServer(
+          {
+            cert: readFileSync(config.tls.certPath),
+            key: readFileSync(config.tls.keyPath),
+          },
+          handleRequest,
+        );
   const wss = attachWebSocketServer(server, {
     registry,
     config: {
@@ -317,7 +358,9 @@ export function createDevServer(config: DevServerConfig, deps: DevServerDeps = {
 
     const address = server.address();
     const port = typeof address === "object" && address !== null ? address.port : config.port;
-    const urls = lanUrls(port, networkInterfaces());
+    const urls = lanUrls(port, networkInterfaces()).map((url) =>
+      config.tls === undefined ? url : url.replace(/^http:/, "https:"),
+    );
     if (config.allowedOrigins.length === 0) {
       config.allowedOrigins.push(...allowedOriginsFromUrls(urls));
     }
@@ -345,9 +388,10 @@ export function createDevServer(config: DevServerConfig, deps: DevServerDeps = {
 
 /** Boots the default server and prints the LAN banner + QR. */
 export async function main(): Promise<void> {
-  const app = createDevServer(defaultConfig());
+  const config = defaultConfig();
+  const app = createDevServer(config);
   const { urls } = await app.listen();
-  await printBootInfo(urls);
+  await printBootInfo(urls, { tls: config.tls !== undefined });
 
   const shutdown = (): void => {
     void app.close().then(() => {

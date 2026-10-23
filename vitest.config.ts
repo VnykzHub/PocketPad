@@ -1,11 +1,13 @@
+import { readdirSync } from "node:fs";
 import { defineConfig } from "vitest/config";
 
 /**
  * Root Vitest config (D0-REPO-01).
  *
  * One project per workspace. Node is the default environment; jsdom is scoped
- * to the controller package for its future DOM tests. `passWithNoTests` keeps
- * the scaffold green until D0 work items add their first tagged tests.
+ * to the controller package for its future DOM tests. Game projects are
+ * discovered from `packages/games/*` so adding a game folder needs no root
+ * config edit (Wave 0).
  */
 const nodeProject = (root: string) => ({
   root,
@@ -16,16 +18,22 @@ const nodeProject = (root: string) => ({
   },
 });
 
+const gameProjects = readdirSync("packages/games", { withFileTypes: true })
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => nodeProject(`packages/games/${entry.name}`));
+
 export default defineConfig({
   test: {
     passWithNoTests: true,
+    // 16 logical CPUs and multiple agent worktrees otherwise starve the
+    // machine; 8 workers keeps the full suite reliable without weakening any
+    // assertion or timeout.
+    maxWorkers: 8,
     projects: [
       nodeProject("packages/protocol"),
       nodeProject("packages/broker"),
       nodeProject("packages/dev-server"),
-      nodeProject("packages/games/reaction-duel"),
-      nodeProject("packages/games/platformer"),
-      nodeProject("packages/games/engine-cube"),
+      ...gameProjects,
       nodeProject("packages/runtime"),
       {
         root: "packages/engine/core",

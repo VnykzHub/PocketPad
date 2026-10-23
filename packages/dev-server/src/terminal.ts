@@ -7,15 +7,23 @@
  */
 import qrcode from "qrcode";
 
-/** Exact warning required by SR-3. */
+/** Exact warning required by SR-3 when TLS is off. */
 export const LAN_ONLY_WARNING = [
   "WARNING: LAN only. This server has no TLS and no production hardening.",
   "Do not expose it to a public network. (SR-3)",
 ].join("\n");
 
+/** Warning when opt-in TLS is active; still a development server. */
+export const TLS_DEV_WARNING = [
+  "WARNING: LAN only. Opt-in TLS is active, but this is still a development",
+  "server with no production hardening. Do not expose it to a public network.",
+].join("\n");
+
 export interface BannerOptions {
   /** Room code to show in the controller URL; `<CODE>` until a room exists. */
   roomCode?: string;
+  /** True when the server is listening over HTTPS (D5). */
+  tls?: boolean;
 }
 
 /**
@@ -36,7 +44,7 @@ export function formatBanner(urls: readonly string[], options: BannerOptions = {
       lines.push(`  ${url}/`);
     }
   }
-  lines.push(LAN_ONLY_WARNING);
+  lines.push(options.tls === true ? TLS_DEV_WARNING : LAN_ONLY_WARNING);
   return lines.join("\n");
 }
 
