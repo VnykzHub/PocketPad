@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "groups": [
+    {
+      "id": "boot",
+      "mode": "eager"
+    },
+    {
+      "id": "lazy",
+      "mode": "lazy"
+    }
+  ],
+  "assets": [
+    {
+      "id": "dep.models.props.roads.textures.colormap",
+      "path": "models/props/roads/Textures/colormap.png",
+      "kind": "texture",
+      "bytes": 11428,
+      "group": "boot",
+      "ledger": "models/props/roads/Textures/colormap.png"
+    },
+    {
+      "id": "dep.models.vehicles.textures.colormap",
+      "path": "models/vehicles/Textures/colormap.png",
+      "kind": "texture",
+      "bytes": 12371,
+      "group": "boot",
+      "ledger": "models/vehicles/Textures/colormap.png"
+    },
+    {
+      "id": "music.menu-sting",
+      "path": "audio/music/menu-sting.ogg",
+      "kind": "audio",
+      "bytes": 11145,
+      "group": "lazy",
+      "ledger": "audio/music/menu-sting.ogg"
+    },
+    {
+      "id": "prop.road-straight",
+      "path": "models/props/roads/road-straight.glb",
+      "kind": "mesh",
+      "bytes": 5248,
+      "group": "boot",
+      "ledger": "models/props/roads/road-straight.glb"
+    },
+    {
+      "id": "prop.streetlight",
+      "path": "models/props/roads/streetlight.glb",
+      "kind": "mesh",
+      "bytes": 6996,
+      "group": "lazy",
+      "ledger": "models/props/roads/streetlight.glb"
+    },
+    {
+      "id": "sfx.impact.metal",
+      "path": "audio/impact/metal.ogg",
+      "kind": "audio",
+      "bytes": 5857,
+      "group": "boot",
+      "ledger": "audio/impact/metal.ogg"
+    },
+    {
+      "id": "sfx.ui.back",
+      "path": "audio/ui/back.ogg",
+      "kind": "audio",
+      "bytes": 6997,
+      "group": "lazy",
+      "ledger": "audio/ui/back.ogg"
+    },
+    {
+      "id": "sfx.ui.click",
+      "path": "audio/ui/click.ogg",
+      "kind": "audio",
+      "bytes": 4983,
+      "group": "boot",
+      "ledger": "audio/ui/click.ogg"
+    },
+    {
+      "id": "sfx.ui.error",
+      "path": "audio/ui/error.ogg",
+      "kind": "audio",
+      "bytes": 6393,
+      "group": "lazy",
+      "ledger": "audio/ui/error.ogg"
+    },
+    {
+      "id": "sfx.ui.rollover",
+      "path": "audio/ui/rollover.ogg",
+      "kind": "audio",
+      "bytes": 5932,
+      "group": "lazy",
+      "ledger": "audio/ui/rollover.ogg"
+    },
+    {
+      "id": "sfx.ui.select",
+      "path": "audio/ui/select.ogg",
+      "kind": "audio",
+      "bytes": 5468,
+      "group": "lazy",
+      "ledger": "audio/ui/select.ogg"
+    },
+    {
+      "id": "sfx.ui.toggle",
+      "path": "audio/ui/toggle.ogg",
+      "kind": "audio",
+      "bytes": 6695,
+      "group": "lazy",
+      "ledger": "audio/ui/toggle.ogg"
+    },
+    {
+      "id": "vehicle.delivery",
+      "path": "models/vehicles/delivery.glb",
+      "kind": "mesh",
+      "bytes": 240264,
+      "group": "lazy",
+      "ledger": "models/vehicles/delivery.glb"
+    },
+    {
+      "id": "vehicle.race",
+      "path": "models/vehicles/race.glb",
+      "kind": "mesh",
+      "bytes": 167272,
+      "group": "lazy",
+      "ledger": "models/vehicles/race.glb"
+    },
+    {
+      "id": "vehicle.sedan",
+      "path": "models/vehicles/sedan.glb",
+      "kind": "mesh",
+      "bytes": 172216,
+      "group": "boot",
+      "ledger": "models/vehicles/sedan.glb"
+    }
+  ]
+}
