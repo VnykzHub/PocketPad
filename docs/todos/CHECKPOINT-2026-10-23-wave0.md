@@ -66,6 +66,8 @@ Wave 1: streams A (Babylon world), B (assets/audio), C (curation), F (game kit) 
 | E follow-up — remote events | `ws/e-controllers` → merged | Launcher layout emits `remote` up/down/left/right/ok/back on press edges, outside the binary input snapshot; 8 new tests; controller 41,236 / 51,200 B gz |
 | H — Havok vs Rapier | `ws/h-physics` → merged | MIT Havok 675,471 B gz vs Apache-2.0 Rapier 1.21–1.64 MB gz; car/drop/wall comparable or better on Rapier; both fail a 0.3 m step; **Rapier stays** (ADR-0004 D1); character sinking must be fixed |
 | M — Draw and Guess (Minimal) | `ws/i-draw-and-guess` → merged | 51 tests; round-robin drawing/guessing, private word + canvas + text panels, 65 self-authored CC0 words, 2–8 players; E10/E16 and frame rows PENDING |
+| G follow-up — launcher layout push | `ws/g-host-integration` → merged | Broadcasts launcher-remote-v1 while the home is shown, restores on return/replacement join, never overrides a game; drift test vs the controller fixture; broker replay e2e; gate 332 files / 3,538 tests |
+| N — Tilt Maze Race (Minimal) | `ws/i-tilt-maze-race` → merged | 66 tests; 2–8 players (plan over the prompt's 1–4); tilt + stick fallback + recenter; finish ranking; gyro/hardware and frame rows PENDING |
 | Trace tooling — game IDs | `GAME-…` prefix registered; 37 merged-game rows added | `tools/trace-check` recognizes the prefix; stage trace 0 unknown, 44 deferred; gate 308 files / 3,353 tests |
 | D — console launcher | `ws/d-console-launcher` in flight | UI-only, independent of A/B |
 | I — Sumo Bumpers (Minimal) | `ws/i-sumo-bumpers` in flight | Flat 2D, game-kit + SDK fakes |

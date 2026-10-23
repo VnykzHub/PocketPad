@@ -481,6 +481,41 @@ enforced by the full Gate.
 | GAME-DG-TEST-03 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
 | GAME-DG-TEST-04 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
 | GAME-DG-TEST-07 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-HOST-01 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-HOST-02 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-HOST-03 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-HOST-04 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-HOST-05 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-CTRL-01 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-CTRL-02 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-CTRL-03 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-CTRL-04 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-DATA-01 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-DATA-02 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-TEST-01 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-TEST-02 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-TEST-03 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-TEST-04 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-TEST-05 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-TEST-06 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-TM-PERF-01 | Plan acceptance row for tilt-maze-race (docs/todos/games/tilt-maze-race.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-HOST-01 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-HOST-02 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-HOST-03 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-HOST-04 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-HOST-05 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-HOST-06 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-CTRL-01 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-CTRL-02 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-CTRL-03 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-DATA-01 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-DATA-02 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-TEST-01 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-TEST-02 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-TEST-03 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-TEST-04 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-TEST-05 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SIR-PERF-01 | Plan acceptance row for spy-in-the-room (docs/todos/games/spy-in-the-room.md) | Game/QA | W1-GAMES | Wave 1 |
 
 ## 11. Amendments (non-spec decisions that affect implementation)
 
