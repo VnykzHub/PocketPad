@@ -17,6 +17,7 @@
  * is absent and the game feature-detects `ctx.save === undefined` (15 §3.8).
  */
 import type {
+  AssetLibrary,
   GameAudio,
   GameContext,
   GameDebug,
@@ -27,6 +28,7 @@ import type {
   GamePanels,
   GameRenderer3D,
   GameRng,
+  GameWorld3D,
   SaveApi,
 } from "@lanpad/sdk";
 import type { SnapshotInputReader } from "./InputReader.js";
@@ -215,6 +217,16 @@ export interface GameContextDeps {
   readonly save?: SaveApi;
   /** Host-resolved manifest slug, used to bind an installed save provider. */
   readonly gameId?: string;
+  /**
+   * Spec-23 asset library. Absent for a game with no `assets.json` so the
+   * game can feature-detect `ctx.assets === undefined`.
+   */
+  readonly assets?: AssetLibrary;
+  /**
+   * Spec-22 3D world. Absent on 2D-only hosts and 2D games; the host updates
+   * it once per fixed tick before `simulate`.
+   */
+  readonly world?: GameWorld3D;
 }
 
 export function createGameContext(deps: GameContextDeps): RuntimeGameContext {
@@ -261,6 +273,8 @@ export function createGameContext(deps: GameContextDeps): RuntimeGameContext {
     haptics: deps.haptics ?? installedCapabilities.haptics ?? unavailableHaptics,
     events: deps.events ?? installedCapabilities.events ?? unavailableEvents,
     ...(providedSave === undefined ? {} : { save: providedSave }),
+    ...(deps.assets === undefined ? {} : { assets: deps.assets }),
+    ...(deps.world === undefined ? {} : { world: deps.world }),
     serverNow: (): number | null => serverNow(),
   });
   if (pendingSave !== undefined && providedSave === undefined) {

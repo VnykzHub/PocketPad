@@ -10,9 +10,22 @@
  * and debug counters. Games only ever see the `GameContext` (FR-7.17).
  */
 import { createCanvas2DDevice } from "@lanpad/engine-renderer-webgl2/canvas2d";
-import type { GameManifest } from "@lanpad/sdk";
-import { AssetLoader, type AssetEntry } from "../assets/AssetLoader.js";
+import type {
+  AssetDeclaration,
+  AssetLibrary,
+  AssetProgress as LoadedAssetProgress,
+  GameManifest,
+  GameWorld3D,
+} from "@lanpad/sdk";
+import type { BabylonGameRenderer } from "../babylon/BabylonGameRenderer.js";
+import type {
+  BabylonModelProvider,
+  BabylonModelSource,
+} from "../babylon/world3d/types.js";
+import type { AssetProgress } from "../assets/AssetLoader.js";
 import { AudioBus } from "../audio/AudioBus.js";
+import { createGameAssetLibrary, toLoadProgress } from "../assets/gameAssets.js";
+import type { GameAssetLibrary } from "../assets/GameAssetLibrary.js";
 import type { BundledGames } from "../demo/bundledGames.js";
 import { createEngineCanvas2DRenderer } from "../engine/canvas2DRenderer.js";
 import { EngineGameRenderer } from "../engine/engine3DRenderer.js";
@@ -20,7 +33,7 @@ import type { EventRouter } from "../game/EventRouter.js";
 import type { GameDebugCounters } from "../game/GameContext.js";
 import { GameHost } from "../game/GameHost.js";
 import type { LayoutApi } from "../game/LayoutApi.js";
-import { assertAssetBudget, loadGame, type LoadedGame } from "../game/loadGame.js";
+import { loadGame, type LoadedGame } from "../game/loadGame.js";
 import { registerManifestLayouts } from "../game/manifestLayouts.js";
 import type { InputMapper } from "../input/InputMapper.js";
 import type { FrameStats } from "../loop/types.js";
@@ -50,8 +63,31 @@ import type { HostNotices } from "./notices.js";
 import type { HostOverlay, OverlayRuntimeStats } from "./overlay.js";
 import type { HostRoster } from "./roster.js";
 
-/** The cube demo has no downloadable assets; real games list theirs here. */
-const GAME_ASSETS: readonly AssetEntry[] = [];
+/**
+ * Start-screen readiness for a game with no `assets.json` (spec 23 §3.3):
+ * there is nothing to fetch, so the screen is ready immediately.
+ */
+const NO_ASSETS_PROGRESS: AssetProgress = {
+  loadedBytes: 0,
+  totalBytes: 0,
+  determinate: true,
+  fraction: 1,
+  loadedCount: 0,
+  totalCount: 0,
+  currentUrl: null,
+  done: true,
+};
+
+/** The same "ready at once" signal in the loader's own progress shape. */
+const NO_ASSETS_LOADED_PROGRESS: LoadedAssetProgress = {
+  fetched: 0,
+  declared: 0,
+  determinate: true,
+  state: "ready",
+  loadedCount: 0,
+  totalCount: 0,
+  currentId: null,
+};
 
 /**
  * Benchmark affordance: `?debug=1&babylon-backend=webgl2` forces the WebGL2
@@ -96,6 +132,18 @@ export interface StageDeps {
   readonly closeOverlays: () => void;
   /** HP-07 "Back to games" action on the unknown-game notice. */
   readonly onBackToGames: () => void;
+  /**
+   * Eager-load progress for a host-level loading screen (spec 25 §2.4). The
+   * launcher forwards it via `setLoadingProgress`; the stage start screen is
+   * still updated independently.
+   */
+  readonly onAssetProgress?: (progress: LoadedAssetProgress) => void;
+  /** Test seam: shared audio bus; production creates its own (Web Audio). */
+  readonly audio?: AudioBus;
+  /** Test seam: renderer selection, so stage tests need no GPU. */
+  readonly createRenderer?: (
+    options: GameRendererChoiceOptions,
+  ) => Promise<GameRendererChoice>;
 }
 
 export interface GameRendererChoiceOptions {
@@ -117,6 +165,16 @@ export type GameRendererChoice =
       /** May differ from `options.canvas`; the caller must mount it. */
       readonly canvas: HTMLCanvasElement;
       readonly usedFallback: boolean;
+      /**
+       * Babylon only: creates the single spec-22 `GameWorld3D` on the already
+       * initialized renderer. When the game declares GLB mesh assets, their
+       * assets are wrapped in a model provider first (spec 22/23 seam). The
+       * stage installs the result as `ctx.world`; the host disposes it.
+       */
+      readonly createWorld?: (input?: {
+        readonly library: AssetLibrary;
+        readonly declarations: readonly AssetDeclaration[];
+      }) => GameWorld3D | Promise<GameWorld3D>;
     }
   | {
       readonly ok: false;
@@ -125,6 +183,11 @@ export type GameRendererChoice =
       readonly message: string;
       readonly canvas: HTMLCanvasElement;
     };
+
+type GameRendererOk = Extract<GameRendererChoice, { ok: true }>;
+
+/** Babylon world factory carried by a successful renderer choice. */
+type GameWorldFactory = NonNullable<GameRendererOk["createWorld"]>;
 
 /**
  * Selects and initializes the renderer a manifest asks for.
@@ -171,6 +234,8 @@ export async function createGameRenderer(
       backend: choice.backend,
       canvas: choice.canvas,
       usedFallback: choice.usedFallback,
+      // Spec 22: one world per renderer, created only after init succeeds.
+      createWorld: (input) => createBabylonWorld(choice.renderer, input),
     };
   }
 
@@ -241,6 +306,78 @@ export async function createGameRenderer(
   };
 }
 
+/**
+ * Creates the Babylon world, first wrapping the game's ready GLB mesh assets
+ * as spec-22 model sources. Handles that are not ready (lazy groups) are left
+ * alone, so boot never fetches an asset the game did not declare eager.
+ */
+async function createBabylonWorld(
+  renderer: BabylonGameRenderer,
+  input?: {
+    readonly library: AssetLibrary;
+    readonly declarations: readonly AssetDeclaration[];
+  },
+): Promise<GameWorld3D> {
+  const provider =
+    input === undefined
+      ? null
+      : await loadBabylonModelProvider(
+          renderer,
+          input.library,
+          input.declarations,
+        );
+  return provider === null
+    ? renderer.createWorld()
+    : renderer.createWorld({ provider });
+}
+
+async function loadBabylonModelProvider(
+  renderer: BabylonGameRenderer,
+  library: AssetLibrary,
+  declarations: readonly AssetDeclaration[],
+): Promise<BabylonModelProvider | null> {
+  const meshDeclarations = declarations.filter(
+    (declaration) => declaration.kind === "mesh",
+  );
+  if (meshDeclarations.length === 0) return null;
+  const scene = renderer.babylonScene;
+  if (scene === null) {
+    throw new Error("The Babylon scene is not ready for model loading.");
+  }
+
+  // Both the glTF plugin and the loader are lazy chunks: 2D games and
+  // asset-free Babylon games never download them (ER-21-08, spec-23 cap).
+  await import("@babylonjs/loaders/glTF/index.js");
+  const { LoadAssetContainerAsync } = await import(
+    "@babylonjs/core/Loading/sceneLoader"
+  );
+  const { createAssetContainerModelSource } = await import(
+    "../babylon/babylonBindings.js"
+  );
+
+  const sources = new Map<string, BabylonModelSource>();
+  for (const declaration of meshDeclarations) {
+    // `get` returns only ready handles, so a lazy mesh is skipped here; the
+    // game's own `ctx.assets.load` still owns that fetch decision.
+    const handle = library.get(declaration.id);
+    if (handle === undefined) continue;
+    const bytes = handle.value;
+    if (!(bytes instanceof Uint8Array)) {
+      throw new Error(`Mesh asset "${declaration.id}" did not decode to bytes.`);
+    }
+    const container = await LoadAssetContainerAsync(bytes, scene, {
+      pluginExtension: declaration.path.endsWith(".gltf") ? ".gltf" : ".glb",
+      name: declaration.id,
+    });
+    sources.set(declaration.id, createAssetContainerModelSource(container));
+  }
+
+  return {
+    hasModel: (assetId) => sources.has(assetId),
+    getModel: (assetId) => sources.get(assetId) ?? null,
+  };
+}
+
 export interface HostStage {
   openGame(slug: string, options?: OpenGameOptions): Promise<void>;
   /** Stops the current game but keeps the room, roster and socket (HP-04). */
@@ -257,7 +394,8 @@ export interface HostStage {
 }
 
 export function createStage(deps: StageDeps): HostStage {
-  const audio = new AudioBus();
+  const audio = deps.audio ?? new AudioBus();
+  const createRenderer = deps.createRenderer ?? createGameRenderer;
   const profile = resolveTvProfile(
     readViewportEnvironment(deps.window),
     deps.window.location.search,
@@ -267,6 +405,14 @@ export function createStage(deps: StageDeps): HostStage {
 
   let startScreen: StartScreen | null = null;
   let gameHost: GameHost | null = null;
+  /** The loaded game whose host is built after the start gesture. */
+  let loadedGame: LoadedGame | null = null;
+  /** Spec-23 library; disposed with the stage, never handed to the game. */
+  let assetLibrary: GameAssetLibrary | null = null;
+  /** Spec-22 world created by the renderer for a Babylon manifest. */
+  let world: GameWorld3D | null = null;
+  /** One-shot world factory from the renderer choice, before the world exists. */
+  let createWorld: GameWorldFactory | null = null;
   let renderer: Renderer3D | null = null;
   let backend: RendererBackend | null = null;
   let canvas: HTMLCanvasElement | null = null;
@@ -311,9 +457,18 @@ export function createStage(deps: StageDeps): HostStage {
     gameHost = null;
     startScreen?.destroy();
     startScreen = null;
+    // Spec 23: the library belongs to the stage; a game only borrows handles.
+    // Disposing it silences in-flight lazy loads and frees decoded assets.
+    assetLibrary?.dispose();
+    assetLibrary = null;
+    loadedGame = null;
     detachContextLoss?.();
     detachContextLoss = null;
     deps.window.removeEventListener("resize", applySize);
+    // The host already disposed the world; the renderer dispose below is the
+    // second (idempotent) owner, so drop our reference first.
+    world = null;
+    createWorld = null;
     renderer?.dispose();
     renderer = null;
     backend = null;
@@ -324,9 +479,46 @@ export function createStage(deps: StageDeps): HostStage {
     // host keeps it while moving between the launcher and a game.
   }
 
+  /**
+   * Builds the `GameHost` after the start gesture. Building it here (rather
+   * than during load) is what lets the host register decoded game audio on
+   * the bus first, per spec 23 §3.3-4.
+   */
+  function buildGameHost(): GameHost | null {
+    const loaded = loadedGame;
+    const active = renderer;
+    const activeBackend = backend;
+    if (loaded === null || active === null || activeBackend === null) {
+      return null;
+    }
+
+    const host = new GameHost({
+      game: loaded.game,
+      gameId: currentSlug ?? "",
+      renderer: active,
+      audio,
+      mapper: deps.mapper,
+      now: () => performance.now(),
+      raf: (callback) => deps.window.requestAnimationFrame(callback),
+      cancel: (id) => deps.window.cancelAnimationFrame(id),
+      serverNow: () => deps.client.serverNow(),
+      debug: deps.debugCounters,
+      onFrameStats,
+      onError: (error) => deps.notices.showError(error),
+      ...(assetLibrary === null ? {} : { assets: assetLibrary }),
+      ...(world === null ? {} : { world }),
+    });
+    // Named `ctx.events.on` handlers run at the start of each simulate tick,
+    // before GameHost drains its queue for `game.onEvent` (D5-RT-01).
+    host.input.setTickHook(() => {
+      deps.eventRouter.dispatch();
+    });
+    return host;
+  }
+
   async function startGame(): Promise<void> {
-    const host = gameHost;
-    if (host === null || canvas === null) return;
+    if (canvas === null) return;
+    const generation = gameGeneration;
     startScreen?.destroy();
     startScreen = null;
     setStageActive(true);
@@ -335,6 +527,25 @@ export function createStage(deps: StageDeps): HostStage {
     deps.chrome.stageBar.hidden = false;
     deps.roster.updateStageBar();
     applySize();
+
+    // Spec 23 §3.3-4: decode/register audio after the gesture unlocked the
+    // bus and before the game context exists. A rematch reuses the already
+    // unlocked bus; a game with no assets.json has nothing to register.
+    const library = assetLibrary;
+    if (library !== null && audio.unlocked) {
+      try {
+        await library.registerAudio(audio);
+      } catch (error) {
+        if (generation !== gameGeneration) return;
+        deps.notices.showError(error);
+        return;
+      }
+      if (generation !== gameGeneration) return;
+    }
+
+    const host = gameHost ?? buildGameHost();
+    if (host === null) return;
+    gameHost = host;
     try {
       await host.start();
     } catch (error) {
@@ -379,7 +590,13 @@ export function createStage(deps: StageDeps): HostStage {
         importModule: deps.games.importModule,
       });
       if (generation !== gameGeneration) return;
-      assertAssetBudget(loaded.manifest, GAME_ASSETS);
+      loadedGame = loaded;
+      // Spec 23: validation (ledger, schema, budgets) already happened in
+      // `loadGame`; constructing the library re-checks the budget before a
+      // single asset byte is fetched. Games without assets.json stay null.
+      if (loaded.assets !== null) {
+        assetLibrary = createGameAssetLibrary(loaded.assets);
+      }
     } catch (error) {
       if (generation !== gameGeneration) return;
       deps.notices.showError(error);
@@ -388,7 +605,7 @@ export function createStage(deps: StageDeps): HostStage {
 
     let active: Renderer3D | null = null;
     try {
-      const choice = await createGameRenderer({
+      const choice = await createRenderer({
         canvas: surface,
         manifest: loaded.manifest,
         maxRenderHeight: profile.maxRenderHeight,
@@ -415,6 +632,7 @@ export function createStage(deps: StageDeps): HostStage {
       active = choice.renderer;
       renderer = choice.renderer;
       backend = choice.backend;
+      createWorld = choice.createWorld ?? null;
       // A failed WebGPU init can claim the original canvas, so the selector
       // may hand back a fresh one. It must be mounted before the first frame.
       if (choice.canvas !== surface) {
@@ -457,31 +675,12 @@ export function createStage(deps: StageDeps): HostStage {
       return;
     }
 
-    const host = new GameHost({
-      game: loaded.game,
-      gameId: slug,
-      renderer: active,
-      audio,
-      mapper: deps.mapper,
-      now: () => performance.now(),
-      raf: (callback) => deps.window.requestAnimationFrame(callback),
-      cancel: (id) => deps.window.cancelAnimationFrame(id),
-      serverNow: () => deps.client.serverNow(),
-      debug: deps.debugCounters,
-      onFrameStats,
-      onError: (error) => deps.notices.showError(error),
-    });
-    gameHost = host;
-    // Events forwarded by the server enter the game's own `onEvent` queue.
+    // The host is built on the start gesture (after audio registration), so
+    // the sink forwards through the closure instead of a captured instance.
     deps.eventRouter.setSink({
       push: (slot, name, data) => {
-        host.pushEvent(slot, name, data);
+        gameHost?.pushEvent(slot, name, data);
       },
-    });
-    // Named `ctx.events.on` handlers run at the start of each simulate tick,
-    // before GameHost drains its queue for `game.onEvent` (D5-RT-01).
-    host.input.setTickHook(() => {
-      deps.eventRouter.dispatch();
     });
 
     if (options.autoStart !== true) {
@@ -496,12 +695,50 @@ export function createStage(deps: StageDeps): HostStage {
     }
 
     try {
-      await new AssetLoader().load(GAME_ASSETS, (progress) => {
-        startScreen?.updateProgress(progress);
-      });
+      if (assetLibrary !== null) {
+        // Spec 23 §3.3-3: eager bytes load on the start screen with exact
+        // byte progress; lazy assets wait for the game's `ctx.assets.load`.
+        await assetLibrary.loadEager((progress) => {
+          deps.onAssetProgress?.(progress);
+          startScreen?.updateProgress(toLoadProgress(progress));
+        });
+      } else {
+        // No assets.json: nothing to fetch, so the screen is ready at once.
+        deps.onAssetProgress?.(NO_ASSETS_LOADED_PROGRESS);
+        startScreen?.updateProgress(NO_ASSETS_PROGRESS);
+      }
     } catch (error) {
+      if (generation !== gameGeneration) return;
       deps.notices.showError(error);
       return;
+    }
+
+    // Spec 22: a Babylon manifest gets exactly one world. It is created after
+    // the eager asset load so GLB meshes in the eager group can become model
+    // sources, and before the start gesture so `ctx.world` is ready at init.
+    // A 2D/engine manifest never gets a `createWorld` seam and stays absent.
+    if (createWorld !== null) {
+      const buildWorld = createWorld;
+      createWorld = null;
+      const assetInput =
+        assetLibrary === null || loaded.assets === null
+          ? undefined
+          : {
+              library: assetLibrary,
+              declarations: loaded.assets.manifest.assets,
+            };
+      try {
+        const created = await buildWorld(assetInput);
+        if (generation !== gameGeneration) {
+          created.dispose();
+          return;
+        }
+        world = created;
+      } catch (error) {
+        if (generation !== gameGeneration) return;
+        deps.notices.showError(error);
+        return;
+      }
     }
 
     if (generation !== gameGeneration) return;

@@ -9,6 +9,7 @@
 import type { InputState } from "@lanpad/protocol";
 import { InputTable } from "../debug/inputTable.js";
 import { SlotRoster, type SlotRosterEntry, type SlotRosterState } from "../ui/SlotRoster.js";
+import type { ConsolePlayerInput } from "../ui/console/types.js";
 import { playerCountLabel } from "./routes.js";
 
 const SLOT_COUNT = 8;
@@ -27,6 +28,8 @@ export interface RosterDeps {
 
 export interface HostRoster {
   connectedCount(): number;
+  /** Occupied slots as console-lobby inputs; identity is left to the shell. */
+  playerInputs(): ReadonlyArray<ConsolePlayerInput>;
   resetSlots(): void;
   markAllPlayersLeft(): void;
   updateStageBar(): void;
@@ -69,6 +72,20 @@ export function createRoster(deps: RosterDeps): HostRoster {
     const result: SlotRosterEntry[] = [];
     for (let slot = 1; slot <= SLOT_COUNT; slot += 1) {
       result.push({ slot, state: slotStates[slot] ?? "open" });
+    }
+    return result;
+  }
+
+  /**
+   * Open slots are omitted: the console lobby renders its own eight rows and
+   * fills labels/colours, so only real presence crosses the boundary.
+   */
+  function playerInputs(): ReadonlyArray<ConsolePlayerInput> {
+    const result: ConsolePlayerInput[] = [];
+    for (let slot = 1; slot <= SLOT_COUNT; slot += 1) {
+      const state = slotStates[slot] ?? "open";
+      if (state === "open") continue;
+      result.push({ slot, state });
     }
     return result;
   }
@@ -138,6 +155,7 @@ export function createRoster(deps: RosterDeps): HostRoster {
 
   return {
     connectedCount,
+    playerInputs,
     resetSlots,
     markAllPlayersLeft,
     updateStageBar,

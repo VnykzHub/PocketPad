@@ -28,6 +28,8 @@ import {
   type HostSession,
 } from "../net/hostReconnect.js";
 import type { RoomPanel } from "../ui/RoomPanel.js";
+import { buildJoinUrl, resolvePublicOrigin } from "../ui/QrCode.js";
+import type { ConsoleConnection } from "../ui/console/types.js";
 import type { HostChrome } from "./chrome.js";
 import { CREATE_ROOM_LABEL, ROOM_ENDED_TITLE } from "./copy.js";
 import type { HostNotices } from "./notices.js";
@@ -38,6 +40,36 @@ import { slotRosterStateFor } from "./routes.js";
 interface HostRoom {
   code: string;
   hostToken: string;
+  /** Console top-bar PIN; null after a reload resume (no fresh credentials). */
+  pin: string | null;
+  /** Only ever used to build the QR join URL; never rendered or logged. */
+  roomToken: string | null;
+}
+
+const REMOTE_BUTTONS: ReadonlySet<string> = new Set([
+  "up",
+  "down",
+  "left",
+  "right",
+  "ok",
+  "back",
+]);
+
+/**
+ * Recognizes the launcher remote event (spec 25 §2.7): either
+ * `{t:"event", name:"remote", data:"ok"}` or `{button:"ok"}`. Any other event
+ * keeps flowing to the game unchanged.
+ */
+function hostRemoteButton(name: string, data: unknown): string | null {
+  if (name !== "remote") return null;
+  if (typeof data === "string") {
+    return REMOTE_BUTTONS.has(data) ? data : null;
+  }
+  if (data !== null && typeof data === "object" && !Array.isArray(data)) {
+    const button = (data as { button?: unknown }).button;
+    if (typeof button === "string" && REMOTE_BUTTONS.has(button)) return button;
+  }
+  return null;
 }
 
 export interface RoomDeps {
@@ -56,6 +88,10 @@ export interface RoomDeps {
   readonly maybeShowLauncher: () => void;
   readonly destroyLauncher: () => void;
   readonly resetRouteToLauncher: () => void;
+  /** Mirror connection/room/player state onto a live launcher shell. */
+  readonly syncLauncher?: () => void;
+  /** Launcher remote buttons; true means the event was consumed (spec 25). */
+  readonly handleRemote?: (button: string) => boolean;
 }
 
 export interface RoomController {
@@ -65,6 +101,11 @@ export interface RoomController {
   getPhase(): HostPhase;
   isNetworkLost(): boolean;
   getRoomCode(): string | null;
+  getRoomPin(): string | null;
+  /** Token-safe `<origin>/c/<CODE>#<token>`; null when there is no fresh QR. */
+  getJoinUrl(): string | null;
+  /** Console connection pill derived from phase, recovery and socket state. */
+  getConnection(): ConsoleConnection;
   getServerStats(): ReadonlyArray<SlotStats>;
   /** Visibility pause also tells the recovery machine not to retry. */
   pauseForVisibility(): void;
@@ -106,10 +147,18 @@ export function createRoomController(deps: RoomDeps): RoomController {
       default:
         break;
     }
+    deps.syncLauncher?.();
   }
 
   function handleHostResumed(session: HostSession): void {
-    room = { code: session.code, hostToken: session.hostToken };
+    // A resumed session carries no PIN or room token, so the console shows
+    // "PIN ----" and the QR reports unavailable instead of a stale code.
+    room = {
+      code: session.code,
+      hostToken: session.hostToken,
+      pin: null,
+      roomToken: null,
+    };
     networkLost = false;
     phase = "ready";
     deps.syncPause();
@@ -121,6 +170,7 @@ export function createRoomController(deps: RoomDeps): RoomController {
     deps.layouts.resendAll();
     deps.panels.resendAll();
     deps.maybeShowLauncher();
+    deps.syncLauncher?.();
   }
 
   function handleHostLost(): void {
@@ -132,6 +182,7 @@ export function createRoomController(deps: RoomDeps): RoomController {
     deps.chrome.setConnection("Room lost — starting a new room…", "bad");
     deps.hintEl.textContent = "Room lost. Creating a new room…";
     deps.chrome.showReconnectBanner(false);
+    deps.syncLauncher?.();
     // Same recovery contract as D4: a lost room starts a fresh one.
     void createRoom();
   }
@@ -177,12 +228,15 @@ export function createRoomController(deps: RoomDeps): RoomController {
       phase = "failed";
       deps.chrome.setConnection("Could not create a room", "bad");
       deps.hintEl.textContent = "Press Enter to retry.";
+      deps.syncLauncher?.();
       return;
     }
 
     const current: HostRoom = {
       code: credentials.code,
       hostToken: credentials.hostToken,
+      pin: credentials.pin,
+      roomToken: credentials.roomToken,
     };
     // Never leak the previous room's private panels/layouts into a new room.
     clearRoomState();
@@ -209,6 +263,7 @@ export function createRoomController(deps: RoomDeps): RoomController {
     }
 
     deps.chrome.setConnection("Connecting…", "pending");
+    deps.syncLauncher?.();
     try {
       // HostReconnect owns connect + hostJoin, stores the resumable session and
       // reports the recovery state used by the status line.
@@ -219,6 +274,7 @@ export function createRoomController(deps: RoomDeps): RoomController {
       phase = "failed";
       deps.chrome.setConnection("Host join failed", "bad");
       deps.hintEl.textContent = "Press Enter to start a new room.";
+      deps.syncLauncher?.();
     }
   }
 
@@ -245,7 +301,12 @@ export function createRoomController(deps: RoomDeps): RoomController {
       return;
     }
 
-    room = { code: session.code, hostToken: session.hostToken };
+    room = {
+      code: session.code,
+      hostToken: session.hostToken,
+      pin: null,
+      roomToken: null,
+    };
     phase = "ready";
     networkLost = result !== "resumed";
     deps.syncPause();
@@ -264,6 +325,7 @@ export function createRoomController(deps: RoomDeps): RoomController {
       deps.chrome.showReconnectBanner(false);
     }
     deps.maybeShowLauncher();
+    deps.syncLauncher?.();
   }
 
   // -------------------------------------------------------------------------
@@ -285,6 +347,7 @@ export function createRoomController(deps: RoomDeps): RoomController {
       deps.chrome.setConnection("Reconnecting…", "pending");
       deps.hintEl.textContent = "Waiting for the room connection to recover…";
       deps.chrome.showReconnectBanner(true);
+      deps.syncLauncher?.();
       return;
     }
     phase = "failed";
@@ -298,6 +361,7 @@ export function createRoomController(deps: RoomDeps): RoomController {
       "bad",
     );
     deps.hintEl.textContent = "Press Enter to start a new room.";
+    deps.syncLauncher?.();
   });
 
   deps.client.onError(() => {
@@ -305,6 +369,7 @@ export function createRoomController(deps: RoomDeps): RoomController {
       return;
     }
     deps.chrome.setConnection("Connection error", "bad");
+    deps.syncLauncher?.();
   });
 
   deps.client.onMessage((message: ServerToClientMessage) => {
@@ -317,6 +382,7 @@ export function createRoomController(deps: RoomDeps): RoomController {
         deps.chrome.setConnection("Connected", "ok");
         deps.hintEl.textContent = "";
         deps.chrome.showReconnectBanner(false);
+        deps.syncLauncher?.();
         break;
       case "joinError":
         if (recovery.state === "reconnecting") {
@@ -326,6 +392,7 @@ export function createRoomController(deps: RoomDeps): RoomController {
           deps.chrome.setConnection(`Host join failed: ${message.reason}`, "bad");
           deps.hintEl.textContent = "Press Enter to start a new room.";
         }
+        deps.syncLauncher?.();
         break;
       case "playerJoined":
         deps.layouts.handleJoined(message.slot);
@@ -359,9 +426,16 @@ export function createRoomController(deps: RoomDeps): RoomController {
         deps.layouts.handleResumed(message.slot);
         deps.panels.handleResumed(message.slot);
         break;
-      case "event":
+      case "event": {
+        // Spec 25 §2.7: a phone can drive the launcher. Only a live shell
+        // consumes the event; otherwise it stays a game event.
+        const button = hostRemoteButton(message.name, message.data);
+        if (button !== null && deps.handleRemote?.(button) === true) {
+          break;
+        }
         deps.events.receive(message.slot, message.name, message.data);
         break;
+      }
       case "layoutAck":
         deps.layouts.handleAck(message.slot, message.layoutId);
         break;
@@ -402,12 +476,33 @@ export function createRoomController(deps: RoomDeps): RoomController {
     deps.roster.setInput(slot, state, receivedAt);
   });
 
+  function getJoinUrl(): string | null {
+    if (room === null || room.roomToken === null) return null;
+    try {
+      return buildJoinUrl(resolvePublicOrigin(), room.code, room.roomToken);
+    } catch {
+      // A misconfigured public origin is not fatal: the console shows
+      // "Join QR unavailable" and the code/PIN stay usable.
+      return null;
+    }
+  }
+
+  function getConnection(): ConsoleConnection {
+    if (phase === "failed") return { text: "Connection error", tone: "bad" };
+    if (networkLost) return { text: "Reconnecting…", tone: "pending" };
+    if (phase === "ready") return { text: "Connected", tone: "ok" };
+    return { text: "Creating room…", tone: "pending" };
+  }
+
   return {
     createRoom,
     bootHost,
     getPhase: () => phase,
     isNetworkLost: () => networkLost,
     getRoomCode: () => room?.code ?? null,
+    getRoomPin: () => room?.pin ?? null,
+    getJoinUrl,
+    getConnection,
     getServerStats: () => serverStats,
     pauseForVisibility: () => recovery.pauseForVisibility(),
     resumeForVisibility: () => recovery.resumeForVisibility(),
