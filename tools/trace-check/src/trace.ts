@@ -8,7 +8,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join, relative, resolve } from "node:path";
 
-const DASH_PREFIXES = ["FR", "NR", "PR", "SR", "AR", "TR", "ER"] as const;
+const DASH_PREFIXES = ["FR", "NR", "PR", "SR", "AR", "TR", "ER", "GAME"] as const;
 const BARE_PREFIXES = ["A", "G", "E", "C"] as const;
 
 /** Prefix display/grouping order. */
@@ -24,7 +24,7 @@ export const PREFIX_ORDER: readonly string[] = [...DASH_PREFIXES, ...BARE_PREFIX
  * The surrounding negative lookarounds keep work-item IDs such as
  * `D0-SRV-03` or `P1-SRV-03` from being mistaken for requirement tags.
  */
-const ID_SOURCE = String.raw`(?<![A-Za-z0-9-])(?:(?:FR|NR|PR|SR|AR|TR)-\d+(?:\.\d+)?|ER-\d+-\d+|[AGEC]\d+)(?![A-Za-z0-9-])`;
+const ID_SOURCE = String.raw`(?<![A-Za-z0-9-])(?:(?:FR|NR|PR|SR|AR|TR)-\d+(?:\.\d+)?|ER-\d+-\d+|GAME-[A-Z0-9]+(?:-[A-Z0-9]+)+-\d+|[AGEC]\d+)(?![A-Za-z0-9-])`;
 const ANCHORED_ID = new RegExp(`^(?:${ID_SOURCE})$`);
 
 const TEXT_EXTENSIONS = new Set([
@@ -173,6 +173,16 @@ export function rowMentionsStage(row: string, stage: string): boolean {
 }
 
 function idParts(id: string): { prefix: string; major: number; minor: number } {
+  // GAME-<GAME>-<AREA>-<NN> has a variable segment count; the trailing number
+  // is its acceptance row.
+  if (id.startsWith("GAME-")) {
+    const gameMatch = /^GAME-[A-Z0-9-]+-(\d+)$/.exec(id);
+    return {
+      prefix: "GAME",
+      major: Number(gameMatch?.[1] ?? 0),
+      minor: 0,
+    };
+  }
   // ER IDs use a second hyphen (ER-19-01); the phone-platform families use a dot.
   const match = /^([A-Z]+)-?(\d+)(?:[-.](\d+))?$/.exec(id);
   if (match === null) return { prefix: "", major: 0, minor: 0 };
