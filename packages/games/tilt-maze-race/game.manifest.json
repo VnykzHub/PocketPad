@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "name": "Tilt Maze Race",
+  "description": "Tilt your phone to roll your ball through the maze and reach the exit first.",
+  "entry": "index.js",
+  "layouts": ["layouts/tm-tilt-v1.json", "layouts/tm-stick-v1.json"],
+  "assetBudget": {
+    "initialBytes": 262144,
+    "totalBytes": 1048576
+  },
+  "minPlayers": 2,
+  "maxPlayers": 8,
+  "needsGyro": false,
+  "presentation": {
+    "tagline": "Tilt, roll and race to the exit.",
+    "accent": "#ff9f45",
+    "categories": ["racing", "party"],
+    "inputBadges": ["gyro", "stick"]
+  }
+}
