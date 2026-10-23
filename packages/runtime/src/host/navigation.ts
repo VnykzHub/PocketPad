@@ -19,6 +19,11 @@ export interface NavigationDeps {
   readonly launcher: HostLauncher;
   readonly stage: HostStage;
   readonly modals: HostModals;
+  /**
+   * The console home is visible again (return from a game, failed launch).
+   * Bootstrap uses it to re-send the launcher remote layout to phones.
+   */
+  readonly onLauncherShown?: () => void;
 }
 
 export interface HostNavigation {
@@ -50,6 +55,8 @@ export function createNavigation(deps: NavigationDeps): HostNavigation {
       deps.window.history.replaceState({}, "", "/");
     }
     deps.launcher.returnToLauncher(slug);
+    // The game never took over the phones, so restore the launcher remote.
+    deps.onLauncherShown?.();
   }
 
   function navigateToGame(slug: string): void {
@@ -89,6 +96,9 @@ export function createNavigation(deps: NavigationDeps): HostNavigation {
     deps.stage.teardownGame();
     deps.stage.clearCurrentSlug();
     deps.launcher.returnToLauncher(slug);
+    // Phones get the launcher d-pad back on the first `/` frame; the stage's
+    // game layout must not survive the route change.
+    deps.onLauncherShown?.();
   }
 
   function resetRouteToLauncher(): void {

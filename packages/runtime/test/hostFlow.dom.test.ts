@@ -192,6 +192,18 @@ describe("host shell", () => {
     expect(document.querySelector(".console-status__text")?.textContent).toBe(
       "Connected",
     );
+    // Spec 25 §2.7: room-ready broadcasts the launcher remote layout exactly
+    // once, so phones render its d-pad/Select/Back instead of game input.
+    const launcherLayouts = socket()
+      .sent.map((frame) => JSON.parse(frame) as Record<string, unknown>)
+      .filter(
+        (message) =>
+          message["t"] === "setLayout" &&
+          message["slot"] === "all" &&
+          (message["layout"] as { id?: string } | undefined)?.id ===
+            "launcher-remote-v1",
+      );
+    expect(launcherLayouts).toHaveLength(1);
   });
 
   test("[FR-5.4] updates connected counts in place and keeps the roster truthful", () => {
