@@ -637,7 +637,7 @@ describe("Babylon world instances", () => {
     expect(matrices[0]?.m[14]).toBeCloseTo(-4, 6);
   });
 
-  test("[ER-22-02] rigged models fall back to pooled instances", () => {
+  test("[ER-22-01] rigged models fall back to pooled instances", () => {
     const provider = createFixtureProvider(createRiggedFixtureSource());
     const { world, scene, engine } = harness("webgpu", { provider });
     engine.getCaps().instancedArrays = true;
