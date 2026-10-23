@@ -401,6 +401,11 @@ export function createRoomController(deps: RoomDeps): RoomController {
           message.slot,
           slotRosterStateFor("joined"),
         );
+        // A slot that an earlier phone left has no stored layout (participant
+        // leave clears it on both host and broker). The console home is the
+        // active UI then, so re-broadcast the launcher remote for the new
+        // phone; a join with a stored layout makes this a no-op.
+        deps.syncLauncher?.();
         break;
       case "playerLeft":
         deps.mapper.reset(message.slot);
