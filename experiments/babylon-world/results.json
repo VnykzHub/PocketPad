@@ -1,0 +1,1202 @@
+{
+  "generatedAt": "2026-10-23T10:56:42.737Z",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "node": "v22.14.0",
+  "baseUrl": "http://127.0.0.1:5199",
+  "chrome": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/155.0.8059.85",
+    "revision": "@0e66b94549a8bd85f03fbdf189b752d6e7b63c32",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+    "jsVersion": "15.5.35.25"
+  },
+  "cases": [
+    {
+      "label": "world-webgpu",
+      "url": "http://127.0.0.1:5199/?backend=webgpu",
+      "state": {
+        "requestedBackend": "webgpu",
+        "backend": "webgpu",
+        "ready": true,
+        "error": null,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+        "crossOriginIsolated": true,
+        "gpu": {
+          "webgpu": true,
+          "adapter": {
+            "vendor": "nvidia",
+            "architecture": "ampere",
+            "device": "",
+            "description": ""
+          }
+        },
+        "modelClips": [
+          "walk"
+        ],
+        "capabilities": {
+          "backend": "webgpu",
+          "tier": "high",
+          "shadows": true,
+          "post": true,
+          "animation": true,
+          "instances": true,
+          "instanceTint": false,
+          "maxActors": 512,
+          "maxInstances": 2048
+        },
+        "instanceCount": 8,
+        "instanceMode": "pooled",
+        "thinInstances": 0,
+        "clip": {
+          "name": "walk",
+          "started": true,
+          "weight": 1,
+          "speedRatio": 1,
+          "currentFrame": 43.67309284687042
+        },
+        "scene": {
+          "meshes": 36,
+          "activeMeshes": 36,
+          "transformNodes": 621,
+          "animationGroups": 9,
+          "totalVertices": 79274
+        },
+        "camera": {
+          "x": 0,
+          "y": 3.5,
+          "z": 7
+        },
+        "follow": {
+          "expected": {
+            "x": 0,
+            "y": 3.5,
+            "z": 7
+          },
+          "actual": {
+            "x": 0,
+            "y": 3.5,
+            "z": 7
+          },
+          "error": 0
+        },
+        "actorAlive": true,
+        "frame": 87,
+        "engineFps": 303.3827173271298,
+        "meshDetails": [
+          {
+            "name": "world-experiment-world-sky",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 703,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-1",
+            "type": "GroundMesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 4,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-2",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 24,
+            "position": {
+              "x": -6,
+              "y": 0.6,
+              "z": -6
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-3",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 24,
+            "position": {
+              "x": -3,
+              "y": 0.72,
+              "z": -6
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-4",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 24,
+            "position": {
+              "x": 0,
+              "y": 0.84,
+              "z": -6
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-5",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 24,
+            "position": {
+              "x": 3,
+              "y": 0.96,
+              "z": -6
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-6",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 24,
+            "position": {
+              "x": 6,
+              "y": 1.08,
+              "z": -6
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-7",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 1431,
+            "position": {
+              "x": 5,
+              "y": 0.9,
+              "z": -2
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-8",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 102,
+            "position": {
+              "x": -5,
+              "y": 1.2,
+              "z": -2
+            }
+          },
+          {
+            "name": "world-experiment-world-actor-9-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-actor-9-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-actor-9-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-actor-9-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-actor-9-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-0-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-0-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-0-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-0-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-0-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-1-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-1-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-1-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-1-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-1-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-2-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-2-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-2-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-2-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-2-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-3-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-3-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-3-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-3-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-3-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-4-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-4-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-4-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-4-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-4-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-5-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-5-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-5-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-5-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-5-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-6-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-6-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-6-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-6-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-6-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-7-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-7-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-7-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-7-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-7-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          }
+        ],
+        "thinMatrices": []
+      },
+      "samples": {
+        "count": 640,
+        "p50Ms": 3.07,
+        "p95Ms": 3.865,
+        "maxMs": 6.08,
+        "meanMs": 3.143
+      },
+      "screenshot": {
+        "file": "E:\\PROJECTS 2026\\PocketPad\\.claude\\worktrees\\agent-a3796dd171cf2146f\\experiments\\babylon-world\\world-webgpu.png",
+        "bytes": 192201
+      },
+      "errors": []
+    },
+    {
+      "label": "world-webgl2",
+      "url": "http://127.0.0.1:5199/?backend=webgl2",
+      "state": {
+        "requestedBackend": "webgl2",
+        "backend": "webgl2",
+        "ready": true,
+        "error": null,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+        "crossOriginIsolated": true,
+        "gpu": {
+          "webgpu": true,
+          "adapter": {
+            "vendor": "nvidia",
+            "architecture": "ampere",
+            "device": "",
+            "description": ""
+          }
+        },
+        "modelClips": [
+          "walk"
+        ],
+        "capabilities": {
+          "backend": "webgl2",
+          "tier": "reduced",
+          "shadows": true,
+          "post": false,
+          "animation": true,
+          "instances": true,
+          "instanceTint": false,
+          "maxActors": 256,
+          "maxInstances": 1024
+        },
+        "instanceCount": 8,
+        "instanceMode": "pooled",
+        "thinInstances": 0,
+        "clip": {
+          "name": "walk",
+          "started": true,
+          "weight": 1,
+          "speedRatio": 1,
+          "currentFrame": 44.87819284737111
+        },
+        "scene": {
+          "meshes": 36,
+          "activeMeshes": 36,
+          "transformNodes": 621,
+          "animationGroups": 9,
+          "totalVertices": 79274
+        },
+        "camera": {
+          "x": 0,
+          "y": 3.5,
+          "z": 7
+        },
+        "follow": {
+          "expected": {
+            "x": 0,
+            "y": 3.5,
+            "z": 7
+          },
+          "actual": {
+            "x": 0,
+            "y": 3.5,
+            "z": 7
+          },
+          "error": 0
+        },
+        "actorAlive": true,
+        "frame": 87,
+        "engineFps": 448.53106083991247,
+        "meshDetails": [
+          {
+            "name": "world-experiment-world-sky",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 703,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-1",
+            "type": "GroundMesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 4,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-2",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 24,
+            "position": {
+              "x": -6,
+              "y": 0.6,
+              "z": -6
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-3",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 24,
+            "position": {
+              "x": -3,
+              "y": 0.72,
+              "z": -6
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-4",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 24,
+            "position": {
+              "x": 0,
+              "y": 0.84,
+              "z": -6
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-5",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 24,
+            "position": {
+              "x": 3,
+              "y": 0.96,
+              "z": -6
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-6",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 24,
+            "position": {
+              "x": 6,
+              "y": 1.08,
+              "z": -6
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-7",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 1431,
+            "position": {
+              "x": 5,
+              "y": 0.9,
+              "z": -2
+            }
+          },
+          {
+            "name": "world-experiment-world-primitive-8",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 102,
+            "position": {
+              "x": -5,
+              "y": 1.2,
+              "z": -2
+            }
+          },
+          {
+            "name": "world-experiment-world-actor-9-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-actor-9-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-actor-9-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-actor-9-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-actor-9-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-0-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-0-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-0-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-0-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-0-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-1-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-1-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-1-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-1-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-1-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-2-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-2-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-2-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-2-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-2-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-3-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-3-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-3-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-3-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-3-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-4-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-4-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-4-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-4-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-4-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-5-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-5-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-5-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-5-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-5-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-6-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-6-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-6-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-6-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-6-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-7-__root__",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": null,
+            "visible": true,
+            "enabled": true,
+            "vertices": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-7-Mannequin_primitive0",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-7-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 3389,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          {
+            "name": "world-experiment-world-instances-10-7-Mannequin_primitive1",
+            "type": "Mesh",
+            "thin": 0,
+            "skeleton": "world-experiment-world-instances-10-7-Armature",
+            "visible": true,
+            "enabled": true,
+            "vertices": 5157,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          }
+        ],
+        "thinMatrices": []
+      },
+      "samples": {
+        "count": 790,
+        "p50Ms": 2.49,
+        "p95Ms": 3.185,
+        "maxMs": 10.995,
+        "meanMs": 2.544
+      },
+      "screenshot": {
+        "file": "E:\\PROJECTS 2026\\PocketPad\\.claude\\worktrees\\agent-a3796dd171cf2146f\\experiments\\babylon-world\\world-webgl2.png",
+        "bytes": 122177
+      },
+      "errors": []
+    }
+  ]
+}

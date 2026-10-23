@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "groups": [
+    {
+      "id": "boot",
+      "mode": "eager"
+    },
+    {
+      "id": "lazy",
+      "mode": "lazy"
+    }
+  ],
+  "assets": [
+    {
+      "id": "char.archer",
+      "path": "models/characters/archer.glb",
+      "kind": "mesh",
+      "bytes": 239124,
+      "group": "lazy",
+      "ledger": "models/characters/archer.glb"
+    },
+    {
+      "id": "char.ual",
+      "path": "models/characters/ual-mannequin.glb",
+      "kind": "mesh",
+      "bytes": 854184,
+      "group": "boot",
+      "ledger": "models/characters/ual-mannequin.glb",
+      "clips": [
+        "Idle_Loop",
+        "Walk_Loop"
+      ]
+    },
+    {
+      "id": "dep.models.characters.textures.colormap",
+      "path": "models/characters/Textures/colormap.png",
+      "kind": "texture",
+      "bytes": 10659,
+      "group": "lazy",
+      "ledger": "models/characters/Textures/colormap.png"
+    },
+    {
+      "id": "music.menu-sting",
+      "path": "audio/music/menu-sting.ogg",
+      "kind": "audio",
+      "bytes": 11145,
+      "group": "lazy",
+      "ledger": "audio/music/menu-sting.ogg"
+    },
+    {
+      "id": "sfx.impact.footstep",
+      "path": "audio/impact/footstep.ogg",
+      "kind": "audio",
+      "bytes": 5808,
+      "group": "lazy",
+      "ledger": "audio/impact/footstep.ogg"
+    },
+    {
+      "id": "sfx.impact.metal",
+      "path": "audio/impact/metal.ogg",
+      "kind": "audio",
+      "bytes": 5857,
+      "group": "boot",
+      "ledger": "audio/impact/metal.ogg"
+    },
+    {
+      "id": "sfx.impact.soft",
+      "path": "audio/impact/soft.ogg",
+      "kind": "audio",
+      "bytes": 5351,
+      "group": "lazy",
+      "ledger": "audio/impact/soft.ogg"
+    },
+    {
+      "id": "sfx.impact.wood",
+      "path": "audio/impact/wood.ogg",
+      "kind": "audio",
+      "bytes": 6233,
+      "group": "boot",
+      "ledger": "audio/impact/wood.ogg"
+    },
+    {
+      "id": "sfx.ui.back",
+      "path": "audio/ui/back.ogg",
+      "kind": "audio",
+      "bytes": 6997,
+      "group": "lazy",
+      "ledger": "audio/ui/back.ogg"
+    },
+    {
+      "id": "sfx.ui.click",
+      "path": "audio/ui/click.ogg",
+      "kind": "audio",
+      "bytes": 4983,
+      "group": "boot",
+      "ledger": "audio/ui/click.ogg"
+    },
+    {
+      "id": "sfx.ui.error",
+      "path": "audio/ui/error.ogg",
+      "kind": "audio",
+      "bytes": 6393,
+      "group": "lazy",
+      "ledger": "audio/ui/error.ogg"
+    },
+    {
+      "id": "sfx.ui.rollover",
+      "path": "audio/ui/rollover.ogg",
+      "kind": "audio",
+      "bytes": 5932,
+      "group": "lazy",
+      "ledger": "audio/ui/rollover.ogg"
+    },
+    {
+      "id": "sfx.ui.select",
+      "path": "audio/ui/select.ogg",
+      "kind": "audio",
+      "bytes": 5468,
+      "group": "lazy",
+      "ledger": "audio/ui/select.ogg"
+    },
+    {
+      "id": "sfx.ui.toggle",
+      "path": "audio/ui/toggle.ogg",
+      "kind": "audio",
+      "bytes": 6695,
+      "group": "lazy",
+      "ledger": "audio/ui/toggle.ogg"
+    }
+  ]
+}

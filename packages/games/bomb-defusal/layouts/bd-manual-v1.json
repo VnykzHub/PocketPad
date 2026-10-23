@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "bd-manual-v1",
+  "orientation": "any",
+  "background": "#0b0b0f",
+  "controls": [
+    {
+      "type": "panel",
+      "id": "manual",
+      "x": "50%",
+      "y": "42%",
+      "w": "92%",
+      "h": "80%"
+    },
+    {
+      "type": "button",
+      "id": "prev-page",
+      "x": "14%",
+      "y": "91%",
+      "r": "8%",
+      "bit": 0,
+      "label": "PREV",
+      "shape": "circle"
+    },
+    {
+      "type": "button",
+      "id": "next-page",
+      "x": "86%",
+      "y": "91%",
+      "r": "8%",
+      "bit": 1,
+      "label": "NEXT",
+      "shape": "circle"
+    }
+  ]
+}

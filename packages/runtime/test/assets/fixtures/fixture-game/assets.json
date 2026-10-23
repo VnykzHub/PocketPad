@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "groups": [
+    {
+      "id": "boot",
+      "mode": "eager"
+    },
+    {
+      "id": "arena",
+      "mode": "lazy"
+    }
+  ],
+  "assets": [
+    {
+      "id": "triangle",
+      "path": "files/triangle.glb",
+      "kind": "mesh",
+      "bytes": 600,
+      "group": "boot",
+      "ledger": "triangle.glb"
+    },
+    {
+      "id": "hit",
+      "path": "files/hit.ogg",
+      "kind": "audio",
+      "bytes": 3889,
+      "group": "boot",
+      "ledger": "hit.ogg"
+    },
+    {
+      "id": "music",
+      "path": "files/hit.ogg",
+      "kind": "audio",
+      "bytes": 3889,
+      "group": "boot",
+      "ledger": "hit.ogg"
+    },
+    {
+      "id": "arena-data",
+      "path": "files/arena.json",
+      "kind": "json",
+      "bytes": 28,
+      "group": "arena",
+      "ledger": "arena.json"
+    },
+    {
+      "id": "arena-music",
+      "path": "files/hit.ogg",
+      "kind": "audio",
+      "bytes": 3889,
+      "group": "arena",
+      "ledger": "hit.ogg"
+    }
+  ]
+}

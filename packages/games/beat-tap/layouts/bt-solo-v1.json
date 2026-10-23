@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "bt-solo-v1",
+  "orientation": "landscape",
+  "background": "#08080c",
+  "controls": [
+    {
+      "type": "button",
+      "id": "lane-1",
+      "x": "50%",
+      "y": "72%",
+      "label": "Lane 1",
+      "symbol": "1",
+      "shape": "circle",
+      "r": "22%",
+      "bit": 0
+    },
+    {
+      "type": "button",
+      "id": "calibrate",
+      "x": "88%",
+      "y": "14%",
+      "label": "CAL",
+      "shape": "circle",
+      "r": "7%",
+      "bit": 15
+    }
+  ]
+}

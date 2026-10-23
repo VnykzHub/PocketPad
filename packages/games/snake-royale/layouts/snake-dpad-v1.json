@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "snake-dpad-v1",
+  "orientation": "landscape",
+  "background": "#101014",
+  "controls": [
+    {
+      "type": "panel",
+      "id": "status",
+      "x": "50%",
+      "y": "15%",
+      "w": "92%",
+      "h": "24%"
+    },
+    {
+      "type": "dpad",
+      "id": "move",
+      "x": "50%",
+      "y": "66%",
+      "size": "46%",
+      "bits": {
+        "up": 8,
+        "down": 9,
+        "left": 10,
+        "right": 11
+      }
+    }
+  ]
+}

@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 1,
+  "groups": [
+    {
+      "id": "boot",
+      "mode": "eager"
+    },
+    {
+      "id": "lazy",
+      "mode": "lazy"
+    }
+  ],
+  "assets": [
+    {
+      "id": "char.archer",
+      "path": "models/characters/archer.glb",
+      "kind": "mesh",
+      "bytes": 239124,
+      "group": "lazy",
+      "ledger": "models/characters/archer.glb"
+    },
+    {
+      "id": "char.ual",
+      "path": "models/characters/ual-mannequin.glb",
+      "kind": "mesh",
+      "bytes": 854184,
+      "group": "boot",
+      "ledger": "models/characters/ual-mannequin.glb",
+      "clips": [
+        "Idle_Loop",
+        "Walk_Loop"
+      ]
+    },
+    {
+      "id": "dep.models.characters.textures.colormap",
+      "path": "models/characters/Textures/colormap.png",
+      "kind": "texture",
+      "bytes": 10659,
+      "group": "lazy",
+      "ledger": "models/characters/Textures/colormap.png"
+    },
+    {
+      "id": "dep.models.props.forest.textures.colormap",
+      "path": "models/props/forest/Textures/colormap.png",
+      "kind": "texture",
+      "bytes": 10659,
+      "group": "boot",
+      "ledger": "models/props/forest/Textures/colormap.png"
+    },
+    {
+      "id": "dep.models.props.roads.textures.colormap",
+      "path": "models/props/roads/Textures/colormap.png",
+      "kind": "texture",
+      "bytes": 11428,
+      "group": "boot",
+      "ledger": "models/props/roads/Textures/colormap.png"
+    },
+    {
+      "id": "dep.models.props.urban.textures.metal",
+      "path": "models/props/urban/Textures/metal.png",
+      "kind": "texture",
+      "bytes": 4930,
+      "group": "lazy",
+      "ledger": "models/props/urban/Textures/metal.png"
+    },
+    {
+      "id": "dep.models.props.urban.textures.planks",
+      "path": "models/props/urban/Textures/planks.png",
+      "kind": "texture",
+      "bytes": 5050,
+      "group": "lazy",
+      "ledger": "models/props/urban/Textures/planks.png"
+    },
+    {
+      "id": "dep.models.vehicles.textures.colormap",
+      "path": "models/vehicles/Textures/colormap.png",
+      "kind": "texture",
+      "bytes": 12371,
+      "group": "boot",
+      "ledger": "models/vehicles/Textures/colormap.png"
+    },
+    {
+      "id": "music.menu-sting",
+      "path": "audio/music/menu-sting.ogg",
+      "kind": "audio",
+      "bytes": 11145,
+      "group": "lazy",
+      "ledger": "audio/music/menu-sting.ogg"
+    },
+    {
+      "id": "prop.bench",
+      "path": "models/props/urban/bench.glb",
+      "kind": "mesh",
+      "bytes": 10260,
+      "group": "lazy",
+      "ledger": "models/props/urban/bench.glb"
+    },
+    {
+      "id": "prop.pallet",
+      "path": "models/props/urban/pallet.glb",
+      "kind": "mesh",
+      "bytes": 10044,
+      "group": "lazy",
+      "ledger": "models/props/urban/pallet.glb"
+    },
+    {
+      "id": "prop.road-straight",
+      "path": "models/props/roads/road-straight.glb",
+      "kind": "mesh",
+      "bytes": 5248,
+      "group": "boot",
+      "ledger": "models/props/roads/road-straight.glb"
+    },
+    {
+      "id": "prop.rocks",
+      "path": "models/props/forest/rocks.glb",
+      "kind": "mesh",
+      "bytes": 31964,
+      "group": "lazy",
+      "ledger": "models/props/forest/rocks.glb"
+    },
+    {
+      "id": "prop.streetlight",
+      "path": "models/props/roads/streetlight.glb",
+      "kind": "mesh",
+      "bytes": 6996,
+      "group": "lazy",
+      "ledger": "models/props/roads/streetlight.glb"
+    },
+    {
+      "id": "prop.tree",
+      "path": "models/props/forest/tree.glb",
+      "kind": "mesh",
+      "bytes": 23476,
+      "group": "boot",
+      "ledger": "models/props/forest/tree.glb"
+    },
+    {
+      "id": "sfx.impact.footstep",
+      "path": "audio/impact/footstep.ogg",
+      "kind": "audio",
+      "bytes": 5808,
+      "group": "boot",
+      "ledger": "audio/impact/footstep.ogg"
+    },
+    {
+      "id": "sfx.impact.metal",
+      "path": "audio/impact/metal.ogg",
+      "kind": "audio",
+      "bytes": 5857,
+      "group": "lazy",
+      "ledger": "audio/impact/metal.ogg"
+    },
+    {
+      "id": "sfx.impact.soft",
+      "path": "audio/impact/soft.ogg",
+      "kind": "audio",
+      "bytes": 5351,
+      "group": "lazy",
+      "ledger": "audio/impact/soft.ogg"
+    },
+    {
+      "id": "sfx.impact.wood",
+      "path": "audio/impact/wood.ogg",
+      "kind": "audio",
+      "bytes": 6233,
+      "group": "lazy",
+      "ledger": "audio/impact/wood.ogg"
+    },
+    {
+      "id": "sfx.scifi.explosion",
+      "path": "audio/scifi/explosion.ogg",
+      "kind": "audio",
+      "bytes": 9408,
+      "group": "lazy",
+      "ledger": "audio/scifi/explosion.ogg"
+    },
+    {
+      "id": "sfx.scifi.laser",
+      "path": "audio/scifi/laser.ogg",
+      "kind": "audio",
+      "bytes": 7286,
+      "group": "lazy",
+      "ledger": "audio/scifi/laser.ogg"
+    },
+    {
+      "id": "sfx.ui.back",
+      "path": "audio/ui/back.ogg",
+      "kind": "audio",
+      "bytes": 6997,
+      "group": "lazy",
+      "ledger": "audio/ui/back.ogg"
+    },
+    {
+      "id": "sfx.ui.click",
+      "path": "audio/ui/click.ogg",
+      "kind": "audio",
+      "bytes": 4983,
+      "group": "boot",
+      "ledger": "audio/ui/click.ogg"
+    },
+    {
+      "id": "sfx.ui.error",
+      "path": "audio/ui/error.ogg",
+      "kind": "audio",
+      "bytes": 6393,
+      "group": "lazy",
+      "ledger": "audio/ui/error.ogg"
+    },
+    {
+      "id": "sfx.ui.rollover",
+      "path": "audio/ui/rollover.ogg",
+      "kind": "audio",
+      "bytes": 5932,
+      "group": "lazy",
+      "ledger": "audio/ui/rollover.ogg"
+    },
+    {
+      "id": "sfx.ui.select",
+      "path": "audio/ui/select.ogg",
+      "kind": "audio",
+      "bytes": 5468,
+      "group": "lazy",
+      "ledger": "audio/ui/select.ogg"
+    },
+    {
+      "id": "sfx.ui.toggle",
+      "path": "audio/ui/toggle.ogg",
+      "kind": "audio",
+      "bytes": 6695,
+      "group": "lazy",
+      "ledger": "audio/ui/toggle.ogg"
+    },
+    {
+      "id": "vehicle.delivery",
+      "path": "models/vehicles/delivery.glb",
+      "kind": "mesh",
+      "bytes": 240264,
+      "group": "lazy",
+      "ledger": "models/vehicles/delivery.glb"
+    },
+    {
+      "id": "vehicle.race",
+      "path": "models/vehicles/race.glb",
+      "kind": "mesh",
+      "bytes": 167272,
+      "group": "lazy",
+      "ledger": "models/vehicles/race.glb"
+    },
+    {
+      "id": "vehicle.sedan",
+      "path": "models/vehicles/sedan.glb",
+      "kind": "mesh",
+      "bytes": 172216,
+      "group": "boot",
+      "ledger": "models/vehicles/sedan.glb"
+    }
+  ]
+}

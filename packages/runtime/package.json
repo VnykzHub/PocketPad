@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@babylonjs/core": "9.32.0",
+    "@babylonjs/loaders": "9.32.0",
     "@lanpad/engine-assets": "0.1.0",
     "@lanpad/engine-core": "0.1.0",
     "@lanpad/engine-input": "0.1.0",

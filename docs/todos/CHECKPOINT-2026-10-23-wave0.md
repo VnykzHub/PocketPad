@@ -35,7 +35,7 @@
 
 - WebGPU context loss is PENDING; only the WebGL2 loss path was exercised.
 - TLS was unit-tested but not exercised with a real certificate on a phone.
-- `npm run play` was not run end to end after the build (the gate builds every workspace and the dev server starts).
+- `npm run play` was run end to end on 2026-10-23: build completed, the server printed the LAN URL/QR, `/healthz` returned 200, then it was stopped.
 - The template game is a Wave 0 fixture; retire it once a real game proves registration.
 - Hardware rows (phones, TV, gyro, haptics) remain PENDING.
 
@@ -48,3 +48,18 @@ Wave 1: streams A (Babylon world), B (assets/audio), C (curation), F (game kit) 
 | Stream | Branch / commit | Evidence |
 |---|---|---|
 | F — `@lanpad/game-kit` | `ws/f-game-kit` → merged; integration wires `tsconfig`, Vitest and the lockfile | 79 package tests; sample 184 lines; whole gate 278 files / 3,074 tests, 0 unknown |
+| C — asset curation | `ws/c-asset-curation` → merged; root wiring committed | 32 CC0 files, 1,936,734 B raw / 740,904 B per-file gzip; 15 tests; Chrome OGG decode PASS, Firefox/Safari PENDING; gate 281 files / 3,089 tests |
+| B — assets/audio runtime | `ws/b-assets-audio` → merged | 50 asset/audio tests with real GLB/OGG fixture bytes; host boot 623,121 B gz; gate 285 files / 3,120 tests |
+| A — Babylon world | `ws/a-babylon-world` → merged | 68 tests + official ER-22-01 fake conformance; WebGPU 3.865 ms / WebGL2 3.185 ms p95 at 1280×720 headless, 0 errors; ER-22-05 allocation PENDING; host boot 712,199 B gz |
+| I — Sumo Bumpers (Minimal) | `ws/i-sumo-bumpers` → merged | 26 tests; 2–8 players; dash + hit haptics in the default layout per the brief, overriding the older plan's Full-only note (accepted); PERF-01 PENDING; gate 289 files / 3,209 tests, host 720,931 B gz |
+| J — Snake Royale (Minimal) | `ws/i-snake-royale` → merged | 50 tests; 32×32 grid, 2–8 players, d-pad, shrink/food/grace; PERF-01 PENDING |
+| L — Beat Tap (Minimal) | `ws/i-beat-tap` → merged | 60 tests; 4 lanes, timing windows, calibration, 1–4 players; chart is self-made CC0, audio cue absent/silent; PERF-01 and real audio PENDING |
+| K — Bomb Defusal (Minimal) | `ws/i-bomb-defusal` → merged | 34 tests; procedural wires/button/keypad, private manuals, solvability over 10,000 seeds; 2–8 players (plan/product cap; the prompt's 2–4 was too narrow); PERF and hardware PENDING |
+| Trace tooling — game IDs | `GAME-…` prefix registered; 37 merged-game rows added | `tools/trace-check` recognizes the prefix; stage trace 0 unknown, 44 deferred; gate 308 files / 3,353 tests |
+| D — console launcher | `ws/d-console-launcher` in flight | UI-only, independent of A/B |
+| I — Sumo Bumpers (Minimal) | `ws/i-sumo-bumpers` in flight | Flat 2D, game-kit + SDK fakes |
+| J — Snake Royale (Minimal) | `ws/i-snake-royale` in flight | Flat 2D, game-kit + SDK fakes |
+| K — Bomb Defusal (Minimal) | `ws/i-bomb-defusal` in flight | Panels + flat 2D |
+| L — Beat Tap (Minimal) | `ws/i-beat-tap` in flight | Chart + flat 2D |
+
+Concurrency note: D and four Minimal games started before A/B/G because Wave 0 and the game kit were already green and those streams touch disjoint paths. G (shared host wiring) still waits for A and B.

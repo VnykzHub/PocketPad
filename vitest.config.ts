@@ -66,6 +66,7 @@ export default defineConfig({
       nodeProject("experiments"),
       nodeProject("sdk"),
       nodeProject("tools/input-bot"),
+      nodeProject("tools/asset-curate"),
       nodeProject("tools/size-budget"),
       nodeProject("tools/trace-check"),
       nodeProject("tools/engine-test"),

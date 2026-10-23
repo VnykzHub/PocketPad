@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "name": "Beat Tap",
+  "description": "Tap the lanes in time with the beat.",
+  "entry": "index.js",
+  "layouts": [
+    "layouts/bt-lanes-v1.json",
+    "layouts/bt-duo-v1.json",
+    "layouts/bt-solo-v1.json",
+    "layouts/bt-dpad-v1.json",
+    "layouts/bt-calibrate-v1.json"
+  ],
+  "assetBudget": {
+    "initialBytes": 262144,
+    "totalBytes": 1048576
+  },
+  "minPlayers": 1,
+  "maxPlayers": 4,
+  "needsGyro": false,
+  "renderer": "canvas2d",
+  "presentation": {
+    "tagline": "Four lanes. One beat. Tap with the couch.",
+    "accent": "#c6f24e",
+    "categories": ["party", "action"],
+    "inputBadges": ["buttons", "dpad"]
+  }
+}

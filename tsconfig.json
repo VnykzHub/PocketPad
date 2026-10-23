@@ -18,6 +18,7 @@
     { "path": "./packages/engine/streaming" },
     { "path": "./sdk" },
     { "path": "./tools/input-bot" },
+    { "path": "./tools/asset-curate" },
     { "path": "./tools/size-budget" },
     { "path": "./tools/trace-check" },
     { "path": "./tools/engine-test" }

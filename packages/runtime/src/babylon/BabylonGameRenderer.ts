@@ -18,15 +18,20 @@
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import type { WebGPUEngine } from "@babylonjs/core/Engines/webgpuEngine";
 import type { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
+import type { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
+import type { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import type { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
+import type { GameWorld3D } from "@lanpad/sdk";
 import type {
   Renderer3D,
   RendererCapabilities,
   RendererSize,
 } from "../render/Renderer.js";
+import type { BabylonWorld3D } from "./world3d/BabylonWorld3D.js";
+import type { BabylonWorldOptions } from "./world3d/types.js";
 import {
   computeBackingSize,
   isFinitePosition,
@@ -117,6 +122,9 @@ export class BabylonGameRenderer implements Renderer3D {
   private scene: Scene | null = null;
   private camera: FreeCamera | null = null;
   private cameraTarget: Vector3 | null = null;
+  private sun: DirectionalLight | null = null;
+  private hemisphere: HemisphericLight | null = null;
+  private world: BabylonWorld3D | null = null;
   private bindings: BabylonBindings | null = null;
   private readonly slots: CubeSlot[] = [];
   private readonly materials = new Map<string, StandardMaterial>();
@@ -149,6 +157,14 @@ export class BabylonGameRenderer implements Renderer3D {
   /** CSS size since the last `resize`; zero before the host's first call. */
   get size(): RendererSize {
     return this.surfaceSize;
+  }
+
+  /**
+   * Host-only handle for AssetContainer loading (GLB -> world model source).
+   * Games never see this; the SDK and game boundary stay Babylon-free.
+   */
+  get babylonScene(): Scene | null {
+    return this.scene;
   }
 
   get drawCalls(): number {
@@ -220,6 +236,8 @@ export class BabylonGameRenderer implements Renderer3D {
     this.scene = scene;
     this.camera = camera;
     this.cameraTarget = cameraTarget;
+    this.sun = sun;
+    this.hemisphere = hemisphere;
     this.initialized = true;
     this.capabilities = {
       maxTextureSize: this.engine.getCaps().maxTextureSize,
@@ -228,6 +246,51 @@ export class BabylonGameRenderer implements Renderer3D {
       compressedFormats: [],
     };
     return this.capabilities;
+  }
+
+  /**
+   * Creates the renderer's single `GameWorld3D`, sharing this scene, camera
+   * and lights. The host must call `init()` first and install the result as
+   * `ctx.world`. Dispose the world (or this renderer) before creating another.
+   */
+  createWorld(options: BabylonWorldOptions = {}): GameWorld3D {
+    if (this.disposed) {
+      throw new Error("BabylonGameRenderer cannot be used after dispose().");
+    }
+    const scene = this.scene;
+    const camera = this.camera;
+    const sun = this.sun;
+    const ambient = this.hemisphere;
+    if (scene === null || camera === null || sun === null || ambient === null) {
+      throw new Error(
+        "BabylonGameRenderer.init() must complete before createWorld().",
+      );
+    }
+    if (this.world !== null) {
+      throw new Error(
+        "A world already exists; dispose it before creating another.",
+      );
+    }
+    // Resolve the class from the already-loaded dynamic chunk so importing
+    // the renderer in Node still does not load Babylon.
+    const { BabylonWorld3D: BabylonWorld } = this.requireBindings();
+    let world: BabylonWorld3D | null = null;
+    world = new BabylonWorld({
+      scene,
+      camera,
+      sun,
+      ambient,
+      backend: this.backend,
+      label: `${this.label}-world`,
+      provider: options.provider ?? null,
+      maxActors: options.maxActors ?? null,
+      maxInstances: options.maxInstances ?? null,
+      onDispose: () => {
+        if (this.world === world) this.world = null;
+      },
+    });
+    this.world = world;
+    return world;
   }
 
   resize(cssWidth: number, cssHeight: number, dpr: number): void {
@@ -313,10 +376,16 @@ export class BabylonGameRenderer implements Renderer3D {
     this.activeCount = 0;
     this.lastActiveCount = 0;
     this.frameDrawCalls = 0;
+    // The world shares the scene and lights, so it must go first.
+    const world = this.world;
+    this.world = null;
+    world?.dispose();
     this.materials.clear();
     this.slots.length = 0;
     this.camera = null;
     this.cameraTarget = null;
+    this.sun = null;
+    this.hemisphere = null;
     this.bindings = null;
     const scene = this.scene;
     this.scene = null;
