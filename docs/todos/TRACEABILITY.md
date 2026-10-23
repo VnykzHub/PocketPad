@@ -401,6 +401,12 @@ Engine acceptance IDs are Gate-audited, not owned by a phone-platform stage. A r
 | ER-25-01 | `presentation` is optional; a fully-populated manifest validates | Engine/QA | W0-CONTRACTS | Wave 0 |
 | ER-25-02 | Invalid presentation fields fail with their JSON path | Engine/QA | W0-CONTRACTS | Wave 0 |
 | ER-25-03 | A game folder with a manifest, layout, entry and tsconfig registers without any root-file edit | Engine/QA | W0-CONTRACTS | Wave 0 |
+| ER-25-04 | Keyboard, gamepad and phone-remote navigation pass the same launcher tests | Engine/QA | W1-LAUNCHER | Wave 1 |
+| ER-25-05 | The reduced-motion tier passes the same navigation tests with animations off | Engine/QA | W1-LAUNCHER | Wave 1 |
+| ER-25-06 | 20 launch/return cycles leave no leaked listener, timer, audio node or GPU resource | Engine/QA | W1-LAUNCHER | Wave 1 |
+| ER-25-07 | The backdrop is paused during a game; its ≤4 ms per-frame cost is PENDING | Engine/QA | W1-LAUNCHER | Wave 1 |
+| ER-25-08 | Screenshots exist for start, 4 tiles, 13 tiles, empty and 8-player lobby at 1920×1080 | Engine/QA | W1-LAUNCHER | Wave 1 |
+| ER-25-09 | Engine Cube is hidden unless `?debug=1` | Engine/QA | W1-LAUNCHER | Wave 1 |
 | ER-24-01 | Match transitions lobby→countdown→playing→results→next are legal and illegal transitions throw | Engine/QA | W1-GAMEKIT | Wave 1 |
 | ER-24-02 | Scoreboard ordering, ties and reset are deterministic | Engine/QA | W1-GAMEKIT | Wave 1 |
 | ER-24-03 | Player colours match DESIGN tokens and always pair with label + shape | Engine/QA | W1-GAMEKIT | Wave 1 |

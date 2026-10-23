@@ -345,11 +345,10 @@ async function loadBabylonModelProvider(
     throw new Error("The Babylon scene is not ready for model loading.");
   }
 
-  // Both the glTF plugin and the loader are lazy chunks: 2D games and
-  // asset-free Babylon games never download them (ER-21-08, spec-23 cap).
-  await import("@babylonjs/loaders/glTF/index.js");
-  const { LoadAssetContainerAsync } = await import(
-    "@babylonjs/core/Loading/sceneLoader"
+  // Both the glTF plugin and the loader are lazy chunks inside the Babylon
+  // adapter (ER-21-08); 2D games and asset-free Babylon games never load them.
+  const { loadAssetContainerFromBytes } = await import(
+    "../babylon/loadAssetContainer.js"
   );
   const { createAssetContainerModelSource } = await import(
     "../babylon/babylonBindings.js"
@@ -365,7 +364,7 @@ async function loadBabylonModelProvider(
     if (!(bytes instanceof Uint8Array)) {
       throw new Error(`Mesh asset "${declaration.id}" did not decode to bytes.`);
     }
-    const container = await LoadAssetContainerAsync(bytes, scene, {
+    const container = await loadAssetContainerFromBytes(bytes, scene, {
       pluginExtension: declaration.path.endsWith(".gltf") ? ".gltf" : ".glb",
       name: declaration.id,
     });
