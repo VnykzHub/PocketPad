@@ -18,11 +18,13 @@
  * the loop before calling `game.dispose()` exactly once.
  */
 import type {
+  AssetLibrary,
   Game,
   GameAudio,
   GameContext,
   GameDebug,
   GameRenderer3D,
+  GameWorld3D,
   JsonValue,
   SaveApi,
 } from "@lanpad/sdk";
@@ -58,6 +60,10 @@ export interface GameHostDeps {
   readonly save?: SaveApi;
   /** Manifest slug; binds the installed save capability (stage knows it). */
   readonly gameId?: string;
+  /** Spec-23 asset library; absent when the game has no `assets.json`. */
+  readonly assets?: AssetLibrary;
+  /** Spec-22 world; advanced once per fixed tick and disposed by the host. */
+  readonly world?: GameWorld3D;
   /** Receives the loop's reused stats object (overlay, dynamic resolution). */
   readonly onFrameStats?: (stats: FrameStats) => void;
   /** Called once when the game throws; the loop is already stopped. */
@@ -76,6 +82,7 @@ export class GameHost {
 
   private contextValue: GameContext;
   private readonly audio: PausableAudio;
+  private readonly world: GameWorld3D | undefined;
   private readonly onError: ((error: unknown) => void) | undefined;
   private readonly tiltIntegrators: TiltIntegrator[] = [];
   private phaseValue: GameHostPhase = "idle";
@@ -84,6 +91,7 @@ export class GameHost {
   constructor(deps: GameHostDeps) {
     this.game = deps.game;
     this.audio = deps.audio;
+    this.world = deps.world;
     this.onError = deps.onError;
     for (let slot = 0; slot < TILT_SLOT_COUNT; slot += 1) {
       this.tiltIntegrators.push(new TiltIntegrator());
@@ -100,6 +108,8 @@ export class GameHost {
       ...(deps.seed === undefined ? {} : { seed: deps.seed }),
       ...(deps.save === undefined ? {} : { save: deps.save }),
       ...(deps.gameId === undefined ? {} : { gameId: deps.gameId }),
+      ...(deps.assets === undefined ? {} : { assets: deps.assets }),
+      ...(deps.world === undefined ? {} : { world: deps.world }),
     });
 
     const onFrameStats = deps.onFrameStats;
@@ -193,6 +203,13 @@ export class GameHost {
     } catch {
       // A throwing dispose must not block host teardown.
     }
+    try {
+      // Spec 22 §3: the host disposes the world exactly once; both the game
+      // and the host may call it, so `dispose()` is idempotent.
+      this.world?.dispose();
+    } catch {
+      // World teardown must not block host teardown either.
+    }
   }
 
   private fail(error: unknown): void {
@@ -206,6 +223,9 @@ export class GameHost {
   private readonly simulateTick = (dt: number, snapshot: InputSnapshot): void => {
     if (this.phaseValue !== "playing") return;
     try {
+      // Spec 22 §3: clips and camera follow advance once per fixed tick,
+      // before the game's simulate sees the world.
+      this.world?.update(dt);
       this.updateTilt(dt, snapshot);
       this.input.update(snapshot);
       const events = this.events.drain();
