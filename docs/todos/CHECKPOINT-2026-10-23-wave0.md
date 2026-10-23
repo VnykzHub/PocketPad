@@ -50,6 +50,7 @@ Wave 1: streams A (Babylon world), B (assets/audio), C (curation), F (game kit) 
 | F — `@lanpad/game-kit` | `ws/f-game-kit` → merged; integration wires `tsconfig`, Vitest and the lockfile | 79 package tests; sample 184 lines; whole gate 278 files / 3,074 tests, 0 unknown |
 | C — asset curation | `ws/c-asset-curation` → merged; root wiring committed | 32 CC0 files, 1,936,734 B raw / 740,904 B per-file gzip; 15 tests; Chrome OGG decode PASS, Firefox/Safari PENDING; gate 281 files / 3,089 tests |
 | B — assets/audio runtime | `ws/b-assets-audio` → merged | 50 asset/audio tests with real GLB/OGG fixture bytes; host boot 623,121 B gz; gate 285 files / 3,120 tests |
+| A — Babylon world | `ws/a-babylon-world` → merged | 68 tests + official ER-22-01 fake conformance; WebGPU 3.865 ms / WebGL2 3.185 ms p95 at 1280×720 headless, 0 errors; ER-22-05 allocation PENDING; host boot 712,199 B gz |
 | D — console launcher | `ws/d-console-launcher` in flight | UI-only, independent of A/B |
 | I — Sumo Bumpers (Minimal) | `ws/i-sumo-bumpers` in flight | Flat 2D, game-kit + SDK fakes |
 | J — Snake Royale (Minimal) | `ws/i-snake-royale` in flight | Flat 2D, game-kit + SDK fakes |

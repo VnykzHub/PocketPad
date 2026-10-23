@@ -181,6 +181,13 @@ A game branches on `capabilities`, never on `backend`, for correctness.
 | ER-22-09 | Exceeding actor/instance limits throws `E_WORLD_LIMIT` with the limit in the message |
 | ER-22-10 | `dispose` frees actors, instances and GPU resources; a second call is a no-op |
 
+Every row is PENDING until evidence exists. Stream A's 2026-10-23 browser run
+(headless Chrome 155, 1280×720, `experiments/babylon-world/`) measured WebGPU
+p95 3.865 ms and WebGL2 p95 3.185 ms with 0 errors over the model + 8 instances
++ 5 primitives scene; those are desktop dev-machine numbers, not target
+hardware. ER-22-01 is covered by `sdk/test/world3d.conformance.test.ts` (fake)
+and the adapter suite; ER-22-05's per-tick allocation is PENDING.
+
 ## 8. File ownership
 
 | Path | Owner |
@@ -192,6 +199,9 @@ A game branches on `capabilities`, never on `backend`, for correctness.
 
 ## 9. Risks
 
+- Babylon ignores per-instance matrices on **skinned** thin instances. The adapter auto-detects skeletons and pools one clone + skeleton per index instead; transforms are correct, but memory/GPU cost is higher. Record a budget line when the first skinned crowd lands.
+- `@babylonjs/loaders@9.32.0` is required for GLB containers and is pinned in `packages/runtime/package.json`; it is a lazy chunk, not boot code.
+- The browser evidence is headless, 1280×720, desktop RTX 3050 Ti only; TV, integrated GPU and real display pacing remain PENDING.
 - Babylon's thin instances need a custom material for per-instance tint; if it does not land, `instanceTint` reports false and games fall back to per-actor meshes.
 - Skeletal animation and skinning loaders add bundle weight; measured against the 5 MiB boot cap in streams B/C.
 - Follow smoothing must use the fixed tick, not wall-clock time, or replays diverge.
