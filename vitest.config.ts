@@ -25,10 +25,10 @@ const gameProjects = readdirSync("packages/games", { withFileTypes: true })
 export default defineConfig({
   test: {
     passWithNoTests: true,
-    // 16 logical CPUs and multiple agent worktrees otherwise starve the
-    // machine; 8 workers keeps the full suite reliable without weakening any
-    // assertion or timeout.
-    maxWorkers: 8,
+    // Parallel agent worktrees and the browser can starve the machine; 4
+    // workers keeps the full suite reliable. Assertions and timeouts are
+    // unchanged.
+    maxWorkers: 4,
     projects: [
       nodeProject("packages/protocol"),
       nodeProject("packages/broker"),

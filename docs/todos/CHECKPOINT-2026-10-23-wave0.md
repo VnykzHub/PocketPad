@@ -63,6 +63,8 @@ Wave 1: streams A (Babylon world), B (assets/audio), C (curation), F (game kit) 
 | G — host integration | `ws/g-host-integration` → merged | Assets/audio + Babylon world wiring, launcher lifecycle/deps, phone/gamepad launcher input, real 4-bot e2e; Babylon loader moved inside `src/babylon` to restore ER-21-08 |
 | E — controllers/input | `ws/e-controllers` → merged | 501 controller tests + 50 bot tests; launcher remote layout, gyro calibration, steering/tap-tempo/haptics, reconnect/UGC flows, QA probe; controller 40,923 / 51,200 B gz |
 | Host launcher smoke | real Chrome, 2026-10-23 | `.console-shell` + live room code + seven tiles (Beat Tap, Bomb Defusal, Coin Run, Reaction Duel, Snake Royale, Sumo Bumpers, Template Game); Engine Cube hidden without `?debug=1` |
+| E follow-up — remote events | `ws/e-controllers` → merged | Launcher layout emits `remote` up/down/left/right/ok/back on press edges, outside the binary input snapshot; 8 new tests; controller 41,236 / 51,200 B gz |
+| H — Havok vs Rapier | `ws/h-physics` → merged | MIT Havok 675,471 B gz vs Apache-2.0 Rapier 1.21–1.64 MB gz; car/drop/wall comparable or better on Rapier; both fail a 0.3 m step; **Rapier stays** (ADR-0004 D1); character sinking must be fixed |
 | Trace tooling — game IDs | `GAME-…` prefix registered; 37 merged-game rows added | `tools/trace-check` recognizes the prefix; stage trace 0 unknown, 44 deferred; gate 308 files / 3,353 tests |
 | D — console launcher | `ws/d-console-launcher` in flight | UI-only, independent of A/B |
 | I — Sumo Bumpers (Minimal) | `ws/i-sumo-bumpers` in flight | Flat 2D, game-kit + SDK fakes |

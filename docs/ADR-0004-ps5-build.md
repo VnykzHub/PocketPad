@@ -15,7 +15,7 @@ The user's defaults D1–D8 are accepted unchanged:
 
 | ID | Decision |
 |---|---|
-| D1 | **Physics for Babylon scenes:** Havok first, behind the existing `Physics3D` interface, if its licence check passes; Rapier stays the fallback. The vehicle test in stream H decides. Small 2D party games keep the existing 2D physics. |
+| D1 | **Physics for Babylon scenes — outcome: Rapier.** The initial default was Havok-first with the vehicle test deciding. Stream H measured both: Havok 1.3.14 is MIT (675,471 B gz total), Rapier 0.21.0 is Apache-2.0 (~1.21–1.64 MB gz). Rapier is already the contract-complete backend and measured comparable or better (faster 0–50 km/h, more slalom travel with less roll, drop/wall pass, deterministic); both fail a 0.3 m walking step-up. **Rapier stays behind `Physics3D`; the character controller's blocked-state sinking must be fixed before a shipping character.** Havok would need a Babylon-coupled adapter and a hand-written vehicle. |
 | D2 | **Game tiers:** every game ships a Minimal tier on the current Canvas2D/primitive path first, then a Full tier with Babylon and curated assets. Draw and Guess, Bluff Quiz and Spy in the Room stay 2D; Babylon is used only for the launcher backdrop. |
 | D3 | **Launcher motion:** amend `DESIGN.md` with a console-shell tier (focus scale, ≤8px parallax, accent glow, backdrop crossfade). Full tier on capable devices; reduced tier when `prefers-reduced-motion` or a low-tier device; input is never delayed by motion. |
 | D4 | **Controller budget:** dev target rises from 40 KB to 50 KB gzip; the 60 KB hard cap stays. |
@@ -37,6 +37,7 @@ The user's defaults D1–D8 are accepted unchanged:
 - The controller budget gains ~9 KB of headroom; the hard cap is unchanged.
 - `ctx.world` is unavailable on 2D-only hosts and on the custom engine path until a world backend exists; games must feature-detect `ctx.world === undefined`.
 - Havok is a try-first, not a commitment; A15 Rapier remains the fallback until stream H's measured recommendation.
+- **D1 outcome (2026-10-23): Rapier.** Stream H's measured comparison supports the existing A15 backend; Havok's licence is fine but it would add a Babylon-coupled adapter, a hand-written vehicle and no contract-complete event/query surface. The character controller's blocked-state sinking is a known defect to fix before a shipping character. Evidence: [`docs/RESULTS.md`](RESULTS.md) § "Havok vs Rapier physics spike".
 - No hardware rows close in this ADR; every device measurement remains PENDING until run.
 
 ## Reopen conditions

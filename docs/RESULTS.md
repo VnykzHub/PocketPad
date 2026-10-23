@@ -1017,3 +1017,35 @@ errors; follow error was 0 in both runs. The numbers are headless desktop dev
 values at 720p, not the 1080p M1 target and not target hardware. Animation is
 proven by still screenshots, not video. ER-22-05 per-tick allocation remains
 PENDING. The host integration of `ctx.world` is stream G's work.
+
+## Havok vs Rapier physics spike — stream H (2026-10-23)
+
+Standalone `experiments/babylon-physics/` comparison of Havok 1.3.14 and
+Rapier 0.21.0 behind one small seam. Headless Chrome 155, WebGL2/ANGLE D3D11,
+NVIDIA RTX 3050 Ti Laptop, 1080p unless noted. One desktop GPU only; not
+target-hardware acceptance. Evidence: `experiments/babylon-physics/results.json`,
+`size-report.json`, `screenshots/*.png`.
+
+| Measure | Havok | Rapier |
+|---|---|---|
+| Licence | MIT | Apache-2.0 |
+| Total gzip (WASM + glue) | 675,471 B | 1,210,371 B standalone / 1,644,109 B inline |
+| WASM init / first world | 31.7 / 47.4 ms | 29.9 / 36.1 ms |
+| Car 0–50 km/h | 2.700 s | 2.617 s |
+| Car at 10 s | 122.66 km/h, 206.92 m | 125.61 km/h, 212.56 m |
+| Slalom lateral range / max roll | 23.74 m / 3.4° | 35.90 m / 0.6° |
+| 2 m drop | lands tick 100 | lands tick 104 |
+| Wall slide | slides | slides |
+| 0.3 m step-up | **FAILED** | **FAILED** |
+| 240-tick determinism, two fresh worlds | identical (34a1f02f) | identical (d7d66da3) |
+| 500-body physics p95 (300 steps) | 0.31 ms | 0.47 ms |
+
+**Recommendation (recorded in ADR-0004 D1):** keep **Rapier** behind
+`Physics3D`. It is contract-complete and Babylon-free, measured comparable or
+better on the car/drop/wall scenarios, and deterministic. Havok is lighter by
+~0.5–1.0 MB gz but would require a Babylon-coupled adapter, a hand-written
+vehicle and new event/query/hash code. Both engines fail a 0.3 m curb at
+walking speed; Rapier's failure is a shipping-adapter sinking defect
+(~0.066 m while blocked), not an autostep limit. That defect must be fixed
+before a shipping character. TV/phone/WebGPU/4K, long-run memory, 8-controller
+load and Havok upstream legal review remain PENDING.
