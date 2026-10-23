@@ -21,7 +21,7 @@ The engine is not a TV accessory. **Any browser is a display target** — deskto
 - **Zero install.** A browser on the display; a browser on each phone.
 - **The phone is a first-class controller.** Multi-touch, gyro, vibration, a private screen, and per-game layouts.
 - **Any screen.** The host is display-agnostic: desktop, laptop, TV, tablet.
-- **A real engine, not a rendering library.** Custom WebGPU renderer with a WebGL2 fallback, scene and asset pipelines, physics, animation, audio, input, networking and tooling designed as one system.
+- **A real engine, not a rendering library.** Babylon.js 9.32.0 engine base (WebGPU first, WebGL2 fallback) behind the host's own scene, asset, physics, animation, audio, input, networking and tooling layers.
 - **Built for parallel development.** Every subsystem has a spec; games and engine layers can be developed against stable contracts at the same time.
 - **Open.** The engine and SDK are intended for MIT release; games keep their authors' licenses.
 
@@ -46,18 +46,18 @@ The host is authoritative. Phones never simulate, never see game state beyond th
 | --- | --- |
 | Protocol, broker, sessions, reconnect | Working; 8 slots, 30 s reservations, host loss/recovery |
 | Controller | 11 control types, touch engine, gyro, haptics, fullscreen |
-| Host runtime | Fixed 60 Hz loop, `GameHost`, `GameContext`, Canvas2D + custom WebGL2 |
+| Host runtime | Fixed 60 Hz loop, `GameHost`, `GameContext`, Canvas2D + Babylon.js 3D (WebGPU/WebGL2) |
 | Physics | 2D circles/AABB, integration, arena walls |
 | Games | Reaction Duel and Coin Run (2D platformer) |
 | Host/controller UI | Lobby, launcher, stage, results, notices, phone shell |
 | Tests | 134 files / 1,571 tests; `npm run check` green |
-| 3D engine | Cube renderer only; WebGPU backend, assets, animation, lighting, 3D physics and streaming are **not built** |
+| 3D engine | Babylon.js cube path runs on WebGPU and WebGL2 at 1920×1080; asset, animation, lighting, 3D-physics and streaming integration is **not built** |
 
 ## Roadmap
 
 | Milestone | What it proves |
 | --- | --- |
-| **M0 — Foundation** | Specs for every engine subsystem; WebGPU renderer with WebGL2 fallback; 3D math/scene; asset manifest and loaders; keyboard/mouse/gamepad input; a textured 3D scene |
+| **M0 — Foundation** | Specs for every engine subsystem; Babylon.js base with WebGPU/WebGL2; 3D math/scene; asset manifest and loaders; keyboard/mouse/gamepad input; a textured 3D scene |
 | **M1 — Vertical slice** | A real 3D slice: a city block, a drivable vehicle, pedestrians, a mission, streaming, audio and save/load |
 | **M2 — Engine completeness** | Animation, PBR/lighting, 3D physics, AI/navigation, world streaming, UI/text in 3D, profiling and budgets |
 | **M3 — Open-world proof** | A Vice City-scale vertical slice with traffic, missions and a content pipeline |
@@ -103,7 +103,7 @@ The engine program adds `docs/engine/` — one spec per subsystem, each with int
 
 ## Honest limits
 
-- **No 3D games yet.** The WebGL2 renderer draws cubes; the WebGPU backend and the 3D layers are the current program.
+- **No 3D games yet.** The Babylon adapter draws cubes on WebGPU and WebGL2; assets, animation, lighting and world streaming are not wired into the host.
 - **No asset pipeline yet.** `GAME_ASSETS` is empty; glTF/KTX2/WebP/audio/font loading is specified but not wired.
 - **TV and Android evidence is PENDING.** Desktop Chrome is the provisional target; no TV, phone-sensor or haptics measurement is claimed.
 - **iOS has no vibration API and gyro needs HTTPS.**

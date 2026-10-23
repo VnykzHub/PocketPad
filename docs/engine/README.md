@@ -9,7 +9,7 @@ A **browser-native game engine**, not a TV accessory:
 
 - runs entirely in the browser, on any display (desktop, laptop, TV, tablet);
 - 2D and 3D, local multiplayer with phones as controllers;
-- custom **WebGPU-first** renderer with a **WebGL2 fallback**, no Three.js;
+- custom **WebGPU-first** engine with a **WebGL2 fallback**, no Three.js — **superseded by A19/ADR-0003: Babylon.js 9.32.0 is the engine base; the custom renderer packages remain frozen**;
 - inputs: phones, keyboard/mouse, gamepad;
 - architectural ceiling: a Vice City-scale open-world game.
 
@@ -19,8 +19,8 @@ The ceiling is not the v1 claim. The program is a sequence of evidence-gated mil
 
 | Decision | Choice | Why |
 |---|---|---|
-| Renderer | Custom WebGPU + WebGL2 fallback | Full control; Three.js rejected as a gaming foundation |
-| Physics | Custom first; Rapier only if a game proves the need | Control, size, determinism |
+| Renderer | **Babylon.js 9.32.0 engine base** (WebGPU first, WebGL2 fallback); custom WebGPU/WebGL2 packages frozen | ADR-0003 audited bake-off 2026-10-23; A19. Full control retained at the engine layer, not the rasterizer |
+| Physics | Rapier behind `Physics3D` (A15); Babylon+Havok evaluated after the host spike | Proven solver behind a swappable interface |
 | Input | Phones + KB/M + gamepad | Local multiplayer plus desktop/single-player |
 | Multiplayer | Local-first; online relay later | Get games playable before state sync |
 | Benchmark | Vice City as north star, not v1 | Architecture for the ceiling, prove with slices |
@@ -90,6 +90,7 @@ Each spec lives at `docs/engine/<nn>-<name>.md` and follows the template in §7.
 | `18-game-sdk.md` | Game lifecycle, `GameContext` evolution, packaging, templates, API reference | all |
 | `19-testing-benchmarks.md` | Unit/property/golden/integration/benchmark harness, acceptance scenes | all |
 | `20-m1-vertical-slice.md` | The M1 “Block 7 courier run” target: world, vehicle, pedestrians, mission, audio, save, acceptance rows | 07, 08, 09, 12, 15, 18 |
+| `21-babylon-migration.md` | Babylon.js engine-base migration: boundary, adapter contract, waves B1–B4, acceptance rows ER-21 | 04, 06, 08, 09, 18 |
 
 This index is the plan. A spec that does not exist yet is not a contract; write it before implementing.
 

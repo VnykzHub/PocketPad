@@ -14,7 +14,7 @@ The host page is authoritative: it runs the simulation and renders the game. Pho
 
 ## Product decisions (do not re-litigate without the user)
 
-- **Renderer:** custom **WebGPU-first** engine with a **WebGL2 fallback**. No Three.js. The user wants full control; Three.js was evaluated and rejected as a gaming foundation.
+- **Renderer:** **Babylon.js 9.32.0 is the engine base** (A19, ADR-0003), WebGPU-first with its WebGL2 fallback, behind the host's `Renderer3D`/`GameContext` contracts. No Three.js. The custom WebGPU/WebGL2 packages remain frozen in the tree, not deleted; spec 21 governs the migration.
 - **Inputs:** phones **and** keyboard/mouse **and** gamepad. Phones are the signature local-multiplayer controller, not the only input.
 - **Multiplayer:** local-first (same room / LAN). Online relay and state sync are a later engine layer.
 - **Benchmark:** GTA Vice City is the north star. A vertical slice proves the architecture; full parity is a multi-year program.

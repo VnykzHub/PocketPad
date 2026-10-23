@@ -943,3 +943,46 @@ intervals. Babylon and custom each cover 3 measured runs.
 - Runner-recorded non-blank source lines: PlayCanvas 1,522; Babylon 1,544;
   custom 2,981. This counts contender-folder source, not shared assets or
   engine source.
+
+## Babylon host spike — B1 (2026-10-23)
+
+First measured run of the host itself on the Babylon engine base (A19/ADR-0003,
+spec 21). Evidence: `experiments/babylon-host/results.json`, generated
+`2026-10-23T08:18:47.901Z`; screenshots `cube-webgpu.png` (71,168 B) and
+`cube-webgl2.png` (70,426 B).
+
+**Environment:** Windows 11 10.0.26300, Intel i7-11800H, NVIDIA RTX 3050 Ti
+Laptop (ANGLE D3D11), Chrome HeadlessChrome 155.0.8059.85, `crossOriginIsolated:
+true`. Canvas backbuffer 1920×1080 DPR 1 (emulated host viewport 1936×1200 for
+the 48px stage chrome and 8px stage padding). Frame intervals come from an
+independent uncapped rAF probe (`--disable-frame-rate-limit`,
+`--disable-gpu-vsync`); they are not display-paced and not GPU timestamps.
+Nearest-rank percentiles over one 60 s sample after a 5 s warm-up.
+
+| Scene | Backend | Draw calls | Canvas | Samples | p50 ms | p95 ms | max ms | Errors |
+|---|---|---|---:|---|---:|---:|---:|---:|---:|
+| engine-cube through `GameContext` | webgpu | 3 | 1920×1080 | 335,560 | 0.15 | 0.26 | 19.055 | 0 |
+| engine-cube through `GameContext`, forced fallback | webgl2 | 3 | 1920×1080 | — | — | — | — | 0 |
+
+**Boot size (dev gate, gzip):** host 613,530 B over 58 files (dev budget
+3,145,728 B, 19.5%); controller unchanged at 40,794 / 40,960 B. The lazy
+Babylon path in this build is three chunks:
+`babylonBindings-Bx0_kgbU.js` 773,883 B raw / 185,237 B gzip,
+`createBabylonEngines-B_eK9ftf.js` 350,975 B / 87,705 B gzip and
+`createBabylonRenderer-DtdPAFFV.js` 7,005 B / 2,698 B gzip. None is downloaded
+by 2D games.
+
+**What this proves and what it does not:**
+
+- The host lifecycle, fixed loop, `GameContext`, room, layout and overlay paths
+  run unchanged with Babylon drawing the frame. Three cubes are visible in both
+  screenshots with 0 page errors.
+- The 0.26 ms p95 is the throughput of a three-cube scene under an uncapped
+  headless rAF; it is **not** a frame budget for the M1 city scene and must not
+  be quoted as one. The bake-off scene (14 buildings, 50 skinned pedestrians,
+  shadows) remains the comparable measurement.
+- Only the cube path is wired. Assets, animation, lighting, shadows, 3D physics
+  and streaming are not integrated, and no phone was connected during this run.
+- The automated start used a trusted CDP mouse click and
+  `--autoplay-policy=no-user-gesture-required`; neither changes rendering cost.
+- The debug overlay was visible (`?debug=1`) and is included in the screenshots.

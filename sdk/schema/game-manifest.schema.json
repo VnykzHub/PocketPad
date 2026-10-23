@@ -76,8 +76,8 @@
     },
     "renderer": {
       "type": "string",
-      "enum": ["canvas2d", "engine"],
-      "description": "Renderer family to select. Absent means \"canvas2d\". \"engine\" requires WebGPU or WebGL2 and is refused on the Canvas2D fallback."
+      "enum": ["canvas2d", "engine", "babylon"],
+      "description": "Renderer family to select. Absent means \"canvas2d\". \"engine\" and \"babylon\" require WebGPU or WebGL2 and are refused on the Canvas2D fallback."
     },
     "version": {
       "type": "string",

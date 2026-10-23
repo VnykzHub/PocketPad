@@ -29,9 +29,10 @@ export interface GameManifest {
    * Renderer family the host must select (00 §5.12). Absent means
    * `"canvas2d"`, which keeps every existing manifest on the 2D path.
    * `"engine"` requires a WebGPU or WebGL2 device and is refused on the
-   * Canvas2D fallback; it never silently downgrades.
+   * Canvas2D fallback; it never silently downgrades. `"babylon"` selects the
+   * Babylon.js backend (spec 21) with the same 3D requirement.
    */
-  renderer?: "canvas2d" | "engine";
+  renderer?: "canvas2d" | "engine" | "babylon";
   chunkConfig?: {
     chunkSize: number;
     loadRadius: number;
@@ -224,9 +225,10 @@ export function validateManifest(
   if (
     value.renderer !== undefined &&
     value.renderer !== "canvas2d" &&
-    value.renderer !== "engine"
+    value.renderer !== "engine" &&
+    value.renderer !== "babylon"
   ) {
-    errors.push('renderer: must be "canvas2d" or "engine"');
+    errors.push('renderer: must be "canvas2d", "engine" or "babylon"');
   }
 
   if (value.chunkConfig !== undefined) {

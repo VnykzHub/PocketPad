@@ -7,13 +7,14 @@
 
 | ID | Decision | Source |
 |---|---|---|
-| D-001 | Custom **WebGPU-first** renderer; WebGL2 is a **reduced-feature** fallback; Canvas2D is 2D-only; **no Three.js** | ADR-0002; user 2026-10-22 |
+| D-001 | Custom **WebGPU-first** renderer; WebGL2 is a **reduced-feature** fallback; Canvas2D is 2D-only; **no Three.js** — superseded by D-008 for the engine base | ADR-0002; user 2026-10-22 |
 | D-002 | **Rapier** behind a `Physics3D` interface; custom physics only if a measured need appears | User 2026-10-22 |
 | D-003 | Retire D0–P6 stage gating for the engine track; the phone/room platform stays frozen and maintained separately | User 2026-10-22; audit |
 | D-004 | Enable **COOP/COEP** cross-origin isolation in W0 | User 2026-10-22 |
 | D-005 | Specs before implementation; each contract spec also lands a `.d.ts`, a conformance suite, a fixture with a numeric budget, and an ownership manifest | Audit; program README §7.1 |
 | D-006 | One writer per file; parallel inside a wave; every wave ends with `npm run check`; never weaken a test | CLAUDE.md |
 | D-007 | No invented measurements; TV/Android rows stay PENDING | CLAUDE.md |
+| D-008 | **Babylon.js 9.32.0 is the engine base** (A19, ADR-0003). WebGPU first, WebGL2 fallback; custom engine packages frozen, not deleted; manifest gains additive `"babylon"` | User 2026-10-23; ADR-0003 |
 
 ## Log
 
@@ -921,3 +922,14 @@
 - **Paper-trail discrepancies recorded, none decision-changing:** stale unreferenced `runner/screenshots/playcanvas-run1.png`; PlayCanvas local heap range understated; custom checklist gzip component sum typo (matrix total 1,766,889 B is correct); ped clip is 1.333 s vs README 1.0 s; no build-hash field in runner results.
 - **ADR updated** with the audit reference and ADR-0002's superseded status; `docs/RESULTS.md` keeps the measured matrix.
 - **State:** custom-engine breadth remains frozen; no migration code; no commits. Migration starts only on the user's explicit go.
+
+### 2026-10-23 — B1 host-on-Babylon spike
+
+- **Go:** user asked to commit/push the bake-off decision and branch for Babylon work. Commit `7d9c7f4` pushed to `checkpoint/wave5-green`; branch `feat/babylon-engine` created and pushed.
+- **Boundary chosen:** Babylon sits behind the frozen `Renderer3D`/`GameContext`; no Babylon type outside `packages/runtime/src/babylon/**`. Manifest gets an additive `"babylon"` value; `"engine"` (custom) stays until wave B4. This keeps every existing game and test contract intact during migration.
+- **Clock:** GameHost keeps the fixed loop; the adapter calls `engine.beginFrame()`, `scene.render()`, `engine.endFrame()` inside the host frame. `runRenderLoop` is never used; a source-scan test enforces it.
+- **Backend order:** WebGPU first (`WebGPUEngine.IsSupportedAsync` + `initAsync`), fresh canvas if it fails, then WebGL2 `Engine`. Both failing returns fixed copy, not an exception.
+- **Physics:** unchanged. A15 Rapier stays in force; no physics package is loaded by the cube path. Havok vs Rapier decision deferred to a dedicated ADR after assets/B2, as planned.
+- **Measured:** headless Chrome 155 / RTX 3050 Ti, canvas 1920×1080; WebGPU 3 draw calls, 335,560 rAF samples, p95 0.26 ms (uncapped; trivial scene), 0 errors; forced WebGL2 3 draw calls, 0 errors. Full gate exit 0: 267 files / 2,980 tests. Host dev boot 613,530 B gz (19.5% of budget); lazy Babylon chunks 185,237 + 87,705 + 2,698 B gz. Evidence in `experiments/babylon-host/`.
+- **Not claimed:** no phone input run, no assets/animation/shadows/physics, no M1 frame budget. The 0.28 ms number is not a city-scene result.
+- **No commit on this branch yet:** the user asked to branch, not to commit the migration spike.

@@ -2,7 +2,7 @@
  * Engine Cube adapter tests (GAME-EC-01).
  *
  * The game is the first consumer of the engine 3D path: its manifest asks for
- * `renderer: "engine"`, and its render loop may only use the SDK 3D surface.
+ * `renderer: "babylon"`, and its render loop may only use the SDK 3D surface.
  * These tests lock the shipped manifest and layout, the lifecycle, the draw
  * call count and the allocation-free steady state.
  */
@@ -198,10 +198,10 @@ function createHarness(): Harness {
 }
 
 describe("Engine Cube manifest and layout", () => {
-  test("[FR-10.3] the shipped manifest validates and declares the engine renderer", () => {
+  test("[FR-10.3] the shipped manifest validates and declares the Babylon renderer", () => {
     expect(manifestResult.ok).toBe(true);
     expect(manifest.name).toBe("Engine Cube");
-    expect(manifest.renderer).toBe("engine");
+    expect(manifest.renderer).toBe("babylon");
     expect(manifest.minPlayers).toBe(1);
     expect(manifest.maxPlayers).toBe(2);
     expect(manifest.needsGyro).toBe(false);

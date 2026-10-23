@@ -11,13 +11,16 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "node -e \"const fs=require('node:fs');fs.rmSync('dist/assets',{recursive:true,force:true});fs.rmSync('dist/tsconfig.tsbuildinfo',{force:true})\" && tsc -b && tsc -p tsconfig.test.json && vite build",
     "test": "vitest run --root ../.. --project packages/runtime",
     "typecheck": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
+    "@babylonjs/core": "9.32.0",
     "@lanpad/engine-assets": "0.1.0",
     "@lanpad/engine-core": "0.1.0",
     "@lanpad/engine-input": "0.1.0",

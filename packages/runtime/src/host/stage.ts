@@ -53,6 +53,24 @@ import type { HostRoster } from "./roster.js";
 /** The cube demo has no downloadable assets; real games list theirs here. */
 const GAME_ASSETS: readonly AssetEntry[] = [];
 
+/**
+ * Benchmark affordance: `?babylon-backend=webgl2` forces the WebGL2 path so
+ * the fallback can be measured on a machine whose WebGPU works. Never read
+ * from game data; unknown values are ignored.
+ */
+function readBabylonBackendOverride(
+  window: Window,
+): "webgl2" | undefined {
+  try {
+    const value = new URLSearchParams(window.location.search).get(
+      "babylon-backend",
+    );
+    return value === "webgl2" ? "webgl2" : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export interface OpenGameOptions {
   /** Rematch: reload and start without a second start-screen gesture. */
   readonly autoStart?: boolean;
@@ -86,6 +104,8 @@ export interface GameRendererChoiceOptions {
   readonly manifest: GameManifest;
   readonly maxRenderHeight?: number;
   readonly tvProfile?: boolean;
+  /** Benchmark override for the Babylon backend; production leaves it unset. */
+  readonly babylonBackend?: "webgpu" | "webgl2";
   readonly factories?: Partial<RendererSelectionFactories>;
   readonly createCanvas2D?: typeof createCanvas2DDevice;
 }
@@ -122,6 +142,39 @@ export type GameRendererChoice =
 export async function createGameRenderer(
   options: GameRendererChoiceOptions,
 ): Promise<GameRendererChoice> {
+  if (options.manifest.renderer === "babylon") {
+    const { createBabylonGameRenderer } = await import(
+      "../babylon/createBabylonRenderer.js"
+    );
+    const choice = await createBabylonGameRenderer({
+      canvas: options.canvas,
+      ...(options.babylonBackend !== undefined
+        ? { forceBackend: options.babylonBackend }
+        : {}),
+    });
+    if (!choice.ok) {
+      return {
+        ok: false,
+        reason: "3d-unavailable",
+        message: choice.message,
+        canvas: options.canvas,
+      };
+    }
+    try {
+      await choice.renderer.init(choice.canvas);
+    } catch (error) {
+      choice.renderer.dispose();
+      throw error;
+    }
+    return {
+      ok: true,
+      renderer: choice.renderer,
+      backend: choice.backend,
+      canvas: choice.canvas,
+      usedFallback: choice.usedFallback,
+    };
+  }
+
   if (options.manifest.renderer !== "engine") {
     const createCanvas2D = options.createCanvas2D ?? createCanvas2DDevice;
     const device = await createCanvas2D({
@@ -210,6 +263,7 @@ export function createStage(deps: StageDeps): HostStage {
     readViewportEnvironment(deps.window),
     deps.window.location.search,
   );
+  const babylonBackend = readBabylonBackendOverride(deps.window);
   const resolution = new ResolutionController();
 
   let startScreen: StartScreen | null = null;
@@ -340,6 +394,7 @@ export function createStage(deps: StageDeps): HostStage {
         manifest: loaded.manifest,
         maxRenderHeight: profile.maxRenderHeight,
         tvProfile: profile.mode === "tv",
+        ...(babylonBackend !== undefined ? { babylonBackend } : {}),
       });
       if (generation !== gameGeneration) {
         if (choice.ok) choice.renderer.dispose();

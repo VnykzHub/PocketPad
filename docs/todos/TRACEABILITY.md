@@ -381,6 +381,12 @@ Engine acceptance IDs are Gate-audited, not owned by a phone-platform stage. A r
 | ER-18-02 | Engine `Scene`, `AssetLibrary` and `RendererCapabilities` are assignable to the SDK structural projections; the negative fixture remains PENDING | Engine/QA | W1-RUNTIME | M0 |
 | ER-19-01 | Engine rig commands, result schema and exit codes are contract-tested; malformed suites and results are refused | Engine/QA | W0-CONTRACTS | M0 |
 | ER-19-11 | The shared conformance suite runs against every backend and reports each case in declaration order | Engine/QA | W0-CONTRACTS | M0 |
+| ER-21-01 | Babylon adapter helpers parse colours, round backing sizes and reject non-finite cube positions exactly like the frozen `Renderer3D` semantics | Engine/QA | W8-BABYLON | B1 |
+| ER-21-02 | `engine-cube` renders three cubes on WebGPU, reports `backend: "webgpu"` and produces a non-blank 1920×1080 screenshot; browser PASS 2026-10-23 | Engine/QA | W8-BABYLON | B1 |
+| ER-21-03 | Forced WebGL2 selects the fallback without attempting WebGPU; unit PASS and browser PASS 2026-10-23 (1920×1080, 3 draw calls, 0 errors) | Engine/QA | W8-BABYLON | B1 |
+| ER-21-08 | Babylon imports stay inside `packages/runtime/src/babylon/**` and no runtime file starts a Babylon render loop | Engine/QA | W8-BABYLON | B1 |
+| ER-21-09 | Both Babylon backends unavailable returns fixed copy with no adapter or driver text in the result | Engine/QA | W8-BABYLON | B1 |
+| ER-21-10 | `BabylonGameRenderer.dispose()` is idempotent and frees the engine exactly once; drawing before `init` is a programming error | Engine/QA | W8-BABYLON | B1 |
 
 ---
 

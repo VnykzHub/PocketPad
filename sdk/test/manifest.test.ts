@@ -200,7 +200,7 @@ describe("validateManifest (D0-SDK-01)", () => {
     expect("renderer" in manifest).toBe(false);
   });
 
-  test.each(["canvas2d", "engine"] as const)(
+  test.each(["canvas2d", "engine", "babylon"] as const)(
     "[FR-10.3] accepts renderer %s",
     (renderer) => {
       expect(validateManifest(validManifest({ renderer })).ok).toBe(true);
@@ -211,7 +211,7 @@ describe("validateManifest (D0-SDK-01)", () => {
     "[FR-10.3] rejects an invalid renderer (%j)",
     (renderer) => {
       expect(errorsFor(validManifest({ renderer }))).toEqual([
-        'renderer: must be "canvas2d" or "engine"',
+        'renderer: must be "canvas2d", "engine" or "babylon"',
       ]);
     },
   );
@@ -308,7 +308,7 @@ describe("validateManifest (D0-SDK-01)", () => {
     expect(schema.properties?.needsGyro?.type).toBe("boolean");
     expect(schema.properties?.renderer).toMatchObject({
       type: "string",
-      enum: ["canvas2d", "engine"],
+      enum: ["canvas2d", "engine", "babylon"],
     });
     expect(schema.properties?.chunkConfig?.properties?.lodTiers).toMatchObject({
       type: "array",

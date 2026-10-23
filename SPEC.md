@@ -5,7 +5,7 @@
 **Status:** Ready for Phase 1 (Dev). Phase 2 (Production) is blocked until the Dev Exit Gate passes.
 **Target site:** vynkzhub.com
 
-> **Amendment banner (2026-10-22).** A14–A18 in `docs/todos/README.md` reframe this product as a **browser-native game engine for any display** and record the renderer (custom WebGPU-first, WebGL2 reduced fallback, no Three.js), physics (Rapier behind `Physics3D`), host input (keyboard/mouse and gamepad), engine gating (D0–P6 retired for the engine track) and cross-origin isolation (COOP/COEP). Where this spec says TV-first, phone-only input or Canvas2D-only rendering, the amendments win. The wire protocol, budgets and phone/room contract are unchanged.
+> **Amendment banner (2026-10-22, updated 2026-10-23).** A14–A18 in `docs/todos/README.md` reframe this product as a **browser-native game engine for any display** and record the renderer (custom WebGPU-first, WebGL2 reduced fallback, no Three.js), physics (Rapier behind `Physics3D`), host input (keyboard/mouse and gamepad), engine gating (D0–P6 retired for the engine track) and cross-origin isolation (COOP/COEP). **A19 (2026-10-23) re-decides the renderer only: Babylon.js 9.32.0 is the engine base after the audited bake-off ([ADR-0003](docs/ADR-0003-engine-base.md)); the custom WebGPU/WebGL2 packages remain frozen in the tree, not deleted.** Where this spec says TV-first, phone-only input or Canvas2D-only rendering, the amendments win. The wire protocol, budgets and phone/room contract are unchanged.
 
 ---
 

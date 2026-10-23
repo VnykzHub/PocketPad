@@ -5,7 +5,7 @@
  * `(manifest) => Game` factory. It consumes `GameContext` only (FR-7.17) and
  * draws exclusively through the 3D surface (`setCamera`, `beginFrame`,
  * `drawCube`, `endFrame`). The host selects the renderer from the manifest's
- * `"renderer": "engine"`; this game never names a backend.
+ * `"renderer": "babylon"`; this game never names a backend.
  *
  * Scene: one large cube in the middle and two smaller satellites orbiting it.
  * The left stick orbits the camera, the A button boosts the spin. Every vector

@@ -15,7 +15,7 @@
     "build": "npm run build --workspaces --if-present",
     "typecheck": "tsc -b && npm run typecheck:games",
     "typecheck:games": "tsc -p packages/games/reaction-duel/tsconfig.json --noEmit && tsc -p packages/games/platformer/tsconfig.json --noEmit && tsc -p packages/games/engine-cube/tsconfig.json --noEmit",
-    "lint": "eslint . --ignore-pattern \".github/**\"",
+    "lint": "eslint . --ignore-pattern \".github/**\" --ignore-pattern \"references/**\" --ignore-pattern \"Game-assets/**\"",
     "test": "vitest run",
     "size": "node tools/size-budget/dist/cli.js",
     "trace": "node tools/trace-check/dist/cli.js --stage D0 && node tools/trace-check/dist/cli.js --stage D1 && node tools/trace-check/dist/cli.js --stage D2 && node tools/trace-check/dist/cli.js --stage D3 && node tools/trace-check/dist/cli.js --stage D4 && node tools/trace-check/dist/cli.js --stage D5 && node tools/trace-check/dist/cli.js --stage D6 && node tools/trace-check/dist/cli.js --stage D7",

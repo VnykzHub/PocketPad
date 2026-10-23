@@ -1,7 +1,9 @@
 # PocketPad Engine Guide
 
-**Status:** describes the code in this working tree as of 2026-10-22 (Wave 7 + the UI portability fixes).
+**Status:** describes the code in this working tree as of 2026-10-23 (Wave 7 + the UI portability fixes + the Babylon host spike).
 **Authority:** [`SPEC.md`](../SPEC.md) is the contract; this guide explains the implementation. Where the two differ, the spec wins until an amendment is recorded in [`docs/todos/README.md`](todos/README.md).
+
+> **Engine base:** A19/ADR-0003 adopts **Babylon.js 9.32.0** as the host engine base. `engine-cube` now runs through a Babylon `Renderer3D` adapter on WebGPU and WebGL2 ([spec 21](engine/21-babylon-migration.md)). The custom `packages/engine/*` renderer packages remain in the tree but are frozen for feature work; the rest of this guide still describes the custom engine, audio, assets and runtime layers.
 
 ---
 

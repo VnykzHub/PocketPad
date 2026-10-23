@@ -830,6 +830,7 @@ describe("runtime rendering stack", () => {
     ) as { dependencies?: Record<string, string> };
     const dependencyNames = Object.keys(pkg.dependencies ?? {});
     expect(dependencyNames.sort()).toEqual([
+      "@babylonjs/core",
       "@lanpad/engine-assets",
       "@lanpad/engine-core",
       "@lanpad/engine-input",
