@@ -1,0 +1,2932 @@
+{
+  "generatedAt": "2026-10-23T13:08:30.806Z",
+  "headless": true,
+  "note": "Headless Chrome through ANGLE/D3D11 on the desktop GPU named in each run's environment.renderer. Behaviour and relative-cost evidence on one desktop GPU; not target-hardware acceptance. 1080p/720p frame numbers include one unchanging showcase scene with 501 draw calls, not a game.",
+  "runs": [
+    {
+      "engine": "havok",
+      "width": 1920,
+      "height": 1080,
+      "elapsedMs": 5144,
+      "url": "http://127.0.0.1:1044/index.html?engine=havok",
+      "screenshot": "screenshots\\havok-1920x1080.png",
+      "screenshotError": null,
+      "consoleErrors": [],
+      "spike": {
+        "engine": "havok",
+        "status": "done",
+        "done": true,
+        "error": null,
+        "errors": [],
+        "boot": {
+          "wasmInitMs": 31.7,
+          "backendReportedInitMs": 31.6,
+          "firstWorldMs": 47.4,
+          "navigationToReadyMs": 452.5,
+          "backendVersion": "1.3.14",
+          "domContentLoadedMs": 381.6,
+          "loadEventMs": 382
+        },
+        "environment": {
+          "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+          "vendor": "Google Inc. (NVIDIA)",
+          "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3050 Ti Laptop GPU (0x000025A0) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+          "api": "WebGL2",
+          "crossOriginIsolated": true,
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "hardwareConcurrency": 16,
+          "devicePixelRatio": 1,
+          "viewport": {
+            "width": 1920,
+            "height": 1080
+          }
+        },
+        "scenarios": {
+          "carAcceleration": {
+            "name": "car-accel-0-50",
+            "ticks": 600,
+            "timeTo50KmhSeconds": 2.7,
+            "speedAt2sKmh": 29.8,
+            "speedAt5sKmh": 75.3,
+            "speedAt10sKmh": 122.66,
+            "distanceAt10sM": 206.92,
+            "maxLateralDeviationM": 0,
+            "maxRollDegrees": 1.35,
+            "upright": true,
+            "finite": true,
+            "final": {
+              "x": 0,
+              "y": 0.832,
+              "z": -206.921,
+              "yawDeg": 0,
+              "speedKmh": 122.66
+            },
+            "trace": [
+              {
+                "t": 0.02,
+                "speedKmh": 0,
+                "z": 0,
+                "y": 0.898
+              },
+              {
+                "t": 0.52,
+                "speedKmh": 10,
+                "z": -0.67,
+                "y": 0.832
+              },
+              {
+                "t": 1.02,
+                "speedKmh": 20.24,
+                "z": -2.8,
+                "y": 0.832
+              },
+              {
+                "t": 1.52,
+                "speedKmh": 29.8,
+                "z": -6.31,
+                "y": 0.832
+              },
+              {
+                "t": 2.02,
+                "speedKmh": 38.74,
+                "z": -11.1,
+                "y": 0.832
+              },
+              {
+                "t": 2.52,
+                "speedKmh": 47.08,
+                "z": -17.09,
+                "y": 0.832
+              },
+              {
+                "t": 3.02,
+                "speedKmh": 54.88,
+                "z": -24.2,
+                "y": 0.832
+              },
+              {
+                "t": 3.52,
+                "speedKmh": 62.16,
+                "z": -32.35,
+                "y": 0.832
+              },
+              {
+                "t": 4.02,
+                "speedKmh": 68.95,
+                "z": -41.48,
+                "y": 0.832
+              },
+              {
+                "t": 4.52,
+                "speedKmh": 75.3,
+                "z": -51.52,
+                "y": 0.832
+              },
+              {
+                "t": 5.02,
+                "speedKmh": 81.23,
+                "z": -62.42,
+                "y": 0.832
+              },
+              {
+                "t": 5.52,
+                "speedKmh": 86.77,
+                "z": -74.11,
+                "y": 0.832
+              },
+              {
+                "t": 6.02,
+                "speedKmh": 91.95,
+                "z": -86.54,
+                "y": 0.832
+              },
+              {
+                "t": 6.52,
+                "speedKmh": 96.78,
+                "z": -99.67,
+                "y": 0.832
+              },
+              {
+                "t": 7.02,
+                "speedKmh": 101.29,
+                "z": -113.44,
+                "y": 0.832
+              },
+              {
+                "t": 7.52,
+                "speedKmh": 105.51,
+                "z": -127.82,
+                "y": 0.832
+              },
+              {
+                "t": 8.02,
+                "speedKmh": 109.44,
+                "z": -142.77,
+                "y": 0.832
+              },
+              {
+                "t": 8.52,
+                "speedKmh": 113.12,
+                "z": -158.24,
+                "y": 0.832
+              },
+              {
+                "t": 9.02,
+                "speedKmh": 116.55,
+                "z": -174.21,
+                "y": 0.832
+              },
+              {
+                "t": 9.52,
+                "speedKmh": 119.76,
+                "z": -190.63,
+                "y": 0.832
+              },
+              {
+                "t": 10,
+                "speedKmh": 122.66,
+                "z": -206.92,
+                "y": 0.832
+              }
+            ]
+          },
+          "carSlalom": {
+            "name": "car-slalom",
+            "scriptedTicks": 600,
+            "entrySpeedKmh": 15.32,
+            "peakSpeedKmh": 19.99,
+            "minSpeedKmh": 14.55,
+            "finalSpeedKmh": 24.64,
+            "maxYawRateDegPerSec": 64.2,
+            "maxRollDegrees": 3.4,
+            "minUpY": 0.9982,
+            "uprightThroughout": true,
+            "lateralRangeM": 23.74,
+            "final": {
+              "x": 25.117,
+              "y": 0.832,
+              "z": -34.711,
+              "yawDeg": -14.38,
+              "speedKmh": 24.64
+            },
+            "trace": [
+              {
+                "t": 1.52,
+                "speedKmh": 15.32,
+                "z": -3.26,
+                "y": 0.832
+              },
+              {
+                "t": 1.93,
+                "speedKmh": 14.58,
+                "z": -4.99,
+                "y": 0.831
+              },
+              {
+                "t": 2.35,
+                "speedKmh": 15.62,
+                "z": -6.35,
+                "y": 0.831
+              },
+              {
+                "t": 2.77,
+                "speedKmh": 16.76,
+                "z": -7.23,
+                "y": 0.831
+              },
+              {
+                "t": 3.18,
+                "speedKmh": 18.56,
+                "z": -7.91,
+                "y": 0.831
+              },
+              {
+                "t": 3.6,
+                "speedKmh": 16.9,
+                "z": -9.21,
+                "y": 0.831
+              },
+              {
+                "t": 4.02,
+                "speedKmh": 17.48,
+                "z": -11.08,
+                "y": 0.831
+              },
+              {
+                "t": 4.43,
+                "speedKmh": 19.28,
+                "z": -13.25,
+                "y": 0.831
+              },
+              {
+                "t": 4.85,
+                "speedKmh": 17.47,
+                "z": -15.03,
+                "y": 0.831
+              },
+              {
+                "t": 5.27,
+                "speedKmh": 17.73,
+                "z": -16.04,
+                "y": 0.831
+              },
+              {
+                "t": 5.68,
+                "speedKmh": 19.52,
+                "z": -16.74,
+                "y": 0.831
+              },
+              {
+                "t": 6.1,
+                "speedKmh": 17.67,
+                "z": -18.06,
+                "y": 0.831
+              },
+              {
+                "t": 6.52,
+                "speedKmh": 17.81,
+                "z": -19.96,
+                "y": 0.831
+              },
+              {
+                "t": 6.93,
+                "speedKmh": 19.6,
+                "z": -22.17,
+                "y": 0.831
+              },
+              {
+                "t": 7.35,
+                "speedKmh": 17.74,
+                "z": -23.99,
+                "y": 0.831
+              },
+              {
+                "t": 7.77,
+                "speedKmh": 17.84,
+                "z": -25.02,
+                "y": 0.831
+              },
+              {
+                "t": 8.18,
+                "speedKmh": 19.63,
+                "z": -25.73,
+                "y": 0.831
+              },
+              {
+                "t": 8.6,
+                "speedKmh": 17.76,
+                "z": -27.05,
+                "y": 0.831
+              },
+              {
+                "t": 10,
+                "speedKmh": 24.64,
+                "z": -34.71,
+                "y": 0.832
+              }
+            ]
+          },
+          "characterStep": {
+            "name": "character-step-0.3m",
+            "ticks": 105,
+            "startY": 0.95,
+            "end": {
+              "x": 0,
+              "y": 0.95,
+              "z": -1.667,
+              "grounded": true
+            },
+            "maxY": 0.95,
+            "firstTopTick": null,
+            "climbedStep": false,
+            "passedFrontFace": false,
+            "grounded": true,
+            "hitWallTicks": 55,
+            "blockedTicks": 55,
+            "trace": [
+              {
+                "t": 0.02,
+                "x": 0,
+                "y": 0.95,
+                "z": -0.03,
+                "grounded": false
+              },
+              {
+                "t": 0.27,
+                "x": 0,
+                "y": 0.95,
+                "z": -0.53,
+                "grounded": true
+              },
+              {
+                "t": 0.52,
+                "x": 0,
+                "y": 0.95,
+                "z": -1.03,
+                "grounded": true
+              },
+              {
+                "t": 0.77,
+                "x": 0,
+                "y": 0.95,
+                "z": -1.53,
+                "grounded": true
+              },
+              {
+                "t": 1.02,
+                "x": 0,
+                "y": 0.95,
+                "z": -1.67,
+                "grounded": true
+              },
+              {
+                "t": 1.27,
+                "x": 0,
+                "y": 0.95,
+                "z": -1.67,
+                "grounded": true
+              },
+              {
+                "t": 1.52,
+                "x": 0,
+                "y": 0.95,
+                "z": -1.67,
+                "grounded": true
+              }
+            ]
+          },
+          "characterDrop": {
+            "name": "character-drop-2m",
+            "ticks": 180,
+            "leftPlatformTick": 72,
+            "landedTick": 100,
+            "fallTicks": 28,
+            "minY": 0.9522,
+            "maxFallSpeedMps": 6.069,
+            "airborneTicks": 33,
+            "end": {
+              "x": 0,
+              "y": 0.952,
+              "z": -7.006,
+              "grounded": true
+            },
+            "grounded": true,
+            "trace": [
+              {
+                "t": 0.02,
+                "x": 0,
+                "y": 2.9,
+                "z": -1.03,
+                "grounded": false
+              },
+              {
+                "t": 0.27,
+                "x": 0,
+                "y": 2.9,
+                "z": -1.53,
+                "grounded": true
+              },
+              {
+                "t": 0.52,
+                "x": 0,
+                "y": 2.9,
+                "z": -2.03,
+                "grounded": true
+              },
+              {
+                "t": 0.77,
+                "x": 0,
+                "y": 2.9,
+                "z": -2.53,
+                "grounded": true
+              },
+              {
+                "t": 1.02,
+                "x": 0,
+                "y": 2.9,
+                "z": -3.03,
+                "grounded": true
+              },
+              {
+                "t": 1.27,
+                "x": 0,
+                "y": 2.589,
+                "z": -3.54,
+                "grounded": false
+              },
+              {
+                "t": 1.52,
+                "x": 0,
+                "y": 1.685,
+                "z": -4.04,
+                "grounded": false
+              },
+              {
+                "t": 1.77,
+                "x": 0,
+                "y": 0.952,
+                "z": -4.54,
+                "grounded": true
+              },
+              {
+                "t": 2.02,
+                "x": 0,
+                "y": 0.952,
+                "z": -5.04,
+                "grounded": true
+              },
+              {
+                "t": 2.27,
+                "x": 0,
+                "y": 0.952,
+                "z": -5.54,
+                "grounded": true
+              },
+              {
+                "t": 2.52,
+                "x": 0,
+                "y": 0.952,
+                "z": -6.04,
+                "grounded": true
+              },
+              {
+                "t": 2.77,
+                "x": 0,
+                "y": 0.952,
+                "z": -6.54,
+                "grounded": true
+              }
+            ]
+          },
+          "characterWall": {
+            "name": "character-wall-slide",
+            "ticks": 150,
+            "blockedPosition": {
+              "x": 0,
+              "y": 0.95,
+              "z": -2,
+              "grounded": true
+            },
+            "final": {
+              "x": 2.121,
+              "y": 0.95,
+              "z": -2.401,
+              "grounded": true
+            },
+            "stoppedAtZ": -2.401,
+            "slidAlongX": true,
+            "hitWallTicks": 0,
+            "grounded": true
+          },
+          "determinism": {
+            "name": "determinism",
+            "ticks": 240,
+            "identical": true,
+            "firstDivergenceTick": -1,
+            "finalHashA": "34a1f02f",
+            "finalHashB": "34a1f02f",
+            "hashAt60A": "d5559b49",
+            "hashAt60B": "d5559b49"
+          }
+        },
+        "probe": null,
+        "benchmark": {
+          "dynamicBodies": 500,
+          "physics": {
+            "count": 300,
+            "p50": 0.255,
+            "p95": 0.31,
+            "p99": 0.44,
+            "min": 0.21,
+            "max": 0.59,
+            "mean": 0.2552,
+            "totalMs": 76.69,
+            "stepsPerSecond": 3912.1,
+            "p95PercentOf16_67ms": 1.9,
+            "dynamicBodies": 500
+          },
+          "frames": {
+            "width": 1920,
+            "height": 1080,
+            "samples": 235,
+            "frameIntervalMs": {
+              "count": 235,
+              "p50": 8.33,
+              "p95": 8.525,
+              "p99": 8.85,
+              "min": 4.555,
+              "max": 27.62,
+              "mean": 8.389
+            },
+            "stepPlusRenderMs": {
+              "count": 235,
+              "p50": 3.135,
+              "p95": 5.79,
+              "p99": 6.955,
+              "min": 1.905,
+              "max": 27.34,
+              "mean": 3.56
+            },
+            "engineDeltaMs": {
+              "count": 235,
+              "p50": 0,
+              "p95": 0,
+              "p99": 0,
+              "min": 0,
+              "max": 0,
+              "mean": 0
+            },
+            "drawCalls": 501,
+            "activeMeshes": 501,
+            "fpsFromInterval": 119.2
+          }
+        },
+        "showcase": {
+          "screenshotReady": true,
+          "car": {
+            "x": 1.641,
+            "y": 0.831,
+            "z": -10.654
+          },
+          "character": {
+            "x": 3.2,
+            "y": 0.95,
+            "z": -1,
+            "grounded": true
+          }
+        },
+        "resources": [
+          {
+            "name": "index-DGnlGPrx.js",
+            "initiatorType": "script",
+            "transferSize": 1233845,
+            "encodedBodySize": 1233545,
+            "decodedBodySize": 1233545,
+            "durationMs": 12.92
+          },
+          {
+            "name": "havok-C6gEZstW.js",
+            "initiatorType": "script",
+            "transferSize": 137799,
+            "encodedBodySize": 137499,
+            "decodedBodySize": 137499,
+            "durationMs": 3.2
+          },
+          {
+            "name": "favicon.ico",
+            "initiatorType": "other",
+            "transferSize": 309,
+            "encodedBodySize": 9,
+            "decodedBodySize": 9,
+            "durationMs": 4.22
+          },
+          {
+            "name": "HavokPhysics-BqNY-4N9.wasm",
+            "initiatorType": "fetch",
+            "transferSize": 2094863,
+            "encodedBodySize": 2094563,
+            "decodedBodySize": 2094563,
+            "durationMs": 17.97
+          },
+          {
+            "name": "default.vertex-C230Wxbn.js",
+            "initiatorType": "script",
+            "transferSize": 19968,
+            "encodedBodySize": 19668,
+            "decodedBodySize": 19668,
+            "durationMs": 5.54
+          },
+          {
+            "name": "logDepthDeclaration-DMb8Zsa8.js",
+            "initiatorType": "script",
+            "transferSize": 2467,
+            "encodedBodySize": 2167,
+            "decodedBodySize": 2167,
+            "durationMs": 5.89
+          },
+          {
+            "name": "helperFunctions-CL-mhAUv.js",
+            "initiatorType": "script",
+            "transferSize": 7114,
+            "encodedBodySize": 6814,
+            "decodedBodySize": 6814,
+            "durationMs": 5.94
+          },
+          {
+            "name": "vertexColorMixing-UCGukeO3.js",
+            "initiatorType": "script",
+            "transferSize": 10722,
+            "encodedBodySize": 10422,
+            "decodedBodySize": 10422,
+            "durationMs": 6.09
+          },
+          {
+            "name": "default.fragment-mnFm7Z4g.js",
+            "initiatorType": "script",
+            "transferSize": 110810,
+            "encodedBodySize": 110510,
+            "decodedBodySize": 110510,
+            "durationMs": 6.78
+          },
+          {
+            "name": "fogFragment-BYTpR7dp.js",
+            "initiatorType": "script",
+            "transferSize": 2500,
+            "encodedBodySize": 2200,
+            "decodedBodySize": 2200,
+            "durationMs": 6.23
+          }
+        ]
+      }
+    },
+    {
+      "engine": "rapier",
+      "width": 1920,
+      "height": 1080,
+      "elapsedMs": 4722,
+      "url": "http://127.0.0.1:1044/index.html?engine=rapier",
+      "screenshot": "screenshots\\rapier-1920x1080.png",
+      "screenshotError": null,
+      "consoleErrors": [],
+      "spike": {
+        "engine": "rapier",
+        "status": "done",
+        "done": true,
+        "error": null,
+        "errors": [],
+        "boot": {
+          "wasmInitMs": 29.9,
+          "backendReportedInitMs": 29.8,
+          "firstWorldMs": 36.1,
+          "navigationToReadyMs": 486.6,
+          "backendVersion": "0.21.0",
+          "domContentLoadedMs": 400.7,
+          "loadEventMs": 401.2
+        },
+        "environment": {
+          "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+          "vendor": "Google Inc. (NVIDIA)",
+          "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3050 Ti Laptop GPU (0x000025A0) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+          "api": "WebGL2",
+          "crossOriginIsolated": true,
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "hardwareConcurrency": 16,
+          "devicePixelRatio": 1,
+          "viewport": {
+            "width": 1920,
+            "height": 1080
+          }
+        },
+        "scenarios": {
+          "carAcceleration": {
+            "name": "car-accel-0-50",
+            "ticks": 600,
+            "timeTo50KmhSeconds": 2.617,
+            "speedAt2sKmh": 30.99,
+            "speedAt5sKmh": 77.34,
+            "speedAt10sKmh": 125.61,
+            "distanceAt10sM": 212.56,
+            "maxLateralDeviationM": 0,
+            "maxRollDegrees": 1.41,
+            "upright": true,
+            "finite": true,
+            "final": {
+              "x": 0,
+              "y": 0.838,
+              "z": -212.564,
+              "yawDeg": 0,
+              "speedKmh": 125.61
+            },
+            "trace": [
+              {
+                "t": 0.02,
+                "speedKmh": 0,
+                "z": 0,
+                "y": 0.898
+              },
+              {
+                "t": 0.52,
+                "speedKmh": 10.82,
+                "z": -0.76,
+                "y": 0.838
+              },
+              {
+                "t": 1.02,
+                "speedKmh": 21.25,
+                "z": -3.03,
+                "y": 0.838
+              },
+              {
+                "t": 1.52,
+                "speedKmh": 30.99,
+                "z": -6.69,
+                "y": 0.838
+              },
+              {
+                "t": 2.02,
+                "speedKmh": 40.09,
+                "z": -11.65,
+                "y": 0.838
+              },
+              {
+                "t": 2.52,
+                "speedKmh": 48.59,
+                "z": -17.84,
+                "y": 0.838
+              },
+              {
+                "t": 3.02,
+                "speedKmh": 56.53,
+                "z": -25.17,
+                "y": 0.838
+              },
+              {
+                "t": 3.52,
+                "speedKmh": 63.95,
+                "z": -33.57,
+                "y": 0.838
+              },
+              {
+                "t": 4.02,
+                "speedKmh": 70.87,
+                "z": -42.96,
+                "y": 0.838
+              },
+              {
+                "t": 4.52,
+                "speedKmh": 77.34,
+                "z": -53.27,
+                "y": 0.838
+              },
+              {
+                "t": 5.02,
+                "speedKmh": 83.39,
+                "z": -64.46,
+                "y": 0.838
+              },
+              {
+                "t": 5.52,
+                "speedKmh": 89.03,
+                "z": -76.46,
+                "y": 0.838
+              },
+              {
+                "t": 6.02,
+                "speedKmh": 94.31,
+                "z": -89.21,
+                "y": 0.838
+              },
+              {
+                "t": 6.52,
+                "speedKmh": 99.23,
+                "z": -102.67,
+                "y": 0.838
+              },
+              {
+                "t": 7.02,
+                "speedKmh": 103.83,
+                "z": -116.79,
+                "y": 0.838
+              },
+              {
+                "t": 7.52,
+                "speedKmh": 108.13,
+                "z": -131.53,
+                "y": 0.838
+              },
+              {
+                "t": 8.02,
+                "speedKmh": 112.14,
+                "z": -146.85,
+                "y": 0.838
+              },
+              {
+                "t": 8.52,
+                "speedKmh": 115.89,
+                "z": -162.7,
+                "y": 0.838
+              },
+              {
+                "t": 9.02,
+                "speedKmh": 119.39,
+                "z": -179.06,
+                "y": 0.838
+              },
+              {
+                "t": 9.52,
+                "speedKmh": 122.66,
+                "z": -195.88,
+                "y": 0.838
+              },
+              {
+                "t": 10,
+                "speedKmh": 125.61,
+                "z": -212.56,
+                "y": 0.838
+              }
+            ]
+          },
+          "carSlalom": {
+            "name": "car-slalom",
+            "scriptedTicks": 600,
+            "entrySpeedKmh": 16.19,
+            "peakSpeedKmh": 28.87,
+            "minSpeedKmh": 16.19,
+            "finalSpeedKmh": 34.34,
+            "maxYawRateDegPerSec": 66.6,
+            "maxRollDegrees": 0.6,
+            "minUpY": 0.9999,
+            "uprightThroughout": true,
+            "lateralRangeM": 35.9,
+            "final": {
+              "x": 39.809,
+              "y": 0.838,
+              "z": -43.542,
+              "yawDeg": -27.11,
+              "speedKmh": 34.34
+            },
+            "trace": [
+              {
+                "t": 1.52,
+                "speedKmh": 16.19,
+                "z": -3.48,
+                "y": 0.838
+              },
+              {
+                "t": 1.93,
+                "speedKmh": 16.65,
+                "z": -5.36,
+                "y": 0.838
+              },
+              {
+                "t": 2.35,
+                "speedKmh": 17.89,
+                "z": -6.95,
+                "y": 0.838
+              },
+              {
+                "t": 2.77,
+                "speedKmh": 19.65,
+                "z": -7.9,
+                "y": 0.838
+              },
+              {
+                "t": 3.18,
+                "speedKmh": 21.97,
+                "z": -8.61,
+                "y": 0.838
+              },
+              {
+                "t": 3.6,
+                "speedKmh": 21.8,
+                "z": -10.01,
+                "y": 0.838
+              },
+              {
+                "t": 4.02,
+                "speedKmh": 22.48,
+                "z": -12.14,
+                "y": 0.838
+              },
+              {
+                "t": 4.43,
+                "speedKmh": 24.36,
+                "z": -14.68,
+                "y": 0.838
+              },
+              {
+                "t": 4.85,
+                "speedKmh": 24.07,
+                "z": -16.85,
+                "y": 0.838
+              },
+              {
+                "t": 5.27,
+                "speedKmh": 24.5,
+                "z": -18.27,
+                "y": 0.838
+              },
+              {
+                "t": 5.68,
+                "speedKmh": 26.17,
+                "z": -19.26,
+                "y": 0.838
+              },
+              {
+                "t": 6.1,
+                "speedKmh": 25.79,
+                "z": -20.92,
+                "y": 0.838
+              },
+              {
+                "t": 6.52,
+                "speedKmh": 26.05,
+                "z": -23.33,
+                "y": 0.838
+              },
+              {
+                "t": 6.93,
+                "speedKmh": 27.57,
+                "z": -26.18,
+                "y": 0.838
+              },
+              {
+                "t": 7.35,
+                "speedKmh": 27.12,
+                "z": -28.63,
+                "y": 0.838
+              },
+              {
+                "t": 7.77,
+                "speedKmh": 27.26,
+                "z": -30.29,
+                "y": 0.838
+              },
+              {
+                "t": 8.18,
+                "speedKmh": 28.67,
+                "z": -31.46,
+                "y": 0.838
+              },
+              {
+                "t": 8.6,
+                "speedKmh": 28.18,
+                "z": -33.29,
+                "y": 0.838
+              },
+              {
+                "t": 10,
+                "speedKmh": 34.34,
+                "z": -43.54,
+                "y": 0.838
+              }
+            ]
+          },
+          "characterStep": {
+            "name": "character-step-0.3m",
+            "ticks": 105,
+            "startY": 0.95,
+            "end": {
+              "x": -0.002,
+              "y": 0.834,
+              "z": -1.699,
+              "grounded": true
+            },
+            "maxY": 0.95,
+            "firstTopTick": null,
+            "climbedStep": false,
+            "passedFrontFace": false,
+            "grounded": true,
+            "hitWallTicks": 54,
+            "blockedTicks": 54,
+            "trace": [
+              {
+                "t": 0.02,
+                "x": 0,
+                "y": 0.947,
+                "z": -0.03,
+                "grounded": false
+              },
+              {
+                "t": 0.27,
+                "x": 0,
+                "y": 0.835,
+                "z": -0.53,
+                "grounded": true
+              },
+              {
+                "t": 0.52,
+                "x": 0,
+                "y": 0.833,
+                "z": -1.03,
+                "grounded": true
+              },
+              {
+                "t": 0.77,
+                "x": 0,
+                "y": 0.832,
+                "z": -1.53,
+                "grounded": true
+              },
+              {
+                "t": 1.02,
+                "x": 0,
+                "y": 0.833,
+                "z": -1.7,
+                "grounded": true
+              },
+              {
+                "t": 1.27,
+                "x": 0,
+                "y": 0.833,
+                "z": -1.7,
+                "grounded": true
+              },
+              {
+                "t": 1.52,
+                "x": 0,
+                "y": 0.834,
+                "z": -1.7,
+                "grounded": true
+              }
+            ]
+          },
+          "characterDrop": {
+            "name": "character-drop-2m",
+            "ticks": 180,
+            "leftPlatformTick": 73,
+            "landedTick": 104,
+            "fallTicks": 31,
+            "minY": 0.8954,
+            "maxFallSpeedMps": 5.886,
+            "airborneTicks": 36,
+            "end": {
+              "x": 0,
+              "y": 0.897,
+              "z": -7,
+              "grounded": true
+            },
+            "grounded": true,
+            "trace": [
+              {
+                "t": 0.02,
+                "x": 0,
+                "y": 2.897,
+                "z": -1.03,
+                "grounded": false
+              },
+              {
+                "t": 0.27,
+                "x": 0,
+                "y": 2.899,
+                "z": -1.53,
+                "grounded": true
+              },
+              {
+                "t": 0.52,
+                "x": 0,
+                "y": 2.9,
+                "z": -2.03,
+                "grounded": true
+              },
+              {
+                "t": 0.77,
+                "x": 0,
+                "y": 2.901,
+                "z": -2.53,
+                "grounded": true
+              },
+              {
+                "t": 1.02,
+                "x": 0,
+                "y": 2.901,
+                "z": -3.03,
+                "grounded": true
+              },
+              {
+                "t": 1.27,
+                "x": 0,
+                "y": 2.661,
+                "z": -3.53,
+                "grounded": false
+              },
+              {
+                "t": 1.52,
+                "x": 0,
+                "y": 2.047,
+                "z": -4.03,
+                "grounded": false
+              },
+              {
+                "t": 1.77,
+                "x": 0,
+                "y": 0.899,
+                "z": -4.53,
+                "grounded": true
+              },
+              {
+                "t": 2.02,
+                "x": 0,
+                "y": 0.896,
+                "z": -5.03,
+                "grounded": true
+              },
+              {
+                "t": 2.27,
+                "x": 0,
+                "y": 0.898,
+                "z": -5.53,
+                "grounded": true
+              },
+              {
+                "t": 2.52,
+                "x": 0,
+                "y": 0.897,
+                "z": -6.03,
+                "grounded": true
+              },
+              {
+                "t": 2.77,
+                "x": 0,
+                "y": 0.895,
+                "z": -6.53,
+                "grounded": true
+              }
+            ]
+          },
+          "characterWall": {
+            "name": "character-wall-slide",
+            "ticks": 150,
+            "blockedPosition": {
+              "x": -0.001,
+              "y": 0.833,
+              "z": -1.996,
+              "grounded": true
+            },
+            "final": {
+              "x": 2.108,
+              "y": 0.9,
+              "z": -2.449,
+              "grounded": true
+            },
+            "stoppedAtZ": -2.449,
+            "slidAlongX": true,
+            "hitWallTicks": 71,
+            "grounded": true
+          },
+          "determinism": {
+            "name": "determinism",
+            "ticks": 240,
+            "identical": true,
+            "firstDivergenceTick": -1,
+            "finalHashA": "d7d66da3",
+            "finalHashB": "d7d66da3",
+            "hashAt60A": "4c0b2f1e",
+            "hashAt60B": "4c0b2f1e"
+          }
+        },
+        "probe": null,
+        "benchmark": {
+          "dynamicBodies": 500,
+          "physics": {
+            "count": 300,
+            "p50": 0.295,
+            "p95": 0.47,
+            "p99": 0.585,
+            "min": 0.27,
+            "max": 3.08,
+            "mean": 0.3327,
+            "totalMs": 100.04,
+            "stepsPerSecond": 2998.8,
+            "p95PercentOf16_67ms": 2.8,
+            "dynamicBodies": 500
+          },
+          "frames": {
+            "width": 1920,
+            "height": 1080,
+            "samples": 235,
+            "frameIntervalMs": {
+              "count": 235,
+              "p50": 8.335,
+              "p95": 8.495,
+              "p99": 8.9,
+              "min": 6.985,
+              "max": 17.95,
+              "mean": 8.368
+            },
+            "stepPlusRenderMs": {
+              "count": 235,
+              "p50": 2.165,
+              "p95": 3.535,
+              "p99": 4.475,
+              "min": 1.565,
+              "max": 17.745,
+              "mean": 2.404
+            },
+            "engineDeltaMs": {
+              "count": 235,
+              "p50": 0,
+              "p95": 0,
+              "p99": 0,
+              "min": 0,
+              "max": 0,
+              "mean": 0
+            },
+            "drawCalls": 501,
+            "activeMeshes": 501,
+            "fpsFromInterval": 119.5
+          }
+        },
+        "showcase": {
+          "screenshotReady": true,
+          "car": {
+            "x": 1.821,
+            "y": 0.838,
+            "z": -11.273
+          },
+          "character": {
+            "x": 3.198,
+            "y": 0.899,
+            "z": -0.998,
+            "grounded": true
+          }
+        },
+        "resources": [
+          {
+            "name": "index-DGnlGPrx.js",
+            "initiatorType": "script",
+            "transferSize": 1233845,
+            "encodedBodySize": 1233545,
+            "decodedBodySize": 1233545,
+            "durationMs": 20.66
+          },
+          {
+            "name": "rapier-BM6GS3Pd.js",
+            "initiatorType": "script",
+            "transferSize": 4403527,
+            "encodedBodySize": 4403227,
+            "decodedBodySize": 4403227,
+            "durationMs": 39.44
+          },
+          {
+            "name": "favicon.ico",
+            "initiatorType": "other",
+            "transferSize": 309,
+            "encodedBodySize": 9,
+            "decodedBodySize": 9,
+            "durationMs": 5.46
+          },
+          {
+            "name": "default.vertex-C230Wxbn.js",
+            "initiatorType": "script",
+            "transferSize": 19968,
+            "encodedBodySize": 19668,
+            "decodedBodySize": 19668,
+            "durationMs": 4.54
+          },
+          {
+            "name": "logDepthDeclaration-DMb8Zsa8.js",
+            "initiatorType": "script",
+            "transferSize": 2467,
+            "encodedBodySize": 2167,
+            "decodedBodySize": 2167,
+            "durationMs": 4.33
+          },
+          {
+            "name": "helperFunctions-CL-mhAUv.js",
+            "initiatorType": "script",
+            "transferSize": 7114,
+            "encodedBodySize": 6814,
+            "decodedBodySize": 6814,
+            "durationMs": 4.97
+          },
+          {
+            "name": "vertexColorMixing-UCGukeO3.js",
+            "initiatorType": "script",
+            "transferSize": 10722,
+            "encodedBodySize": 10422,
+            "decodedBodySize": 10422,
+            "durationMs": 4.69
+          },
+          {
+            "name": "default.fragment-mnFm7Z4g.js",
+            "initiatorType": "script",
+            "transferSize": 110810,
+            "encodedBodySize": 110510,
+            "decodedBodySize": 110510,
+            "durationMs": 4.94
+          },
+          {
+            "name": "fogFragment-BYTpR7dp.js",
+            "initiatorType": "script",
+            "transferSize": 2500,
+            "encodedBodySize": 2200,
+            "decodedBodySize": 2200,
+            "durationMs": 4.69
+          }
+        ]
+      }
+    },
+    {
+      "engine": "havok",
+      "width": 1280,
+      "height": 720,
+      "elapsedMs": 4678,
+      "url": "http://127.0.0.1:1044/index.html?engine=havok",
+      "screenshot": "screenshots\\havok-1280x720.png",
+      "screenshotError": null,
+      "consoleErrors": [],
+      "spike": {
+        "engine": "havok",
+        "status": "done",
+        "done": true,
+        "error": null,
+        "errors": [],
+        "boot": {
+          "wasmInitMs": 23.3,
+          "backendReportedInitMs": 23.2,
+          "firstWorldMs": 38.8,
+          "navigationToReadyMs": 439.2,
+          "backendVersion": "1.3.14",
+          "domContentLoadedMs": 384.1,
+          "loadEventMs": 384.6
+        },
+        "environment": {
+          "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+          "vendor": "Google Inc. (NVIDIA)",
+          "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3050 Ti Laptop GPU (0x000025A0) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+          "api": "WebGL2",
+          "crossOriginIsolated": true,
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "hardwareConcurrency": 16,
+          "devicePixelRatio": 1,
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "scenarios": {
+          "carAcceleration": {
+            "name": "car-accel-0-50",
+            "ticks": 600,
+            "timeTo50KmhSeconds": 2.7,
+            "speedAt2sKmh": 29.8,
+            "speedAt5sKmh": 75.3,
+            "speedAt10sKmh": 122.66,
+            "distanceAt10sM": 206.92,
+            "maxLateralDeviationM": 0,
+            "maxRollDegrees": 1.35,
+            "upright": true,
+            "finite": true,
+            "final": {
+              "x": 0,
+              "y": 0.832,
+              "z": -206.921,
+              "yawDeg": 0,
+              "speedKmh": 122.66
+            },
+            "trace": [
+              {
+                "t": 0.02,
+                "speedKmh": 0,
+                "z": 0,
+                "y": 0.898
+              },
+              {
+                "t": 0.52,
+                "speedKmh": 10,
+                "z": -0.67,
+                "y": 0.832
+              },
+              {
+                "t": 1.02,
+                "speedKmh": 20.24,
+                "z": -2.8,
+                "y": 0.832
+              },
+              {
+                "t": 1.52,
+                "speedKmh": 29.8,
+                "z": -6.31,
+                "y": 0.832
+              },
+              {
+                "t": 2.02,
+                "speedKmh": 38.74,
+                "z": -11.1,
+                "y": 0.832
+              },
+              {
+                "t": 2.52,
+                "speedKmh": 47.08,
+                "z": -17.09,
+                "y": 0.832
+              },
+              {
+                "t": 3.02,
+                "speedKmh": 54.88,
+                "z": -24.2,
+                "y": 0.832
+              },
+              {
+                "t": 3.52,
+                "speedKmh": 62.16,
+                "z": -32.35,
+                "y": 0.832
+              },
+              {
+                "t": 4.02,
+                "speedKmh": 68.95,
+                "z": -41.48,
+                "y": 0.832
+              },
+              {
+                "t": 4.52,
+                "speedKmh": 75.3,
+                "z": -51.52,
+                "y": 0.832
+              },
+              {
+                "t": 5.02,
+                "speedKmh": 81.23,
+                "z": -62.42,
+                "y": 0.832
+              },
+              {
+                "t": 5.52,
+                "speedKmh": 86.77,
+                "z": -74.11,
+                "y": 0.832
+              },
+              {
+                "t": 6.02,
+                "speedKmh": 91.95,
+                "z": -86.54,
+                "y": 0.832
+              },
+              {
+                "t": 6.52,
+                "speedKmh": 96.78,
+                "z": -99.67,
+                "y": 0.832
+              },
+              {
+                "t": 7.02,
+                "speedKmh": 101.29,
+                "z": -113.44,
+                "y": 0.832
+              },
+              {
+                "t": 7.52,
+                "speedKmh": 105.51,
+                "z": -127.82,
+                "y": 0.832
+              },
+              {
+                "t": 8.02,
+                "speedKmh": 109.44,
+                "z": -142.77,
+                "y": 0.832
+              },
+              {
+                "t": 8.52,
+                "speedKmh": 113.12,
+                "z": -158.24,
+                "y": 0.832
+              },
+              {
+                "t": 9.02,
+                "speedKmh": 116.55,
+                "z": -174.21,
+                "y": 0.832
+              },
+              {
+                "t": 9.52,
+                "speedKmh": 119.76,
+                "z": -190.63,
+                "y": 0.832
+              },
+              {
+                "t": 10,
+                "speedKmh": 122.66,
+                "z": -206.92,
+                "y": 0.832
+              }
+            ]
+          },
+          "carSlalom": {
+            "name": "car-slalom",
+            "scriptedTicks": 600,
+            "entrySpeedKmh": 15.32,
+            "peakSpeedKmh": 19.99,
+            "minSpeedKmh": 14.55,
+            "finalSpeedKmh": 24.64,
+            "maxYawRateDegPerSec": 64.2,
+            "maxRollDegrees": 3.4,
+            "minUpY": 0.9982,
+            "uprightThroughout": true,
+            "lateralRangeM": 23.74,
+            "final": {
+              "x": 25.117,
+              "y": 0.832,
+              "z": -34.711,
+              "yawDeg": -14.38,
+              "speedKmh": 24.64
+            },
+            "trace": [
+              {
+                "t": 1.52,
+                "speedKmh": 15.32,
+                "z": -3.26,
+                "y": 0.832
+              },
+              {
+                "t": 1.93,
+                "speedKmh": 14.58,
+                "z": -4.99,
+                "y": 0.831
+              },
+              {
+                "t": 2.35,
+                "speedKmh": 15.62,
+                "z": -6.35,
+                "y": 0.831
+              },
+              {
+                "t": 2.77,
+                "speedKmh": 16.76,
+                "z": -7.23,
+                "y": 0.831
+              },
+              {
+                "t": 3.18,
+                "speedKmh": 18.56,
+                "z": -7.91,
+                "y": 0.831
+              },
+              {
+                "t": 3.6,
+                "speedKmh": 16.9,
+                "z": -9.21,
+                "y": 0.831
+              },
+              {
+                "t": 4.02,
+                "speedKmh": 17.48,
+                "z": -11.08,
+                "y": 0.831
+              },
+              {
+                "t": 4.43,
+                "speedKmh": 19.28,
+                "z": -13.25,
+                "y": 0.831
+              },
+              {
+                "t": 4.85,
+                "speedKmh": 17.47,
+                "z": -15.03,
+                "y": 0.831
+              },
+              {
+                "t": 5.27,
+                "speedKmh": 17.73,
+                "z": -16.04,
+                "y": 0.831
+              },
+              {
+                "t": 5.68,
+                "speedKmh": 19.52,
+                "z": -16.74,
+                "y": 0.831
+              },
+              {
+                "t": 6.1,
+                "speedKmh": 17.67,
+                "z": -18.06,
+                "y": 0.831
+              },
+              {
+                "t": 6.52,
+                "speedKmh": 17.81,
+                "z": -19.96,
+                "y": 0.831
+              },
+              {
+                "t": 6.93,
+                "speedKmh": 19.6,
+                "z": -22.17,
+                "y": 0.831
+              },
+              {
+                "t": 7.35,
+                "speedKmh": 17.74,
+                "z": -23.99,
+                "y": 0.831
+              },
+              {
+                "t": 7.77,
+                "speedKmh": 17.84,
+                "z": -25.02,
+                "y": 0.831
+              },
+              {
+                "t": 8.18,
+                "speedKmh": 19.63,
+                "z": -25.73,
+                "y": 0.831
+              },
+              {
+                "t": 8.6,
+                "speedKmh": 17.76,
+                "z": -27.05,
+                "y": 0.831
+              },
+              {
+                "t": 10,
+                "speedKmh": 24.64,
+                "z": -34.71,
+                "y": 0.832
+              }
+            ]
+          },
+          "characterStep": {
+            "name": "character-step-0.3m",
+            "ticks": 105,
+            "startY": 0.95,
+            "end": {
+              "x": 0,
+              "y": 0.95,
+              "z": -1.667,
+              "grounded": true
+            },
+            "maxY": 0.95,
+            "firstTopTick": null,
+            "climbedStep": false,
+            "passedFrontFace": false,
+            "grounded": true,
+            "hitWallTicks": 55,
+            "blockedTicks": 55,
+            "trace": [
+              {
+                "t": 0.02,
+                "x": 0,
+                "y": 0.95,
+                "z": -0.03,
+                "grounded": false
+              },
+              {
+                "t": 0.27,
+                "x": 0,
+                "y": 0.95,
+                "z": -0.53,
+                "grounded": true
+              },
+              {
+                "t": 0.52,
+                "x": 0,
+                "y": 0.95,
+                "z": -1.03,
+                "grounded": true
+              },
+              {
+                "t": 0.77,
+                "x": 0,
+                "y": 0.95,
+                "z": -1.53,
+                "grounded": true
+              },
+              {
+                "t": 1.02,
+                "x": 0,
+                "y": 0.95,
+                "z": -1.67,
+                "grounded": true
+              },
+              {
+                "t": 1.27,
+                "x": 0,
+                "y": 0.95,
+                "z": -1.67,
+                "grounded": true
+              },
+              {
+                "t": 1.52,
+                "x": 0,
+                "y": 0.95,
+                "z": -1.67,
+                "grounded": true
+              }
+            ]
+          },
+          "characterDrop": {
+            "name": "character-drop-2m",
+            "ticks": 180,
+            "leftPlatformTick": 72,
+            "landedTick": 100,
+            "fallTicks": 28,
+            "minY": 0.9522,
+            "maxFallSpeedMps": 6.069,
+            "airborneTicks": 33,
+            "end": {
+              "x": 0,
+              "y": 0.952,
+              "z": -7.006,
+              "grounded": true
+            },
+            "grounded": true,
+            "trace": [
+              {
+                "t": 0.02,
+                "x": 0,
+                "y": 2.9,
+                "z": -1.03,
+                "grounded": false
+              },
+              {
+                "t": 0.27,
+                "x": 0,
+                "y": 2.9,
+                "z": -1.53,
+                "grounded": true
+              },
+              {
+                "t": 0.52,
+                "x": 0,
+                "y": 2.9,
+                "z": -2.03,
+                "grounded": true
+              },
+              {
+                "t": 0.77,
+                "x": 0,
+                "y": 2.9,
+                "z": -2.53,
+                "grounded": true
+              },
+              {
+                "t": 1.02,
+                "x": 0,
+                "y": 2.9,
+                "z": -3.03,
+                "grounded": true
+              },
+              {
+                "t": 1.27,
+                "x": 0,
+                "y": 2.589,
+                "z": -3.54,
+                "grounded": false
+              },
+              {
+                "t": 1.52,
+                "x": 0,
+                "y": 1.685,
+                "z": -4.04,
+                "grounded": false
+              },
+              {
+                "t": 1.77,
+                "x": 0,
+                "y": 0.952,
+                "z": -4.54,
+                "grounded": true
+              },
+              {
+                "t": 2.02,
+                "x": 0,
+                "y": 0.952,
+                "z": -5.04,
+                "grounded": true
+              },
+              {
+                "t": 2.27,
+                "x": 0,
+                "y": 0.952,
+                "z": -5.54,
+                "grounded": true
+              },
+              {
+                "t": 2.52,
+                "x": 0,
+                "y": 0.952,
+                "z": -6.04,
+                "grounded": true
+              },
+              {
+                "t": 2.77,
+                "x": 0,
+                "y": 0.952,
+                "z": -6.54,
+                "grounded": true
+              }
+            ]
+          },
+          "characterWall": {
+            "name": "character-wall-slide",
+            "ticks": 150,
+            "blockedPosition": {
+              "x": 0,
+              "y": 0.95,
+              "z": -2,
+              "grounded": true
+            },
+            "final": {
+              "x": 2.121,
+              "y": 0.95,
+              "z": -2.401,
+              "grounded": true
+            },
+            "stoppedAtZ": -2.401,
+            "slidAlongX": true,
+            "hitWallTicks": 0,
+            "grounded": true
+          },
+          "determinism": {
+            "name": "determinism",
+            "ticks": 240,
+            "identical": true,
+            "firstDivergenceTick": -1,
+            "finalHashA": "34a1f02f",
+            "finalHashB": "34a1f02f",
+            "hashAt60A": "d5559b49",
+            "hashAt60B": "d5559b49"
+          }
+        },
+        "probe": null,
+        "benchmark": {
+          "dynamicBodies": 500,
+          "physics": {
+            "count": 300,
+            "p50": 0.275,
+            "p95": 0.5,
+            "p99": 0.57,
+            "min": 0.23,
+            "max": 0.85,
+            "mean": 0.3163,
+            "totalMs": 95.11,
+            "stepsPerSecond": 3154.2,
+            "p95PercentOf16_67ms": 3,
+            "dynamicBodies": 500
+          },
+          "frames": {
+            "width": 1280,
+            "height": 720,
+            "samples": 235,
+            "frameIntervalMs": {
+              "count": 235,
+              "p50": 8.335,
+              "p95": 8.515,
+              "p99": 9.86,
+              "min": 4.225,
+              "max": 29.84,
+              "mean": 8.407
+            },
+            "stepPlusRenderMs": {
+              "count": 235,
+              "p50": 2.37,
+              "p95": 4.915,
+              "p99": 9.425,
+              "min": 1.835,
+              "max": 29.545,
+              "mean": 2.872
+            },
+            "engineDeltaMs": {
+              "count": 235,
+              "p50": 0,
+              "p95": 0,
+              "p99": 0,
+              "min": 0,
+              "max": 0,
+              "mean": 0
+            },
+            "drawCalls": 501,
+            "activeMeshes": 501,
+            "fpsFromInterval": 118.9
+          }
+        },
+        "showcase": {
+          "screenshotReady": true,
+          "car": {
+            "x": 1.641,
+            "y": 0.831,
+            "z": -10.654
+          },
+          "character": {
+            "x": 3.2,
+            "y": 0.95,
+            "z": -1,
+            "grounded": true
+          }
+        },
+        "resources": [
+          {
+            "name": "index-DGnlGPrx.js",
+            "initiatorType": "script",
+            "transferSize": 1233845,
+            "encodedBodySize": 1233545,
+            "decodedBodySize": 1233545,
+            "durationMs": 32.34
+          },
+          {
+            "name": "havok-C6gEZstW.js",
+            "initiatorType": "script",
+            "transferSize": 137799,
+            "encodedBodySize": 137499,
+            "decodedBodySize": 137499,
+            "durationMs": 2.9
+          },
+          {
+            "name": "favicon.ico",
+            "initiatorType": "other",
+            "transferSize": 309,
+            "encodedBodySize": 9,
+            "decodedBodySize": 9,
+            "durationMs": 3.09
+          },
+          {
+            "name": "HavokPhysics-BqNY-4N9.wasm",
+            "initiatorType": "fetch",
+            "transferSize": 2094863,
+            "encodedBodySize": 2094563,
+            "decodedBodySize": 2094563,
+            "durationMs": 7.16
+          },
+          {
+            "name": "default.vertex-C230Wxbn.js",
+            "initiatorType": "script",
+            "transferSize": 19968,
+            "encodedBodySize": 19668,
+            "decodedBodySize": 19668,
+            "durationMs": 6.03
+          },
+          {
+            "name": "logDepthDeclaration-DMb8Zsa8.js",
+            "initiatorType": "script",
+            "transferSize": 2467,
+            "encodedBodySize": 2167,
+            "decodedBodySize": 2167,
+            "durationMs": 5.73
+          },
+          {
+            "name": "helperFunctions-CL-mhAUv.js",
+            "initiatorType": "script",
+            "transferSize": 7114,
+            "encodedBodySize": 6814,
+            "decodedBodySize": 6814,
+            "durationMs": 6.07
+          },
+          {
+            "name": "vertexColorMixing-UCGukeO3.js",
+            "initiatorType": "script",
+            "transferSize": 10722,
+            "encodedBodySize": 10422,
+            "decodedBodySize": 10422,
+            "durationMs": 6.17
+          },
+          {
+            "name": "default.fragment-mnFm7Z4g.js",
+            "initiatorType": "script",
+            "transferSize": 110810,
+            "encodedBodySize": 110510,
+            "decodedBodySize": 110510,
+            "durationMs": 7.33
+          },
+          {
+            "name": "fogFragment-BYTpR7dp.js",
+            "initiatorType": "script",
+            "transferSize": 2500,
+            "encodedBodySize": 2200,
+            "decodedBodySize": 2200,
+            "durationMs": 6.8
+          }
+        ]
+      }
+    },
+    {
+      "engine": "rapier",
+      "width": 1280,
+      "height": 720,
+      "elapsedMs": 4822,
+      "url": "http://127.0.0.1:1044/index.html?engine=rapier",
+      "screenshot": "screenshots\\rapier-1280x720.png",
+      "screenshotError": null,
+      "consoleErrors": [],
+      "spike": {
+        "engine": "rapier",
+        "status": "done",
+        "done": true,
+        "error": null,
+        "errors": [],
+        "boot": {
+          "wasmInitMs": 29.9,
+          "backendReportedInitMs": 29.8,
+          "firstWorldMs": 36.1,
+          "navigationToReadyMs": 478.7,
+          "backendVersion": "0.21.0",
+          "domContentLoadedMs": 410.7,
+          "loadEventMs": 411.1
+        },
+        "environment": {
+          "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+          "vendor": "Google Inc. (NVIDIA)",
+          "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3050 Ti Laptop GPU (0x000025A0) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+          "api": "WebGL2",
+          "crossOriginIsolated": true,
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "hardwareConcurrency": 16,
+          "devicePixelRatio": 1,
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "scenarios": {
+          "carAcceleration": {
+            "name": "car-accel-0-50",
+            "ticks": 600,
+            "timeTo50KmhSeconds": 2.617,
+            "speedAt2sKmh": 30.99,
+            "speedAt5sKmh": 77.34,
+            "speedAt10sKmh": 125.61,
+            "distanceAt10sM": 212.56,
+            "maxLateralDeviationM": 0,
+            "maxRollDegrees": 1.41,
+            "upright": true,
+            "finite": true,
+            "final": {
+              "x": 0,
+              "y": 0.838,
+              "z": -212.564,
+              "yawDeg": 0,
+              "speedKmh": 125.61
+            },
+            "trace": [
+              {
+                "t": 0.02,
+                "speedKmh": 0,
+                "z": 0,
+                "y": 0.898
+              },
+              {
+                "t": 0.52,
+                "speedKmh": 10.82,
+                "z": -0.76,
+                "y": 0.838
+              },
+              {
+                "t": 1.02,
+                "speedKmh": 21.25,
+                "z": -3.03,
+                "y": 0.838
+              },
+              {
+                "t": 1.52,
+                "speedKmh": 30.99,
+                "z": -6.69,
+                "y": 0.838
+              },
+              {
+                "t": 2.02,
+                "speedKmh": 40.09,
+                "z": -11.65,
+                "y": 0.838
+              },
+              {
+                "t": 2.52,
+                "speedKmh": 48.59,
+                "z": -17.84,
+                "y": 0.838
+              },
+              {
+                "t": 3.02,
+                "speedKmh": 56.53,
+                "z": -25.17,
+                "y": 0.838
+              },
+              {
+                "t": 3.52,
+                "speedKmh": 63.95,
+                "z": -33.57,
+                "y": 0.838
+              },
+              {
+                "t": 4.02,
+                "speedKmh": 70.87,
+                "z": -42.96,
+                "y": 0.838
+              },
+              {
+                "t": 4.52,
+                "speedKmh": 77.34,
+                "z": -53.27,
+                "y": 0.838
+              },
+              {
+                "t": 5.02,
+                "speedKmh": 83.39,
+                "z": -64.46,
+                "y": 0.838
+              },
+              {
+                "t": 5.52,
+                "speedKmh": 89.03,
+                "z": -76.46,
+                "y": 0.838
+              },
+              {
+                "t": 6.02,
+                "speedKmh": 94.31,
+                "z": -89.21,
+                "y": 0.838
+              },
+              {
+                "t": 6.52,
+                "speedKmh": 99.23,
+                "z": -102.67,
+                "y": 0.838
+              },
+              {
+                "t": 7.02,
+                "speedKmh": 103.83,
+                "z": -116.79,
+                "y": 0.838
+              },
+              {
+                "t": 7.52,
+                "speedKmh": 108.13,
+                "z": -131.53,
+                "y": 0.838
+              },
+              {
+                "t": 8.02,
+                "speedKmh": 112.14,
+                "z": -146.85,
+                "y": 0.838
+              },
+              {
+                "t": 8.52,
+                "speedKmh": 115.89,
+                "z": -162.7,
+                "y": 0.838
+              },
+              {
+                "t": 9.02,
+                "speedKmh": 119.39,
+                "z": -179.06,
+                "y": 0.838
+              },
+              {
+                "t": 9.52,
+                "speedKmh": 122.66,
+                "z": -195.88,
+                "y": 0.838
+              },
+              {
+                "t": 10,
+                "speedKmh": 125.61,
+                "z": -212.56,
+                "y": 0.838
+              }
+            ]
+          },
+          "carSlalom": {
+            "name": "car-slalom",
+            "scriptedTicks": 600,
+            "entrySpeedKmh": 16.19,
+            "peakSpeedKmh": 28.87,
+            "minSpeedKmh": 16.19,
+            "finalSpeedKmh": 34.34,
+            "maxYawRateDegPerSec": 66.6,
+            "maxRollDegrees": 0.6,
+            "minUpY": 0.9999,
+            "uprightThroughout": true,
+            "lateralRangeM": 35.9,
+            "final": {
+              "x": 39.809,
+              "y": 0.838,
+              "z": -43.542,
+              "yawDeg": -27.11,
+              "speedKmh": 34.34
+            },
+            "trace": [
+              {
+                "t": 1.52,
+                "speedKmh": 16.19,
+                "z": -3.48,
+                "y": 0.838
+              },
+              {
+                "t": 1.93,
+                "speedKmh": 16.65,
+                "z": -5.36,
+                "y": 0.838
+              },
+              {
+                "t": 2.35,
+                "speedKmh": 17.89,
+                "z": -6.95,
+                "y": 0.838
+              },
+              {
+                "t": 2.77,
+                "speedKmh": 19.65,
+                "z": -7.9,
+                "y": 0.838
+              },
+              {
+                "t": 3.18,
+                "speedKmh": 21.97,
+                "z": -8.61,
+                "y": 0.838
+              },
+              {
+                "t": 3.6,
+                "speedKmh": 21.8,
+                "z": -10.01,
+                "y": 0.838
+              },
+              {
+                "t": 4.02,
+                "speedKmh": 22.48,
+                "z": -12.14,
+                "y": 0.838
+              },
+              {
+                "t": 4.43,
+                "speedKmh": 24.36,
+                "z": -14.68,
+                "y": 0.838
+              },
+              {
+                "t": 4.85,
+                "speedKmh": 24.07,
+                "z": -16.85,
+                "y": 0.838
+              },
+              {
+                "t": 5.27,
+                "speedKmh": 24.5,
+                "z": -18.27,
+                "y": 0.838
+              },
+              {
+                "t": 5.68,
+                "speedKmh": 26.17,
+                "z": -19.26,
+                "y": 0.838
+              },
+              {
+                "t": 6.1,
+                "speedKmh": 25.79,
+                "z": -20.92,
+                "y": 0.838
+              },
+              {
+                "t": 6.52,
+                "speedKmh": 26.05,
+                "z": -23.33,
+                "y": 0.838
+              },
+              {
+                "t": 6.93,
+                "speedKmh": 27.57,
+                "z": -26.18,
+                "y": 0.838
+              },
+              {
+                "t": 7.35,
+                "speedKmh": 27.12,
+                "z": -28.63,
+                "y": 0.838
+              },
+              {
+                "t": 7.77,
+                "speedKmh": 27.26,
+                "z": -30.29,
+                "y": 0.838
+              },
+              {
+                "t": 8.18,
+                "speedKmh": 28.67,
+                "z": -31.46,
+                "y": 0.838
+              },
+              {
+                "t": 8.6,
+                "speedKmh": 28.18,
+                "z": -33.29,
+                "y": 0.838
+              },
+              {
+                "t": 10,
+                "speedKmh": 34.34,
+                "z": -43.54,
+                "y": 0.838
+              }
+            ]
+          },
+          "characterStep": {
+            "name": "character-step-0.3m",
+            "ticks": 105,
+            "startY": 0.95,
+            "end": {
+              "x": -0.002,
+              "y": 0.834,
+              "z": -1.699,
+              "grounded": true
+            },
+            "maxY": 0.95,
+            "firstTopTick": null,
+            "climbedStep": false,
+            "passedFrontFace": false,
+            "grounded": true,
+            "hitWallTicks": 54,
+            "blockedTicks": 54,
+            "trace": [
+              {
+                "t": 0.02,
+                "x": 0,
+                "y": 0.947,
+                "z": -0.03,
+                "grounded": false
+              },
+              {
+                "t": 0.27,
+                "x": 0,
+                "y": 0.835,
+                "z": -0.53,
+                "grounded": true
+              },
+              {
+                "t": 0.52,
+                "x": 0,
+                "y": 0.833,
+                "z": -1.03,
+                "grounded": true
+              },
+              {
+                "t": 0.77,
+                "x": 0,
+                "y": 0.832,
+                "z": -1.53,
+                "grounded": true
+              },
+              {
+                "t": 1.02,
+                "x": 0,
+                "y": 0.833,
+                "z": -1.7,
+                "grounded": true
+              },
+              {
+                "t": 1.27,
+                "x": 0,
+                "y": 0.833,
+                "z": -1.7,
+                "grounded": true
+              },
+              {
+                "t": 1.52,
+                "x": 0,
+                "y": 0.834,
+                "z": -1.7,
+                "grounded": true
+              }
+            ]
+          },
+          "characterDrop": {
+            "name": "character-drop-2m",
+            "ticks": 180,
+            "leftPlatformTick": 73,
+            "landedTick": 104,
+            "fallTicks": 31,
+            "minY": 0.8954,
+            "maxFallSpeedMps": 5.886,
+            "airborneTicks": 36,
+            "end": {
+              "x": 0,
+              "y": 0.897,
+              "z": -7,
+              "grounded": true
+            },
+            "grounded": true,
+            "trace": [
+              {
+                "t": 0.02,
+                "x": 0,
+                "y": 2.897,
+                "z": -1.03,
+                "grounded": false
+              },
+              {
+                "t": 0.27,
+                "x": 0,
+                "y": 2.899,
+                "z": -1.53,
+                "grounded": true
+              },
+              {
+                "t": 0.52,
+                "x": 0,
+                "y": 2.9,
+                "z": -2.03,
+                "grounded": true
+              },
+              {
+                "t": 0.77,
+                "x": 0,
+                "y": 2.901,
+                "z": -2.53,
+                "grounded": true
+              },
+              {
+                "t": 1.02,
+                "x": 0,
+                "y": 2.901,
+                "z": -3.03,
+                "grounded": true
+              },
+              {
+                "t": 1.27,
+                "x": 0,
+                "y": 2.661,
+                "z": -3.53,
+                "grounded": false
+              },
+              {
+                "t": 1.52,
+                "x": 0,
+                "y": 2.047,
+                "z": -4.03,
+                "grounded": false
+              },
+              {
+                "t": 1.77,
+                "x": 0,
+                "y": 0.899,
+                "z": -4.53,
+                "grounded": true
+              },
+              {
+                "t": 2.02,
+                "x": 0,
+                "y": 0.896,
+                "z": -5.03,
+                "grounded": true
+              },
+              {
+                "t": 2.27,
+                "x": 0,
+                "y": 0.898,
+                "z": -5.53,
+                "grounded": true
+              },
+              {
+                "t": 2.52,
+                "x": 0,
+                "y": 0.897,
+                "z": -6.03,
+                "grounded": true
+              },
+              {
+                "t": 2.77,
+                "x": 0,
+                "y": 0.895,
+                "z": -6.53,
+                "grounded": true
+              }
+            ]
+          },
+          "characterWall": {
+            "name": "character-wall-slide",
+            "ticks": 150,
+            "blockedPosition": {
+              "x": -0.001,
+              "y": 0.833,
+              "z": -1.996,
+              "grounded": true
+            },
+            "final": {
+              "x": 2.108,
+              "y": 0.9,
+              "z": -2.449,
+              "grounded": true
+            },
+            "stoppedAtZ": -2.449,
+            "slidAlongX": true,
+            "hitWallTicks": 71,
+            "grounded": true
+          },
+          "determinism": {
+            "name": "determinism",
+            "ticks": 240,
+            "identical": true,
+            "firstDivergenceTick": -1,
+            "finalHashA": "d7d66da3",
+            "finalHashB": "d7d66da3",
+            "hashAt60A": "4c0b2f1e",
+            "hashAt60B": "4c0b2f1e"
+          }
+        },
+        "probe": null,
+        "benchmark": {
+          "dynamicBodies": 500,
+          "physics": {
+            "count": 300,
+            "p50": 0.325,
+            "p95": 0.585,
+            "p99": 0.66,
+            "min": 0.26,
+            "max": 1.155,
+            "mean": 0.3671,
+            "totalMs": 110.39,
+            "stepsPerSecond": 2717.6,
+            "p95PercentOf16_67ms": 3.5,
+            "dynamicBodies": 500
+          },
+          "frames": {
+            "width": 1280,
+            "height": 720,
+            "samples": 235,
+            "frameIntervalMs": {
+              "count": 235,
+              "p50": 8.335,
+              "p95": 8.52,
+              "p99": 9.105,
+              "min": 2.18,
+              "max": 22.38,
+              "mean": 8.336
+            },
+            "stepPlusRenderMs": {
+              "count": 235,
+              "p50": 2.605,
+              "p95": 4.815,
+              "p99": 8.305,
+              "min": 1.52,
+              "max": 22.075,
+              "mean": 2.952
+            },
+            "engineDeltaMs": {
+              "count": 235,
+              "p50": 0,
+              "p95": 0,
+              "p99": 0,
+              "min": 0,
+              "max": 0,
+              "mean": 0
+            },
+            "drawCalls": 501,
+            "activeMeshes": 501,
+            "fpsFromInterval": 120
+          }
+        },
+        "showcase": {
+          "screenshotReady": true,
+          "car": {
+            "x": 1.821,
+            "y": 0.838,
+            "z": -11.273
+          },
+          "character": {
+            "x": 3.198,
+            "y": 0.899,
+            "z": -0.998,
+            "grounded": true
+          }
+        },
+        "resources": [
+          {
+            "name": "index-DGnlGPrx.js",
+            "initiatorType": "script",
+            "transferSize": 1233845,
+            "encodedBodySize": 1233545,
+            "decodedBodySize": 1233545,
+            "durationMs": 38.47
+          },
+          {
+            "name": "rapier-BM6GS3Pd.js",
+            "initiatorType": "script",
+            "transferSize": 4403527,
+            "encodedBodySize": 4403227,
+            "decodedBodySize": 4403227,
+            "durationMs": 22.33
+          },
+          {
+            "name": "favicon.ico",
+            "initiatorType": "other",
+            "transferSize": 309,
+            "encodedBodySize": 9,
+            "decodedBodySize": 9,
+            "durationMs": 3.76
+          },
+          {
+            "name": "default.vertex-C230Wxbn.js",
+            "initiatorType": "script",
+            "transferSize": 19968,
+            "encodedBodySize": 19668,
+            "decodedBodySize": 19668,
+            "durationMs": 6.79
+          },
+          {
+            "name": "logDepthDeclaration-DMb8Zsa8.js",
+            "initiatorType": "script",
+            "transferSize": 2467,
+            "encodedBodySize": 2167,
+            "decodedBodySize": 2167,
+            "durationMs": 6.75
+          },
+          {
+            "name": "helperFunctions-CL-mhAUv.js",
+            "initiatorType": "script",
+            "transferSize": 7114,
+            "encodedBodySize": 6814,
+            "decodedBodySize": 6814,
+            "durationMs": 7.2
+          },
+          {
+            "name": "vertexColorMixing-UCGukeO3.js",
+            "initiatorType": "script",
+            "transferSize": 10722,
+            "encodedBodySize": 10422,
+            "decodedBodySize": 10422,
+            "durationMs": 7.22
+          },
+          {
+            "name": "default.fragment-mnFm7Z4g.js",
+            "initiatorType": "script",
+            "transferSize": 110810,
+            "encodedBodySize": 110510,
+            "decodedBodySize": 110510,
+            "durationMs": 7.51
+          },
+          {
+            "name": "fogFragment-BYTpR7dp.js",
+            "initiatorType": "script",
+            "transferSize": 2500,
+            "encodedBodySize": 2200,
+            "decodedBodySize": 2200,
+            "durationMs": 7.24
+          }
+        ]
+      }
+    }
+  ],
+  "size": {
+    "generatedAt": "2026-10-23T13:08:30.805Z",
+    "gzipLevel": 9,
+    "permissive": true,
+    "licences": [
+      {
+        "package": "@babylonjs/havok",
+        "version": "1.3.14",
+        "declaredLicense": "MIT",
+        "licenseFile": "node_modules/@babylonjs/havok/LICENSE",
+        "licenseFirstLine": "# MIT License",
+        "sha256": "d8b00cac49e55c3e93840e02868989c73520e50a865dfbd25b9d20d35397ccf0"
+      },
+      {
+        "package": "@dimforge/rapier3d-compat",
+        "version": "0.21.0",
+        "declaredLicense": "Apache-2.0",
+        "licenseFile": "node_modules/@dimforge/rapier3d-compat/LICENSE",
+        "licenseFirstLine": "Apache License",
+        "sha256": "4c05555705e3efde601fb1252ae48f1d63992af8a8fb8947745b7fa834e8f519"
+      }
+    ],
+    "files": [
+      {
+        "group": "havok",
+        "label": "havok wasm",
+        "path": "node_modules/@babylonjs/havok/lib/esm/HavokPhysics.wasm",
+        "rawBytes": 2094563,
+        "gzipBytes": 662067
+      },
+      {
+        "group": "havok",
+        "label": "havok esm glue",
+        "path": "node_modules/@babylonjs/havok/lib/esm/HavokPhysics_es.js",
+        "rawBytes": 67400,
+        "gzipBytes": 13404
+      },
+      {
+        "group": "rapier",
+        "label": "rapier compat bundle (wasm inlined)",
+        "path": "node_modules/@dimforge/rapier3d-compat/dist/rapier.mjs",
+        "rawBytes": 4340292,
+        "gzipBytes": 1644109
+      },
+      {
+        "group": "rapier",
+        "label": "rapier wasm (standalone)",
+        "path": "node_modules/@dimforge/rapier3d-compat/dist/rapier_wasm3d_bg.wasm",
+        "rawBytes": 3082103,
+        "gzipBytes": 1175669
+      },
+      {
+        "group": "rapier",
+        "label": "rapier wasm loader (standalone)",
+        "path": "node_modules/@dimforge/rapier3d-compat/dist/rapier_wasm3d.js",
+        "rawBytes": 342560,
+        "gzipBytes": 34702
+      }
+    ],
+    "dist": [
+      {
+        "file": "dist/assets/HavokPhysics-BqNY-4N9.wasm",
+        "rawBytes": 2094563,
+        "gzipBytes": 662067
+      },
+      {
+        "file": "dist/assets/basisTextureLoader-CHRmM7oD.js",
+        "rawBytes": 27329,
+        "gzipBytes": 8237
+      },
+      {
+        "file": "dist/assets/color.fragment-DHNS7IWv.js",
+        "rawBytes": 995,
+        "gzipBytes": 460
+      },
+      {
+        "file": "dist/assets/color.fragment-DifbLVj-.js",
+        "rawBytes": 887,
+        "gzipBytes": 427
+      },
+      {
+        "file": "dist/assets/color.vertex-BT8aPKPA.js",
+        "rawBytes": 1360,
+        "gzipBytes": 609
+      },
+      {
+        "file": "dist/assets/color.vertex-DAseNpQ6.js",
+        "rawBytes": 1420,
+        "gzipBytes": 616
+      },
+      {
+        "file": "dist/assets/cubemapToSphericalPolynomial-9uGb6m_E.js",
+        "rawBytes": 3670,
+        "gzipBytes": 1633
+      },
+      {
+        "file": "dist/assets/dds.pure-DayEdtxR.js",
+        "rawBytes": 7053,
+        "gzipBytes": 2477
+      },
+      {
+        "file": "dist/assets/ddsTextureLoader-BMTOIbzy.js",
+        "rawBytes": 1317,
+        "gzipBytes": 638
+      },
+      {
+        "file": "dist/assets/default.fragment-0qgQw4j7.js",
+        "rawBytes": 115282,
+        "gzipBytes": 22139
+      },
+      {
+        "file": "dist/assets/default.fragment-mnFm7Z4g.js",
+        "rawBytes": 110510,
+        "gzipBytes": 22330
+      },
+      {
+        "file": "dist/assets/default.vertex-C230Wxbn.js",
+        "rawBytes": 19668,
+        "gzipBytes": 4347
+      },
+      {
+        "file": "dist/assets/default.vertex-CkxF5gVS.js",
+        "rawBytes": 38088,
+        "gzipBytes": 6261
+      },
+      {
+        "file": "dist/assets/envTextureLoader-Ccr3M_8D.js",
+        "rawBytes": 31768,
+        "gzipBytes": 8982
+      },
+      {
+        "file": "dist/assets/exrTextureLoader-B3aLwQ8t.js",
+        "rawBytes": 14186,
+        "gzipBytes": 5210
+      },
+      {
+        "file": "dist/assets/fogFragment-BYTpR7dp.js",
+        "rawBytes": 2200,
+        "gzipBytes": 699
+      },
+      {
+        "file": "dist/assets/fogFragment-z5COst-Y.js",
+        "rawBytes": 2430,
+        "gzipBytes": 749
+      },
+      {
+        "file": "dist/assets/havok-C6gEZstW.js",
+        "rawBytes": 137499,
+        "gzipBytes": 35388
+      },
+      {
+        "file": "dist/assets/hdrTextureLoader-BGQvgh0h.js",
+        "rawBytes": 2391,
+        "gzipBytes": 1139
+      },
+      {
+        "file": "dist/assets/helperFunctions-CL-mhAUv.js",
+        "rawBytes": 6814,
+        "gzipBytes": 2295
+      },
+      {
+        "file": "dist/assets/helperFunctions-COEg0P8I.js",
+        "rawBytes": 6488,
+        "gzipBytes": 2169
+      },
+      {
+        "file": "dist/assets/iesTextureLoader-TWzaMgSc.js",
+        "rawBytes": 2489,
+        "gzipBytes": 1093
+      },
+      {
+        "file": "dist/assets/index-DGnlGPrx.js",
+        "rawBytes": 1233545,
+        "gzipBytes": 301690
+      },
+      {
+        "file": "dist/assets/ktxTextureLoader-BUAnNEJp.js",
+        "rawBytes": 16405,
+        "gzipBytes": 4759
+      },
+      {
+        "file": "dist/assets/logDepthDeclaration-BVSaCpgT.js",
+        "rawBytes": 2547,
+        "gzipBytes": 842
+      },
+      {
+        "file": "dist/assets/logDepthDeclaration-DMb8Zsa8.js",
+        "rawBytes": 2167,
+        "gzipBytes": 851
+      },
+      {
+        "file": "dist/assets/mesh.vertexData.functions-ayNlGC5K.js",
+        "rawBytes": 960,
+        "gzipBytes": 494
+      },
+      {
+        "file": "dist/assets/postprocess.vertex-B_CZIeFI.js",
+        "rawBytes": 459,
+        "gzipBytes": 307
+      },
+      {
+        "file": "dist/assets/postprocess.vertex-CSzU4x8U.js",
+        "rawBytes": 583,
+        "gzipBytes": 354
+      },
+      {
+        "file": "dist/assets/rapier-BM6GS3Pd.js",
+        "rawBytes": 4403227,
+        "gzipBytes": 1662809
+      },
+      {
+        "file": "dist/assets/rgbdDecode.fragment-B4C1Q0qQ.js",
+        "rawBytes": 671,
+        "gzipBytes": 390
+      },
+      {
+        "file": "dist/assets/rgbdDecode.fragment-Ba56naOb.js",
+        "rawBytes": 528,
+        "gzipBytes": 345
+      },
+      {
+        "file": "dist/assets/tgaTextureLoader-Bik755dN.js",
+        "rawBytes": 3527,
+        "gzipBytes": 1377
+      },
+      {
+        "file": "dist/assets/vertexColorMixing-CYyUuLVs.js",
+        "rawBytes": 11751,
+        "gzipBytes": 2162
+      },
+      {
+        "file": "dist/assets/vertexColorMixing-UCGukeO3.js",
+        "rawBytes": 10422,
+        "gzipBytes": 2132
+      }
+    ]
+  }
+}

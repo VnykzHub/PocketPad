@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Babylon Physics Spike — Havok vs Rapier</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        background: #0b0e12;
+        color: #dfe6ee;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      #stage {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        outline: none;
+        touch-action: none;
+      }
+      #status {
+        position: fixed;
+        top: 10px;
+        left: 12px;
+        padding: 6px 10px;
+        border-radius: 4px;
+        background: rgb(10 14 20 / 72%);
+        border: 1px solid rgb(120 150 180 / 25%);
+        font-size: 12px;
+        letter-spacing: 0.02em;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="stage" aria-label="Physics spike scene"></canvas>
+    <div id="status">booting</div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

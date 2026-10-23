@@ -1,0 +1,237 @@
+{
+  "generatedAt": "2026-10-23T13:08:30.805Z",
+  "gzipLevel": 9,
+  "permissive": true,
+  "licences": [
+    {
+      "package": "@babylonjs/havok",
+      "version": "1.3.14",
+      "declaredLicense": "MIT",
+      "licenseFile": "node_modules/@babylonjs/havok/LICENSE",
+      "licenseFirstLine": "# MIT License",
+      "sha256": "d8b00cac49e55c3e93840e02868989c73520e50a865dfbd25b9d20d35397ccf0"
+    },
+    {
+      "package": "@dimforge/rapier3d-compat",
+      "version": "0.21.0",
+      "declaredLicense": "Apache-2.0",
+      "licenseFile": "node_modules/@dimforge/rapier3d-compat/LICENSE",
+      "licenseFirstLine": "Apache License",
+      "sha256": "4c05555705e3efde601fb1252ae48f1d63992af8a8fb8947745b7fa834e8f519"
+    }
+  ],
+  "files": [
+    {
+      "group": "havok",
+      "label": "havok wasm",
+      "path": "node_modules/@babylonjs/havok/lib/esm/HavokPhysics.wasm",
+      "rawBytes": 2094563,
+      "gzipBytes": 662067
+    },
+    {
+      "group": "havok",
+      "label": "havok esm glue",
+      "path": "node_modules/@babylonjs/havok/lib/esm/HavokPhysics_es.js",
+      "rawBytes": 67400,
+      "gzipBytes": 13404
+    },
+    {
+      "group": "rapier",
+      "label": "rapier compat bundle (wasm inlined)",
+      "path": "node_modules/@dimforge/rapier3d-compat/dist/rapier.mjs",
+      "rawBytes": 4340292,
+      "gzipBytes": 1644109
+    },
+    {
+      "group": "rapier",
+      "label": "rapier wasm (standalone)",
+      "path": "node_modules/@dimforge/rapier3d-compat/dist/rapier_wasm3d_bg.wasm",
+      "rawBytes": 3082103,
+      "gzipBytes": 1175669
+    },
+    {
+      "group": "rapier",
+      "label": "rapier wasm loader (standalone)",
+      "path": "node_modules/@dimforge/rapier3d-compat/dist/rapier_wasm3d.js",
+      "rawBytes": 342560,
+      "gzipBytes": 34702
+    }
+  ],
+  "dist": [
+    {
+      "file": "dist/assets/HavokPhysics-BqNY-4N9.wasm",
+      "rawBytes": 2094563,
+      "gzipBytes": 662067
+    },
+    {
+      "file": "dist/assets/basisTextureLoader-CHRmM7oD.js",
+      "rawBytes": 27329,
+      "gzipBytes": 8237
+    },
+    {
+      "file": "dist/assets/color.fragment-DHNS7IWv.js",
+      "rawBytes": 995,
+      "gzipBytes": 460
+    },
+    {
+      "file": "dist/assets/color.fragment-DifbLVj-.js",
+      "rawBytes": 887,
+      "gzipBytes": 427
+    },
+    {
+      "file": "dist/assets/color.vertex-BT8aPKPA.js",
+      "rawBytes": 1360,
+      "gzipBytes": 609
+    },
+    {
+      "file": "dist/assets/color.vertex-DAseNpQ6.js",
+      "rawBytes": 1420,
+      "gzipBytes": 616
+    },
+    {
+      "file": "dist/assets/cubemapToSphericalPolynomial-9uGb6m_E.js",
+      "rawBytes": 3670,
+      "gzipBytes": 1633
+    },
+    {
+      "file": "dist/assets/dds.pure-DayEdtxR.js",
+      "rawBytes": 7053,
+      "gzipBytes": 2477
+    },
+    {
+      "file": "dist/assets/ddsTextureLoader-BMTOIbzy.js",
+      "rawBytes": 1317,
+      "gzipBytes": 638
+    },
+    {
+      "file": "dist/assets/default.fragment-0qgQw4j7.js",
+      "rawBytes": 115282,
+      "gzipBytes": 22139
+    },
+    {
+      "file": "dist/assets/default.fragment-mnFm7Z4g.js",
+      "rawBytes": 110510,
+      "gzipBytes": 22330
+    },
+    {
+      "file": "dist/assets/default.vertex-C230Wxbn.js",
+      "rawBytes": 19668,
+      "gzipBytes": 4347
+    },
+    {
+      "file": "dist/assets/default.vertex-CkxF5gVS.js",
+      "rawBytes": 38088,
+      "gzipBytes": 6261
+    },
+    {
+      "file": "dist/assets/envTextureLoader-Ccr3M_8D.js",
+      "rawBytes": 31768,
+      "gzipBytes": 8982
+    },
+    {
+      "file": "dist/assets/exrTextureLoader-B3aLwQ8t.js",
+      "rawBytes": 14186,
+      "gzipBytes": 5210
+    },
+    {
+      "file": "dist/assets/fogFragment-BYTpR7dp.js",
+      "rawBytes": 2200,
+      "gzipBytes": 699
+    },
+    {
+      "file": "dist/assets/fogFragment-z5COst-Y.js",
+      "rawBytes": 2430,
+      "gzipBytes": 749
+    },
+    {
+      "file": "dist/assets/havok-C6gEZstW.js",
+      "rawBytes": 137499,
+      "gzipBytes": 35388
+    },
+    {
+      "file": "dist/assets/hdrTextureLoader-BGQvgh0h.js",
+      "rawBytes": 2391,
+      "gzipBytes": 1139
+    },
+    {
+      "file": "dist/assets/helperFunctions-CL-mhAUv.js",
+      "rawBytes": 6814,
+      "gzipBytes": 2295
+    },
+    {
+      "file": "dist/assets/helperFunctions-COEg0P8I.js",
+      "rawBytes": 6488,
+      "gzipBytes": 2169
+    },
+    {
+      "file": "dist/assets/iesTextureLoader-TWzaMgSc.js",
+      "rawBytes": 2489,
+      "gzipBytes": 1093
+    },
+    {
+      "file": "dist/assets/index-DGnlGPrx.js",
+      "rawBytes": 1233545,
+      "gzipBytes": 301690
+    },
+    {
+      "file": "dist/assets/ktxTextureLoader-BUAnNEJp.js",
+      "rawBytes": 16405,
+      "gzipBytes": 4759
+    },
+    {
+      "file": "dist/assets/logDepthDeclaration-BVSaCpgT.js",
+      "rawBytes": 2547,
+      "gzipBytes": 842
+    },
+    {
+      "file": "dist/assets/logDepthDeclaration-DMb8Zsa8.js",
+      "rawBytes": 2167,
+      "gzipBytes": 851
+    },
+    {
+      "file": "dist/assets/mesh.vertexData.functions-ayNlGC5K.js",
+      "rawBytes": 960,
+      "gzipBytes": 494
+    },
+    {
+      "file": "dist/assets/postprocess.vertex-B_CZIeFI.js",
+      "rawBytes": 459,
+      "gzipBytes": 307
+    },
+    {
+      "file": "dist/assets/postprocess.vertex-CSzU4x8U.js",
+      "rawBytes": 583,
+      "gzipBytes": 354
+    },
+    {
+      "file": "dist/assets/rapier-BM6GS3Pd.js",
+      "rawBytes": 4403227,
+      "gzipBytes": 1662809
+    },
+    {
+      "file": "dist/assets/rgbdDecode.fragment-B4C1Q0qQ.js",
+      "rawBytes": 671,
+      "gzipBytes": 390
+    },
+    {
+      "file": "dist/assets/rgbdDecode.fragment-Ba56naOb.js",
+      "rawBytes": 528,
+      "gzipBytes": 345
+    },
+    {
+      "file": "dist/assets/tgaTextureLoader-Bik755dN.js",
+      "rawBytes": 3527,
+      "gzipBytes": 1377
+    },
+    {
+      "file": "dist/assets/vertexColorMixing-CYyUuLVs.js",
+      "rawBytes": 11751,
+      "gzipBytes": 2162
+    },
+    {
+      "file": "dist/assets/vertexColorMixing-UCGukeO3.js",
+      "rawBytes": 10422,
+      "gzipBytes": 2132
+    }
+  ]
+}
