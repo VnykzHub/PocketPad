@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "recipe-gyro-racer-v1",
+  "orientation": "any",
+  "background": "#050608",
+  "sensors": { "gyro": "steer", "sensitivity": 1.4, "smoothing": 0.2 },
+  "controls": [
+    {
+      "type": "panel",
+      "id": "speed",
+      "x": "50%",
+      "y": "12%",
+      "w": "60%",
+      "h": "12%",
+      "z": 10
+    },
+    {
+      "type": "gyro",
+      "id": "steer-motion",
+      "x": "50%",
+      "y": "80%",
+      "sensitivity": 1.4,
+      "smoothing": 0.2
+    },
+    {
+      "type": "stick",
+      "id": "steer-fallback",
+      "x": "22%",
+      "y": "66%",
+      "size": "36%",
+      "axis": "left",
+      "mode": "floating",
+      "deadzone": 0.08
+    },
+    {
+      "type": "button",
+      "id": "brake",
+      "label": "Brake",
+      "shape": "circle",
+      "x": "82%",
+      "y": "66%",
+      "r": "12%",
+      "bit": 0,
+      "haptic": [30]
+    }
+  ]
+}

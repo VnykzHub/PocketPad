@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "recipe-couch-party-v1",
+  "orientation": "landscape",
+  "background": "#000000",
+  "controls": [
+    {
+      "type": "panel",
+      "id": "hud",
+      "x": "50%",
+      "y": "10%",
+      "w": "86%",
+      "h": "12%",
+      "z": 10
+    },
+    {
+      "type": "dpad",
+      "id": "move",
+      "x": "20%",
+      "y": "66%",
+      "size": "36%",
+      "bits": { "up": 8, "down": 9, "left": 10, "right": 11 }
+    },
+    {
+      "type": "button",
+      "id": "primary",
+      "label": "A",
+      "shape": "circle",
+      "x": "76%",
+      "y": "72%",
+      "r": "11%",
+      "bit": 0,
+      "haptic": [30]
+    },
+    {
+      "type": "button",
+      "id": "secondary",
+      "label": "B",
+      "shape": "circle",
+      "x": "91%",
+      "y": "56%",
+      "r": "9%",
+      "bit": 1,
+      "haptic": [18]
+    },
+    {
+      "type": "button",
+      "id": "action",
+      "label": "X",
+      "shape": "circle",
+      "x": "61%",
+      "y": "56%",
+      "r": "9%",
+      "bit": 2,
+      "haptic": [18]
+    }
+  ]
+}

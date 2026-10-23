@@ -1,0 +1,486 @@
+[
+  {
+    "schemaVersion": 1,
+    "id": "launcher-remote-v1",
+    "orientation": "any",
+    "background": "#000000",
+    "controls": [
+      {
+        "type": "panel",
+        "id": "status",
+        "x": "50%",
+        "y": "10%",
+        "w": "88%",
+        "h": "12%",
+        "z": 10
+      },
+      {
+        "type": "dpad",
+        "id": "nav",
+        "x": "24%",
+        "y": "66%",
+        "size": "34%",
+        "bits": {
+          "up": 8,
+          "down": 9,
+          "left": 10,
+          "right": 11
+        }
+      },
+      {
+        "type": "button",
+        "id": "back",
+        "label": "Back",
+        "shape": "circle",
+        "x": "78%",
+        "y": "40%",
+        "r": "9%",
+        "bit": 1,
+        "haptic": [
+          18
+        ]
+      },
+      {
+        "type": "button",
+        "id": "select",
+        "label": "Select",
+        "shape": "circle",
+        "x": "78%",
+        "y": "72%",
+        "r": "12%",
+        "bit": 0,
+        "haptic": [
+          18
+        ]
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "recipe-beat-tap-v1",
+    "orientation": "landscape",
+    "background": "#08080c",
+    "controls": [
+      {
+        "type": "panel",
+        "id": "beat",
+        "x": "50%",
+        "y": "10%",
+        "w": "80%",
+        "h": "12%",
+        "z": 10
+      },
+      {
+        "type": "button",
+        "id": "lane-1",
+        "label": "Lane 1",
+        "shape": "circle",
+        "x": "15%",
+        "y": "70%",
+        "r": "12%",
+        "bit": 0,
+        "haptic": [
+          12
+        ]
+      },
+      {
+        "type": "button",
+        "id": "lane-2",
+        "label": "Lane 2",
+        "shape": "circle",
+        "x": "38%",
+        "y": "70%",
+        "r": "12%",
+        "bit": 1,
+        "haptic": [
+          12
+        ]
+      },
+      {
+        "type": "button",
+        "id": "lane-3",
+        "label": "Lane 3",
+        "shape": "circle",
+        "x": "62%",
+        "y": "70%",
+        "r": "12%",
+        "bit": 2,
+        "haptic": [
+          12
+        ]
+      },
+      {
+        "type": "button",
+        "id": "lane-4",
+        "label": "Lane 4",
+        "shape": "circle",
+        "x": "85%",
+        "y": "70%",
+        "r": "12%",
+        "bit": 3,
+        "haptic": [
+          12
+        ]
+      },
+      {
+        "type": "button",
+        "id": "cancel",
+        "label": "Cancel",
+        "shape": "circle",
+        "x": "88%",
+        "y": "18%",
+        "r": "8%",
+        "bit": 15,
+        "haptic": [
+          18
+        ]
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "recipe-bluff-quiz-v1",
+    "orientation": "portrait",
+    "background": "#0b0810",
+    "controls": [
+      {
+        "type": "panel",
+        "id": "question",
+        "x": "50%",
+        "y": "9%",
+        "w": "90%",
+        "h": "12%",
+        "z": 10
+      },
+      {
+        "type": "choice",
+        "id": "answers",
+        "x": "50%",
+        "y": "38%",
+        "w": "90%",
+        "h": "40%",
+        "event": "quiz.pick",
+        "options": [
+          {
+            "value": "a",
+            "label": "Answer A"
+          },
+          {
+            "value": "b",
+            "label": "Answer B"
+          },
+          {
+            "value": "c",
+            "label": "Answer C"
+          },
+          {
+            "value": "d",
+            "label": "Answer D"
+          }
+        ]
+      },
+      {
+        "type": "text",
+        "id": "bluff",
+        "x": "50%",
+        "y": "69%",
+        "w": "90%",
+        "h": "12%",
+        "event": "quiz.bluff",
+        "maxLen": 120
+      },
+      {
+        "type": "button",
+        "id": "lock",
+        "label": "Lock",
+        "shape": "rounded",
+        "x": "82%",
+        "y": "88%",
+        "r": "12%",
+        "bit": 4,
+        "haptic": [
+          18
+        ]
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "recipe-couch-party-v1",
+    "orientation": "landscape",
+    "background": "#000000",
+    "controls": [
+      {
+        "type": "panel",
+        "id": "hud",
+        "x": "50%",
+        "y": "10%",
+        "w": "86%",
+        "h": "12%",
+        "z": 10
+      },
+      {
+        "type": "dpad",
+        "id": "move",
+        "x": "20%",
+        "y": "66%",
+        "size": "36%",
+        "bits": {
+          "up": 8,
+          "down": 9,
+          "left": 10,
+          "right": 11
+        }
+      },
+      {
+        "type": "button",
+        "id": "primary",
+        "label": "A",
+        "shape": "circle",
+        "x": "76%",
+        "y": "72%",
+        "r": "11%",
+        "bit": 0,
+        "haptic": [
+          30
+        ]
+      },
+      {
+        "type": "button",
+        "id": "secondary",
+        "label": "B",
+        "shape": "circle",
+        "x": "91%",
+        "y": "56%",
+        "r": "9%",
+        "bit": 1,
+        "haptic": [
+          18
+        ]
+      },
+      {
+        "type": "button",
+        "id": "action",
+        "label": "X",
+        "shape": "circle",
+        "x": "61%",
+        "y": "56%",
+        "r": "9%",
+        "bit": 2,
+        "haptic": [
+          18
+        ]
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "recipe-draw-guess-v1",
+    "orientation": "portrait",
+    "background": "#0a0a10",
+    "controls": [
+      {
+        "type": "panel",
+        "id": "prompt",
+        "x": "50%",
+        "y": "8%",
+        "w": "88%",
+        "h": "10%",
+        "z": 10
+      },
+      {
+        "type": "canvas",
+        "id": "board",
+        "x": "50%",
+        "y": "32%",
+        "w": "90%",
+        "h": "34%",
+        "event": "guess.draw",
+        "maxStrokePoints": 2048
+      },
+      {
+        "type": "text",
+        "id": "guess",
+        "x": "50%",
+        "y": "66%",
+        "w": "88%",
+        "h": "12%",
+        "event": "guess.submit",
+        "maxLen": 80
+      },
+      {
+        "type": "choice",
+        "id": "pick",
+        "x": "50%",
+        "y": "86%",
+        "w": "88%",
+        "h": "18%",
+        "event": "guess.pick",
+        "options": [
+          {
+            "value": "a",
+            "label": "It is a cat"
+          },
+          {
+            "value": "b",
+            "label": "It is a house"
+          },
+          {
+            "value": "c",
+            "label": "It is a rocket"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "recipe-gyro-racer-v1",
+    "orientation": "any",
+    "background": "#050608",
+    "sensors": {
+      "gyro": "steer",
+      "sensitivity": 1.4,
+      "smoothing": 0.2
+    },
+    "controls": [
+      {
+        "type": "panel",
+        "id": "speed",
+        "x": "50%",
+        "y": "12%",
+        "w": "60%",
+        "h": "12%",
+        "z": 10
+      },
+      {
+        "type": "gyro",
+        "id": "steer-motion",
+        "x": "50%",
+        "y": "80%",
+        "sensitivity": 1.4,
+        "smoothing": 0.2
+      },
+      {
+        "type": "stick",
+        "id": "steer-fallback",
+        "x": "22%",
+        "y": "66%",
+        "size": "36%",
+        "axis": "left",
+        "mode": "floating",
+        "deadzone": 0.08
+      },
+      {
+        "type": "button",
+        "id": "brake",
+        "label": "Brake",
+        "shape": "circle",
+        "x": "82%",
+        "y": "66%",
+        "r": "12%",
+        "bit": 0,
+        "haptic": [
+          30
+        ]
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "recipe-spy-v1",
+    "orientation": "portrait",
+    "background": "#04070a",
+    "controls": [
+      {
+        "type": "panel",
+        "id": "secret",
+        "x": "50%",
+        "y": "22%",
+        "w": "88%",
+        "h": "30%",
+        "z": 10
+      },
+      {
+        "type": "button",
+        "id": "reveal",
+        "label": "Hold to reveal",
+        "shape": "circle",
+        "x": "50%",
+        "y": "58%",
+        "r": "24%",
+        "bit": 0,
+        "haptic": [
+          12
+        ]
+      },
+      {
+        "type": "button",
+        "id": "done",
+        "label": "Done",
+        "shape": "rounded",
+        "x": "82%",
+        "y": "88%",
+        "r": "12%",
+        "bit": 1,
+        "haptic": [
+          18
+        ]
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "recipe-tilt-maze-v1",
+    "orientation": "any",
+    "background": "#07090c",
+    "sensors": {
+      "gyro": "tilt",
+      "smoothing": 0.25
+    },
+    "controls": [
+      {
+        "type": "panel",
+        "id": "timer",
+        "x": "50%",
+        "y": "10%",
+        "w": "70%",
+        "h": "12%",
+        "z": 10
+      },
+      {
+        "type": "gyro",
+        "id": "tilt-motion",
+        "x": "50%",
+        "y": "80%",
+        "smoothing": 0.25
+      },
+      {
+        "type": "dpad",
+        "id": "tilt-fallback",
+        "x": "24%",
+        "y": "64%",
+        "size": "38%",
+        "bits": {
+          "up": 8,
+          "down": 9,
+          "left": 10,
+          "right": 11
+        }
+      },
+      {
+        "type": "button",
+        "id": "restart",
+        "label": "Restart",
+        "shape": "circle",
+        "x": "82%",
+        "y": "70%",
+        "r": "11%",
+        "bit": 2,
+        "haptic": [
+          18
+        ]
+      }
+    ]
+  }
+]

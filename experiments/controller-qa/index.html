@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controller QA - phone layouts</title>
+<link rel="stylesheet" href="./qa.css">
+</head>
+<body>
+<main>
+<h1>Controller QA - phone layouts</h1>
+<p>Renders the checked-in layout recipes at a portrait (390 x 844) and a landscape (844 x 390) phone size. Every interactive control must clear the 44 x 44 CSS px touch target (AR-5) without relying on the renderer's clamp. Nothing runs on load; press <strong>Run</strong>. No analytics, uploads, cookies or PII.</p>
+
+<div class="qa-actions">
+  <button id="run" type="button">Run</button>
+  <button id="copy" type="button" disabled>Copy JSON</button>
+  <label class="qa-select">Layout for screenshots
+    <select id="layout-select"></select>
+  </label>
+</div>
+
+<p id="status" role="status" aria-live="polite">Not run.</p>
+
+<section aria-labelledby="frames-title">
+  <h2 id="frames-title">Phone frames</h2>
+  <p class="qa-note">The visible frames show the selected layout at both phone sizes. Measurements cover every recipe in <code>layouts.json</code>.</p>
+  <div id="frames" class="qa-phones">
+    <p class="qa-placeholder">Press Run to render the portrait and landscape frames.</p>
+  </div>
+</section>
+
+<section aria-labelledby="table-title">
+  <h2 id="table-title">Target checks</h2>
+  <table id="results">
+    <thead>
+      <tr><th>Layout</th><th>Phone</th><th>Control</th><th>Type</th><th>Box px</th><th>DOM px</th><th>Result</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section aria-labelledby="json-title">
+  <h2 id="json-title">Result JSON</h2>
+  <pre id="json">Not run.</pre>
+</section>
+
+<div id="measure-host" class="qa-measure-host" aria-hidden="true"></div>
+<script type="module" src="./qa.js"></script>
+</body>
+</html>

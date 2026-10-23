@@ -518,7 +518,15 @@ describe("input-bot D4 scenarios (D4-TOOL-01)", () => {
 describe("scenario configuration (D4-TOOL-01)", () => {
   test("[G4] scenario names and interval/loss flags parse strictly", () => {
     expect(parseScenarioName("FULL-ROOM")).toBe("full-room");
-    expect(SCENARIO_NAMES).toEqual(["steady", "taps", "sticks", "churn", "full-room"]);
+    expect(SCENARIO_NAMES).toEqual([
+      "steady",
+      "taps",
+      "sticks",
+      "churn",
+      "full-room",
+      "four-players",
+      "eight-players",
+    ]);
     expect(() => parseScenarioName("soak")).toThrow(BotConfigError);
 
     expect(parseIntervalMs("60s")).toBe(60_000);
@@ -535,6 +543,61 @@ describe("scenario configuration (D4-TOOL-01)", () => {
     expect(parseLoss("5%")).toBeCloseTo(0.05, 12);
     expect(() => parseLoss("1.5")).toThrow(BotConfigError);
     expect(() => parseLoss("-0.1")).toThrow(BotConfigError);
+  });
+
+  test("[G4] four- and eight-player game scenarios drive every bot", () => {
+    const cases = [
+      ["four-players", 4],
+      ["eight-players", MAX_CONTROLLERS],
+    ] as const;
+
+    for (const [name, clients] of cases) {
+      const h = harness();
+      const config = resolveScenario(name);
+      expect(config.clients).toBe(clients);
+      expect(config.macros.some((action) => action.type === "press")).toBe(true);
+      expect(config.macros.some((action) => action.type === "axis")).toBe(true);
+      for (let index = 1; index < config.macros.length; index += 1) {
+        const previous = config.macros[index - 1];
+        const current = config.macros[index];
+        expect(current!.atMs).toBeGreaterThanOrEqual(previous!.atMs);
+      }
+
+      // A 5 ms active tick catches the 8 ms tap window; the fake clock keeps
+      // the run bounded (the 60 Hz soak is D4-QA-01).
+      const bots = createScenarioBots(
+        config,
+        baseOptions(h, { activeTickMs: 5, idleTickMs: 1000 }),
+      );
+      for (const bot of bots) bot.start();
+      expect(h.transport.connections).toHaveLength(clients);
+
+      h.transport.connections.forEach((connection, index) => {
+        connection.accept();
+        connection.receiveText(joinedText(index + 1, `session-${index + 1}`));
+      });
+      h.scheduler.advance(1000);
+
+      for (const [index, connection] of h.transport.connections.entries()) {
+        const states = inputFrames(connection).map((frame) => decodeInput(frame));
+        const where = `${name} bot ${index + 1}`;
+        expect(states.length, `${where} sent no frames`).toBeGreaterThan(0);
+        expect(
+          states.some((state) => state.buttons !== 0),
+          `${where} never pressed a button`,
+        ).toBe(true);
+        expect(
+          states.some(
+            (state) => state.lx !== 0 || state.ly !== 0 || state.rx !== 0 || state.ry !== 0,
+          ),
+          `${where} never sent an axis`,
+        ).toBe(true);
+      }
+
+      const scenario = summarizeScenario(config, bots);
+      expect(scenario.failures).toEqual([]);
+      expect(scenarioExitCode(scenario)).toBe(0);
+    }
   });
 
   test("[G4] move, jump and tap macros exist and validate", () => {
