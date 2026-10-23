@@ -54,6 +54,8 @@ Wave 1: streams A (Babylon world), B (assets/audio), C (curation), F (game kit) 
 | I — Sumo Bumpers (Minimal) | `ws/i-sumo-bumpers` → merged | 26 tests; 2–8 players; dash + hit haptics in the default layout per the brief, overriding the older plan's Full-only note (accepted); PERF-01 PENDING; gate 289 files / 3,209 tests, host 720,931 B gz |
 | J — Snake Royale (Minimal) | `ws/i-snake-royale` → merged | 50 tests; 32×32 grid, 2–8 players, d-pad, shrink/food/grace; PERF-01 PENDING |
 | L — Beat Tap (Minimal) | `ws/i-beat-tap` → merged | 60 tests; 4 lanes, timing windows, calibration, 1–4 players; chart is self-made CC0, audio cue absent/silent; PERF-01 and real audio PENDING |
+| K — Bomb Defusal (Minimal) | `ws/i-bomb-defusal` → merged | 34 tests; procedural wires/button/keypad, private manuals, solvability over 10,000 seeds; 2–8 players (plan/product cap; the prompt's 2–4 was too narrow); PERF and hardware PENDING |
+| Trace tooling — game IDs | `GAME-…` prefix registered; 37 merged-game rows added | `tools/trace-check` recognizes the prefix; stage trace 0 unknown, 44 deferred; gate 308 files / 3,353 tests |
 | D — console launcher | `ws/d-console-launcher` in flight | UI-only, independent of A/B |
 | I — Sumo Bumpers (Minimal) | `ws/i-sumo-bumpers` in flight | Flat 2D, game-kit + SDK fakes |
 | J — Snake Royale (Minimal) | `ws/i-snake-royale` in flight | Flat 2D, game-kit + SDK fakes |
