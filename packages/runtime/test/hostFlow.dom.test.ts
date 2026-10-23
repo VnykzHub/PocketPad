@@ -192,6 +192,18 @@ describe("host shell", () => {
     expect(document.querySelector(".console-status__text")?.textContent).toBe(
       "Connected",
     );
+    // Spec 25 §2.7: room-ready broadcasts the launcher remote layout exactly
+    // once, so phones render its d-pad/Select/Back instead of game input.
+    const launcherLayouts = socket()
+      .sent.map((frame) => JSON.parse(frame) as Record<string, unknown>)
+      .filter(
+        (message) =>
+          message["t"] === "setLayout" &&
+          message["slot"] === "all" &&
+          (message["layout"] as { id?: string } | undefined)?.id ===
+            "launcher-remote-v1",
+      );
+    expect(launcherLayouts).toHaveLength(1);
   });
 
   test("[FR-5.4] updates connected counts in place and keeps the roster truthful", () => {
@@ -232,6 +244,24 @@ describe("host shell", () => {
     expect(
       document.querySelector('.slot-row[data-slot="1"] .slot-row__state')?.textContent,
     ).toBe("Reconnecting");
+
+    // A phone that leaves and a replacement on the same slot still receives
+    // the launcher remote: the join had no stored layout to replay.
+    const launcherFrames = (): Record<string, unknown>[] =>
+      socket()
+        .sent.map((frame) => JSON.parse(frame) as Record<string, unknown>)
+        .filter(
+          (message) =>
+            message["t"] === "setLayout" &&
+            (message["layout"] as { id?: string } | undefined)?.id ===
+              "launcher-remote-v1",
+        );
+    // Room-ready broadcast + the slot-1 join replay.
+    expect(launcherFrames()).toHaveLength(2);
+    socket().emit({ t: "playerLeft", slot: 1 });
+    socket().emit({ t: "playerJoined", slot: 1 });
+    expect(launcherFrames().at(-1)).toMatchObject({ slot: "all" });
+    expect(launcherFrames()).toHaveLength(3);
   });
 
   test("[FR-5.1] a kick shows HP-07 with one focused action and never renders the token", () => {

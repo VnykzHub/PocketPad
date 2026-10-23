@@ -38,6 +38,7 @@ import { createChrome, setupFullscreenToggle } from "./chrome.js";
 import { element } from "./dom.js";
 import { installHostEvents } from "./events.js";
 import { createLauncher, type HostLauncher } from "./launcher.js";
+import { createLauncherLayoutSync } from "./launcherLayout.js";
 import { createModals, type HostModals } from "./modals.js";
 import { createNavigation, type HostNavigation } from "./navigation.js";
 import { createNotices } from "./notices.js";
@@ -111,6 +112,20 @@ export function bootstrapHost(): void {
   // context, and the injected senders are the only place games can reach the
   // socket (FR-7.17).
   const capabilities = createHostCapabilities(client);
+
+  // Spec 25 §2.7: phones drive the console home with the launcher layout.
+  // It is broadcast only while the console is on screen and no game owns the
+  // phones; every getter is late-bound to the collaborator assigned below.
+  const launcherLayout = createLauncherLayoutSync({
+    layouts: capabilities.layouts,
+    isRoomReady: () =>
+      roomController?.getPhase() === "ready" && client.state === "connected",
+    isLauncherShown: () => {
+      const shell = launcher?.shell ?? null;
+      return shell !== null && shell.phase !== "loading";
+    },
+    isGameRunning: () => stage?.isStageActive() ?? false,
+  });
 
   const notices = createNotices({
     doc: document,
@@ -201,6 +216,7 @@ export function bootstrapHost(): void {
     launcher,
     stage,
     modals,
+    onLauncherShown: () => launcherLayout.sync(),
   });
 
   roomController = createRoomController({
@@ -222,7 +238,10 @@ export function bootstrapHost(): void {
     },
     destroyLauncher: () => launcher?.destroy(),
     resetRouteToLauncher: () => navigation?.resetRouteToLauncher(),
-    syncLauncher: () => launcher?.syncCounts(),
+    syncLauncher: () => {
+      launcher?.syncCounts();
+      launcherLayout.sync();
+    },
     handleRemote: (button) => launcher?.handleRemote(button) ?? false,
   });
 
