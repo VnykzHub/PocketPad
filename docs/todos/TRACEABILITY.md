@@ -412,6 +412,53 @@ Engine acceptance IDs are Gate-audited, not owned by a phone-platform stage. A r
 
 ---
 
+## 10.2 Game acceptance rows (Wave 1)
+
+Each game plan in `docs/todos/games/<slug>.md` remains authoritative for the
+rules and full acceptance text. These rows make the `GAME-…` tags used by the
+game tests resolvable; `W1-GAMES` rows are deferred by D0–D7 stage runs and
+enforced by the full Gate.
+
+| ID | Short requirement | Layer | Primary work item | Goal |
+|---|---|---|---|---|
+| GAME-BT-DATA-01 | Plan acceptance row for beat-tap (docs/todos/games/beat-tap.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-BT-DATA-02 | Plan acceptance row for beat-tap (docs/todos/games/beat-tap.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-BT-HOST-01 | Plan acceptance row for beat-tap (docs/todos/games/beat-tap.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-BT-HOST-02 | Plan acceptance row for beat-tap (docs/todos/games/beat-tap.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-BT-HOST-03 | Plan acceptance row for beat-tap (docs/todos/games/beat-tap.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-BT-HOST-04 | Plan acceptance row for beat-tap (docs/todos/games/beat-tap.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-BT-TEST-01 | Plan acceptance row for beat-tap (docs/todos/games/beat-tap.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-RD-TEST-01 | Plan acceptance row for reaction-duel (docs/todos/games/reaction-duel.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SB-CTRL-01 | Plan acceptance row for sumo-bumpers (docs/todos/games/sumo-bumpers.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SB-CTRL-02 | Plan acceptance row for sumo-bumpers (docs/todos/games/sumo-bumpers.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SB-CTRL-03 | Plan acceptance row for sumo-bumpers (docs/todos/games/sumo-bumpers.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SB-DATA-01 | Plan acceptance row for sumo-bumpers (docs/todos/games/sumo-bumpers.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SB-DATA-02 | Plan acceptance row for sumo-bumpers (docs/todos/games/sumo-bumpers.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SB-HOST-01 | Plan acceptance row for sumo-bumpers (docs/todos/games/sumo-bumpers.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SB-HOST-03 | Plan acceptance row for sumo-bumpers (docs/todos/games/sumo-bumpers.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SB-HOST-04 | Plan acceptance row for sumo-bumpers (docs/todos/games/sumo-bumpers.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SB-HOST-05 | Plan acceptance row for sumo-bumpers (docs/todos/games/sumo-bumpers.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SB-TEST-01 | Plan acceptance row for sumo-bumpers (docs/todos/games/sumo-bumpers.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SB-TEST-02 | Plan acceptance row for sumo-bumpers (docs/todos/games/sumo-bumpers.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SB-TEST-03 | Plan acceptance row for sumo-bumpers (docs/todos/games/sumo-bumpers.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SB-TEST-05 | Plan acceptance row for sumo-bumpers (docs/todos/games/sumo-bumpers.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-CTRL-01 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-CTRL-02 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-CTRL-03 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-DATA-01 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-DATA-02 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-HOST-01 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-HOST-02 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-HOST-03 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-HOST-04 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-HOST-05 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-TEST-01 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-TEST-02 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-TEST-03 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-TEST-04 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-TEST-05 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-SR-TEST-06 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+
 ## 11. Amendments (non-spec decisions that affect implementation)
 
 | ID | Amendment | Owner work item | Why |

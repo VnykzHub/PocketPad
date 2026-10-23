@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "name": "Bomb Defusal",
+  "description": "One defuser, one manual, three modules and five minutes.",
+  "entry": "index.js",
+  "layouts": ["layouts/bd-defuser-v1.json", "layouts/bd-manual-v1.json"],
+  "assetBudget": {
+    "initialBytes": 524288,
+    "totalBytes": 2097152
+  },
+  "minPlayers": 2,
+  "maxPlayers": 8,
+  "needsGyro": false,
+  "presentation": {
+    "tagline": "Cut the right wire. Trust the voice on the phone.",
+    "accent": "#e5484d",
+    "categories": ["puzzle", "co-op"],
+    "inputBadges": ["buttons", "choice", "text", "haptics"],
+    "featured": false
+  }
+}
