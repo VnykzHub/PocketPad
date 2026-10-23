@@ -20,10 +20,10 @@ import {
   type LoadedGameAssets,
 } from "../../src/assets/gameAssets.js";
 
-export const FIXTURE_GAME_DIR = fileURLToPath(
+const FIXTURE_GAME_DIR = fileURLToPath(
   new URL("./fixtures/fixture-game/", import.meta.url),
 );
-export const FIXTURE_BASE_URL = "https://fixture.test/games/fixture/";
+const FIXTURE_BASE_URL = "https://fixture.test/games/fixture/";
 export const FIXTURE_MANIFEST_URL = `${FIXTURE_BASE_URL}game.manifest.json`;
 
 export function fixtureText(relativePath: string): string {
@@ -84,17 +84,6 @@ export function fixtureAssets(): LoadedGameAssets {
   };
 }
 
-export async function fixtureFetchText(url: string): Promise<string | null> {
-  const bytes = fixtureFileForUrl(url);
-  return bytes === null ? null : new TextDecoder().decode(bytes);
-}
-
-export async function fixtureFetchJson(url: string): Promise<unknown> {
-  const bytes = fixtureFileForUrl(url);
-  if (bytes === null) throw new Error(`HTTP 404 for ${url}`);
-  return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
-}
-
 /** Streams `bytes` in chunks so progress is observed before completion. */
 export function streamResponse(
   bytes: Uint8Array,
@@ -127,7 +116,7 @@ export function bufferResponse(bytes: Uint8Array): ResponseLike {
   };
 }
 
-export function notFoundResponse(): ResponseLike {
+function notFoundResponse(): ResponseLike {
   return {
     ok: false,
     status: 404,
