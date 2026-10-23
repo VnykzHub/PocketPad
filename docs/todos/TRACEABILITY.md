@@ -464,6 +464,23 @@ enforced by the full Gate.
 | GAME-SR-TEST-04 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
 | GAME-SR-TEST-05 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
 | GAME-SR-TEST-06 | Plan acceptance row for snake-royale (docs/todos/games/snake-royale.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-CTRL-01 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-CTRL-03 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-CTRL-05 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-DATA-01 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-DATA-02 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-HOST-01 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-HOST-02 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-HOST-03 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-HOST-04 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-HOST-05 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-HOST-06 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-PERF-01 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-TEST-01 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-TEST-02 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-TEST-03 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-TEST-04 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
+| GAME-DG-TEST-07 | Plan acceptance row for draw-and-guess (docs/todos/games/draw-and-guess.md) | Game/QA | W1-GAMES | Wave 1 |
 
 ## 11. Amendments (non-spec decisions that affect implementation)
 
