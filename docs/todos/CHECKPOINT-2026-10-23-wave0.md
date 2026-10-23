@@ -52,6 +52,8 @@ Wave 1: streams A (Babylon world), B (assets/audio), C (curation), F (game kit) 
 | B — assets/audio runtime | `ws/b-assets-audio` → merged | 50 asset/audio tests with real GLB/OGG fixture bytes; host boot 623,121 B gz; gate 285 files / 3,120 tests |
 | A — Babylon world | `ws/a-babylon-world` → merged | 68 tests + official ER-22-01 fake conformance; WebGPU 3.865 ms / WebGL2 3.185 ms p95 at 1280×720 headless, 0 errors; ER-22-05 allocation PENDING; host boot 712,199 B gz |
 | I — Sumo Bumpers (Minimal) | `ws/i-sumo-bumpers` → merged | 26 tests; 2–8 players; dash + hit haptics in the default layout per the brief, overriding the older plan's Full-only note (accepted); PERF-01 PENDING; gate 289 files / 3,209 tests, host 720,931 B gz |
+| J — Snake Royale (Minimal) | `ws/i-snake-royale` → merged | 50 tests; 32×32 grid, 2–8 players, d-pad, shrink/food/grace; PERF-01 PENDING |
+| L — Beat Tap (Minimal) | `ws/i-beat-tap` → merged | 60 tests; 4 lanes, timing windows, calibration, 1–4 players; chart is self-made CC0, audio cue absent/silent; PERF-01 and real audio PENDING |
 | D — console launcher | `ws/d-console-launcher` in flight | UI-only, independent of A/B |
 | I — Sumo Bumpers (Minimal) | `ws/i-sumo-bumpers` in flight | Flat 2D, game-kit + SDK fakes |
 | J — Snake Royale (Minimal) | `ws/i-snake-royale` in flight | Flat 2D, game-kit + SDK fakes |
