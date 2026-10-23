@@ -89,21 +89,6 @@ export interface OpenGameOptions {
   readonly autoStart?: boolean;
 }
 
-export interface StageWorldOptions {
-  readonly manifest: GameManifest;
-  /** The initialized renderer the world draws through. */
-  readonly renderer: Renderer3D;
-  readonly backend: RendererBackend;
-}
-
-/**
- * Builds the spec-22 `ctx.world` for a game whose manifest asks for Babylon.
- * The Babylon adapter (stream A) supplies the real factory; until it lands the
- * stage ships without one and `ctx.world` stays absent. Returning null is the
- * "this host cannot provide a world" signal.
- */
-export type StageWorldFactory = (options: StageWorldOptions) => GameWorld3D | null;
-
 export interface StageDeps {
   readonly doc: Document;
   readonly window: Window;
@@ -131,8 +116,6 @@ export interface StageDeps {
   readonly createRenderer?: (
     options: GameRendererChoiceOptions,
   ) => Promise<GameRendererChoice>;
-  /** Optional spec-22 world factory; see `StageWorldFactory`. */
-  readonly createWorld?: StageWorldFactory;
 }
 
 export interface GameRendererChoiceOptions {
@@ -154,6 +137,12 @@ export type GameRendererChoice =
       /** May differ from `options.canvas`; the caller must mount it. */
       readonly canvas: HTMLCanvasElement;
       readonly usedFallback: boolean;
+      /**
+       * Babylon only: creates the single spec-22 `GameWorld3D` on the already
+       * initialized renderer. The stage installs it as `ctx.world` and the
+       * host disposes it with the renderer.
+       */
+      readonly createWorld?: () => GameWorld3D;
     }
   | {
       readonly ok: false;
@@ -208,6 +197,10 @@ export async function createGameRenderer(
       backend: choice.backend,
       canvas: choice.canvas,
       usedFallback: choice.usedFallback,
+      // Spec 22: one world per renderer, created only after init succeeds.
+      // Model support needs a GLB -> AssetContainer provider; the host cannot
+      // build one until the Babylon adapter exposes its scene (follow-up).
+      createWorld: () => choice.renderer.createWorld(),
     };
   }
 
@@ -309,6 +302,10 @@ export function createStage(deps: StageDeps): HostStage {
   let loadedGame: LoadedGame | null = null;
   /** Spec-23 library; disposed with the stage, never handed to the game. */
   let assetLibrary: GameAssetLibrary | null = null;
+  /** Spec-22 world created by the renderer for a Babylon manifest. */
+  let world: GameWorld3D | null = null;
+  /** One-shot world factory from the renderer choice, before the world exists. */
+  let createWorld: (() => GameWorld3D) | null = null;
   let renderer: Renderer3D | null = null;
   let backend: RendererBackend | null = null;
   let canvas: HTMLCanvasElement | null = null;
@@ -361,6 +358,10 @@ export function createStage(deps: StageDeps): HostStage {
     detachContextLoss?.();
     detachContextLoss = null;
     deps.window.removeEventListener("resize", applySize);
+    // The host already disposed the world; the renderer dispose below is the
+    // second (idempotent) owner, so drop our reference first.
+    world = null;
+    createWorld = null;
     renderer?.dispose();
     renderer = null;
     backend = null;
@@ -382,22 +383,6 @@ export function createStage(deps: StageDeps): HostStage {
     const activeBackend = backend;
     if (loaded === null || active === null || activeBackend === null) {
       return null;
-    }
-
-    // Spec 22: the world exists only for a manifest that asks for Babylon and
-    // only when an adapter factory is installed (stream A supplies it).
-    let world: GameWorld3D | null = null;
-    if (deps.createWorld !== undefined && loaded.manifest.renderer === "babylon") {
-      try {
-        world = deps.createWorld({
-          manifest: loaded.manifest,
-          renderer: active,
-          backend: activeBackend,
-        });
-      } catch (error) {
-        deps.notices.showError(error);
-        return null;
-      }
     }
 
     const host = new GameHost({
@@ -540,6 +525,7 @@ export function createStage(deps: StageDeps): HostStage {
       active = choice.renderer;
       renderer = choice.renderer;
       backend = choice.backend;
+      createWorld = choice.createWorld ?? null;
       // A failed WebGPU init can claim the original canvas, so the selector
       // may hand back a fresh one. It must be mounted before the first frame.
       if (choice.canvas !== surface) {
@@ -563,6 +549,20 @@ export function createStage(deps: StageDeps): HostStage {
     }
 
     if (active === null || canvas === null) return;
+
+    // Spec 22: a Babylon manifest gets exactly one world, created after the
+    // renderer initialized. 2D/engine manifests leave `ctx.world` absent.
+    if (createWorld !== null) {
+      const buildWorld = createWorld;
+      createWorld = null;
+      try {
+        world = buildWorld();
+      } catch (error) {
+        if (generation !== gameGeneration) return;
+        deps.notices.showError(error);
+        return;
+      }
+    }
 
     const contextRecovery = new ContextLossRecovery({
       controller: resolution,
