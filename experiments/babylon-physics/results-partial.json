@@ -1,0 +1,1860 @@
+{
+  "generatedAt": "2026-10-23T13:07:03.844Z",
+  "headless": true,
+  "note": "Headless Chrome, software rasteriser. Behaviour and relative cost evidence; not target-hardware acceptance.",
+  "runs": [
+    {
+      "engine": "rapier",
+      "width": 1920,
+      "height": 1080,
+      "elapsedMs": 5603,
+      "url": "http://127.0.0.1:22326/index.html?engine=rapier&probe=1",
+      "screenshot": "screenshots\\rapier-1920x1080.png",
+      "screenshotError": null,
+      "consoleErrors": [],
+      "spike": {
+        "engine": "rapier",
+        "status": "done",
+        "done": true,
+        "error": null,
+        "errors": [],
+        "boot": {
+          "wasmInitMs": 51.2,
+          "backendReportedInitMs": 51.1,
+          "firstWorldMs": 61.2,
+          "navigationToReadyMs": 596.2,
+          "backendVersion": "0.21.0",
+          "domContentLoadedMs": 481.8,
+          "loadEventMs": 482.3
+        },
+        "environment": {
+          "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+          "vendor": "Google Inc. (NVIDIA)",
+          "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3050 Ti Laptop GPU (0x000025A0) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+          "api": "WebGL2",
+          "crossOriginIsolated": true,
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "hardwareConcurrency": 16,
+          "devicePixelRatio": 1,
+          "viewport": {
+            "width": 1920,
+            "height": 1080
+          }
+        },
+        "scenarios": {
+          "carAcceleration": {
+            "name": "car-accel-0-50",
+            "ticks": 600,
+            "timeTo50KmhSeconds": 2.617,
+            "speedAt2sKmh": 30.99,
+            "speedAt5sKmh": 77.34,
+            "speedAt10sKmh": 125.61,
+            "distanceAt10sM": 212.56,
+            "maxLateralDeviationM": 0,
+            "maxRollDegrees": 1.41,
+            "upright": true,
+            "finite": true,
+            "final": {
+              "x": 0,
+              "y": 0.838,
+              "z": -212.564,
+              "yawDeg": 0,
+              "speedKmh": 125.61
+            },
+            "trace": [
+              {
+                "t": 0.02,
+                "speedKmh": 0,
+                "z": 0,
+                "y": 0.898
+              },
+              {
+                "t": 0.52,
+                "speedKmh": 10.82,
+                "z": -0.76,
+                "y": 0.838
+              },
+              {
+                "t": 1.02,
+                "speedKmh": 21.25,
+                "z": -3.03,
+                "y": 0.838
+              },
+              {
+                "t": 1.52,
+                "speedKmh": 30.99,
+                "z": -6.69,
+                "y": 0.838
+              },
+              {
+                "t": 2.02,
+                "speedKmh": 40.09,
+                "z": -11.65,
+                "y": 0.838
+              },
+              {
+                "t": 2.52,
+                "speedKmh": 48.59,
+                "z": -17.84,
+                "y": 0.838
+              },
+              {
+                "t": 3.02,
+                "speedKmh": 56.53,
+                "z": -25.17,
+                "y": 0.838
+              },
+              {
+                "t": 3.52,
+                "speedKmh": 63.95,
+                "z": -33.57,
+                "y": 0.838
+              },
+              {
+                "t": 4.02,
+                "speedKmh": 70.87,
+                "z": -42.96,
+                "y": 0.838
+              },
+              {
+                "t": 4.52,
+                "speedKmh": 77.34,
+                "z": -53.27,
+                "y": 0.838
+              },
+              {
+                "t": 5.02,
+                "speedKmh": 83.39,
+                "z": -64.46,
+                "y": 0.838
+              },
+              {
+                "t": 5.52,
+                "speedKmh": 89.03,
+                "z": -76.46,
+                "y": 0.838
+              },
+              {
+                "t": 6.02,
+                "speedKmh": 94.31,
+                "z": -89.21,
+                "y": 0.838
+              },
+              {
+                "t": 6.52,
+                "speedKmh": 99.23,
+                "z": -102.67,
+                "y": 0.838
+              },
+              {
+                "t": 7.02,
+                "speedKmh": 103.83,
+                "z": -116.79,
+                "y": 0.838
+              },
+              {
+                "t": 7.52,
+                "speedKmh": 108.13,
+                "z": -131.53,
+                "y": 0.838
+              },
+              {
+                "t": 8.02,
+                "speedKmh": 112.14,
+                "z": -146.85,
+                "y": 0.838
+              },
+              {
+                "t": 8.52,
+                "speedKmh": 115.89,
+                "z": -162.7,
+                "y": 0.838
+              },
+              {
+                "t": 9.02,
+                "speedKmh": 119.39,
+                "z": -179.06,
+                "y": 0.838
+              },
+              {
+                "t": 9.52,
+                "speedKmh": 122.66,
+                "z": -195.88,
+                "y": 0.838
+              },
+              {
+                "t": 10,
+                "speedKmh": 125.61,
+                "z": -212.56,
+                "y": 0.838
+              }
+            ]
+          },
+          "carSlalom": {
+            "name": "car-slalom",
+            "scriptedTicks": 600,
+            "entrySpeedKmh": 16.19,
+            "peakSpeedKmh": 28.87,
+            "minSpeedKmh": 16.19,
+            "finalSpeedKmh": 34.34,
+            "maxYawRateDegPerSec": 66.6,
+            "maxRollDegrees": 0.6,
+            "minUpY": 0.9999,
+            "uprightThroughout": true,
+            "lateralRangeM": 35.9,
+            "final": {
+              "x": 39.809,
+              "y": 0.838,
+              "z": -43.542,
+              "yawDeg": -27.11,
+              "speedKmh": 34.34
+            },
+            "trace": [
+              {
+                "t": 1.52,
+                "speedKmh": 16.19,
+                "z": -3.48,
+                "y": 0.838
+              },
+              {
+                "t": 1.93,
+                "speedKmh": 16.65,
+                "z": -5.36,
+                "y": 0.838
+              },
+              {
+                "t": 2.35,
+                "speedKmh": 17.89,
+                "z": -6.95,
+                "y": 0.838
+              },
+              {
+                "t": 2.77,
+                "speedKmh": 19.65,
+                "z": -7.9,
+                "y": 0.838
+              },
+              {
+                "t": 3.18,
+                "speedKmh": 21.97,
+                "z": -8.61,
+                "y": 0.838
+              },
+              {
+                "t": 3.6,
+                "speedKmh": 21.8,
+                "z": -10.01,
+                "y": 0.838
+              },
+              {
+                "t": 4.02,
+                "speedKmh": 22.48,
+                "z": -12.14,
+                "y": 0.838
+              },
+              {
+                "t": 4.43,
+                "speedKmh": 24.36,
+                "z": -14.68,
+                "y": 0.838
+              },
+              {
+                "t": 4.85,
+                "speedKmh": 24.07,
+                "z": -16.85,
+                "y": 0.838
+              },
+              {
+                "t": 5.27,
+                "speedKmh": 24.5,
+                "z": -18.27,
+                "y": 0.838
+              },
+              {
+                "t": 5.68,
+                "speedKmh": 26.17,
+                "z": -19.26,
+                "y": 0.838
+              },
+              {
+                "t": 6.1,
+                "speedKmh": 25.79,
+                "z": -20.92,
+                "y": 0.838
+              },
+              {
+                "t": 6.52,
+                "speedKmh": 26.05,
+                "z": -23.33,
+                "y": 0.838
+              },
+              {
+                "t": 6.93,
+                "speedKmh": 27.57,
+                "z": -26.18,
+                "y": 0.838
+              },
+              {
+                "t": 7.35,
+                "speedKmh": 27.12,
+                "z": -28.63,
+                "y": 0.838
+              },
+              {
+                "t": 7.77,
+                "speedKmh": 27.26,
+                "z": -30.29,
+                "y": 0.838
+              },
+              {
+                "t": 8.18,
+                "speedKmh": 28.67,
+                "z": -31.46,
+                "y": 0.838
+              },
+              {
+                "t": 8.6,
+                "speedKmh": 28.18,
+                "z": -33.29,
+                "y": 0.838
+              },
+              {
+                "t": 10,
+                "speedKmh": 34.34,
+                "z": -43.54,
+                "y": 0.838
+              }
+            ]
+          },
+          "characterStep": {
+            "name": "character-step-0.3m",
+            "ticks": 105,
+            "startY": 0.95,
+            "end": {
+              "x": -0.002,
+              "y": 0.834,
+              "z": -1.699,
+              "grounded": true
+            },
+            "maxY": 0.95,
+            "firstTopTick": null,
+            "climbedStep": false,
+            "passedFrontFace": false,
+            "grounded": true,
+            "hitWallTicks": 54,
+            "blockedTicks": 54,
+            "trace": [
+              {
+                "t": 0.02,
+                "x": 0,
+                "y": 0.947,
+                "z": -0.03,
+                "grounded": false
+              },
+              {
+                "t": 0.27,
+                "x": 0,
+                "y": 0.835,
+                "z": -0.53,
+                "grounded": true
+              },
+              {
+                "t": 0.52,
+                "x": 0,
+                "y": 0.833,
+                "z": -1.03,
+                "grounded": true
+              },
+              {
+                "t": 0.77,
+                "x": 0,
+                "y": 0.832,
+                "z": -1.53,
+                "grounded": true
+              },
+              {
+                "t": 1.02,
+                "x": 0,
+                "y": 0.833,
+                "z": -1.7,
+                "grounded": true
+              },
+              {
+                "t": 1.27,
+                "x": 0,
+                "y": 0.833,
+                "z": -1.7,
+                "grounded": true
+              },
+              {
+                "t": 1.52,
+                "x": 0,
+                "y": 0.834,
+                "z": -1.7,
+                "grounded": true
+              }
+            ]
+          },
+          "characterDrop": {
+            "name": "character-drop-2m",
+            "ticks": 180,
+            "leftPlatformTick": 73,
+            "landedTick": 104,
+            "fallTicks": 31,
+            "minY": 0.8954,
+            "maxFallSpeedMps": 5.886,
+            "airborneTicks": 36,
+            "end": {
+              "x": 0,
+              "y": 0.897,
+              "z": -7,
+              "grounded": true
+            },
+            "grounded": true,
+            "trace": [
+              {
+                "t": 0.02,
+                "x": 0,
+                "y": 2.897,
+                "z": -1.03,
+                "grounded": false
+              },
+              {
+                "t": 0.27,
+                "x": 0,
+                "y": 2.899,
+                "z": -1.53,
+                "grounded": true
+              },
+              {
+                "t": 0.52,
+                "x": 0,
+                "y": 2.9,
+                "z": -2.03,
+                "grounded": true
+              },
+              {
+                "t": 0.77,
+                "x": 0,
+                "y": 2.901,
+                "z": -2.53,
+                "grounded": true
+              },
+              {
+                "t": 1.02,
+                "x": 0,
+                "y": 2.901,
+                "z": -3.03,
+                "grounded": true
+              },
+              {
+                "t": 1.27,
+                "x": 0,
+                "y": 2.661,
+                "z": -3.53,
+                "grounded": false
+              },
+              {
+                "t": 1.52,
+                "x": 0,
+                "y": 2.047,
+                "z": -4.03,
+                "grounded": false
+              },
+              {
+                "t": 1.77,
+                "x": 0,
+                "y": 0.899,
+                "z": -4.53,
+                "grounded": true
+              },
+              {
+                "t": 2.02,
+                "x": 0,
+                "y": 0.896,
+                "z": -5.03,
+                "grounded": true
+              },
+              {
+                "t": 2.27,
+                "x": 0,
+                "y": 0.898,
+                "z": -5.53,
+                "grounded": true
+              },
+              {
+                "t": 2.52,
+                "x": 0,
+                "y": 0.897,
+                "z": -6.03,
+                "grounded": true
+              },
+              {
+                "t": 2.77,
+                "x": 0,
+                "y": 0.895,
+                "z": -6.53,
+                "grounded": true
+              }
+            ]
+          },
+          "characterWall": {
+            "name": "character-wall-slide",
+            "ticks": 150,
+            "blockedPosition": {
+              "x": -0.001,
+              "y": 0.833,
+              "z": -1.996,
+              "grounded": true
+            },
+            "final": {
+              "x": 2.108,
+              "y": 0.9,
+              "z": -2.449,
+              "grounded": true
+            },
+            "stoppedAtZ": -2.449,
+            "slidAlongX": true,
+            "hitWallTicks": 71,
+            "grounded": true
+          },
+          "determinism": {
+            "name": "determinism",
+            "ticks": 240,
+            "identical": true,
+            "firstDivergenceTick": -1,
+            "finalHashA": "d7d66da3",
+            "finalHashB": "d7d66da3",
+            "hashAt60A": "4c0b2f1e",
+            "hashAt60B": "4c0b2f1e"
+          }
+        },
+        "probe": {
+          "rows": [
+            {
+              "tick": 0,
+              "t": 0.02,
+              "x": 0,
+              "y": 0.898,
+              "z": 0,
+              "speedKmh": 0,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": 0,
+              "wheels": [
+                {
+                  "contact": false,
+                  "length": 0.3,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 0,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": false,
+                  "length": 0.3,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 0,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": false,
+                  "length": 0.3,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 0,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": false,
+                  "length": 0.3,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 0,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            },
+            {
+              "tick": 15,
+              "t": 0.27,
+              "x": 0,
+              "y": 0.831,
+              "z": -0.188,
+              "speedKmh": 5.33,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": 0,
+              "wheels": [
+                {
+                  "contact": true,
+                  "length": 0.264,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 2066.1,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.264,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 2066.1,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.202,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 5301.1,
+                  "long": 3899.9,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.202,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 5301.1,
+                  "long": 3899.9,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            },
+            {
+              "tick": 30,
+              "t": 0.52,
+              "x": 0,
+              "y": 0.838,
+              "z": -0.764,
+              "speedKmh": 10.82,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": 0,
+              "wheels": [
+                {
+                  "contact": true,
+                  "length": 0.267,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 1747.4,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.267,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 1747.4,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.21,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 4193.5,
+                  "long": 3788.6,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.21,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 4193.5,
+                  "long": 3788.6,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            },
+            {
+              "tick": 45,
+              "t": 0.77,
+              "x": 0,
+              "y": 0.838,
+              "z": -1.714,
+              "speedKmh": 16.12,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": 0,
+              "wheels": [
+                {
+                  "contact": true,
+                  "length": 0.266,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 1842.6,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.266,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 1842.6,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.211,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 4308.2,
+                  "long": 3681.3,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.211,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 4308.2,
+                  "long": 3681.3,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            },
+            {
+              "tick": 60,
+              "t": 1.02,
+              "x": 0,
+              "y": 0.838,
+              "z": -3.026,
+              "speedKmh": 21.25,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": 0,
+              "wheels": [
+                {
+                  "contact": true,
+                  "length": 0.265,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 1871.5,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.265,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 1871.5,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.211,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 4258.2,
+                  "long": 3577.5,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.211,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 4258.2,
+                  "long": 3577.5,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            },
+            {
+              "tick": 75,
+              "t": 1.27,
+              "x": 0,
+              "y": 0.838,
+              "z": -4.687,
+              "speedKmh": 26.21,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": 0,
+              "wheels": [
+                {
+                  "contact": true,
+                  "length": 0.264,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 1904.7,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.264,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 1904.7,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.212,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 4225.2,
+                  "long": 3477.2,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.212,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 4225.2,
+                  "long": 3477.2,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            },
+            {
+              "tick": 90,
+              "t": 1.52,
+              "x": 0,
+              "y": 0.838,
+              "z": -6.687,
+              "speedKmh": 30.99,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": 0,
+              "wheels": [
+                {
+                  "contact": true,
+                  "length": 0.264,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 1937.3,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.264,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 1937.3,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.213,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 4193.2,
+                  "long": 3380.2,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.213,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 4193.2,
+                  "long": 3380.2,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            },
+            {
+              "tick": 105,
+              "t": 1.77,
+              "x": 0,
+              "y": 0.838,
+              "z": -9.013,
+              "speedKmh": 35.62,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": 0,
+              "wheels": [
+                {
+                  "contact": true,
+                  "length": 0.263,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 1968.5,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.263,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 1968.5,
+                  "long": 0,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.214,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 4161.8,
+                  "long": 3286.5,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.214,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 4161.8,
+                  "long": 3286.5,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            },
+            {
+              "tick": 120,
+              "t": 2.02,
+              "x": 0.001,
+              "y": 0.838,
+              "z": -11.654,
+              "speedKmh": 39.88,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": -0.04,
+              "wheels": [
+                {
+                  "contact": true,
+                  "length": 0.262,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 1998.7,
+                  "long": 0,
+                  "lat": 1998.7,
+                  "slip": 0,
+                  "steer": -0.052
+                },
+                {
+                  "contact": true,
+                  "length": 0.262,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 1998.7,
+                  "long": 0,
+                  "lat": 1998.7,
+                  "slip": 0,
+                  "steer": -0.052
+                },
+                {
+                  "contact": true,
+                  "length": 0.214,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 4131.7,
+                  "long": 1118.6,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.214,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 4131.7,
+                  "long": 1118.6,
+                  "lat": 0,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            },
+            {
+              "tick": 135,
+              "t": 2.27,
+              "x": 0.178,
+              "y": 0.838,
+              "z": -14.426,
+              "speedKmh": 39.74,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": -4.5,
+              "wheels": [
+                {
+                  "contact": true,
+                  "length": 0.24,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 3107.8,
+                  "long": 0,
+                  "lat": 3107.8,
+                  "slip": 0,
+                  "steer": -0.611
+                },
+                {
+                  "contact": true,
+                  "length": 0.249,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 2636,
+                  "long": 0,
+                  "lat": 2636,
+                  "slip": 0,
+                  "steer": -0.611
+                },
+                {
+                  "contact": true,
+                  "length": 0.228,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 3490.6,
+                  "long": 1118.6,
+                  "lat": 1487.7,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.236,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 3018.9,
+                  "long": 1118.6,
+                  "lat": 1487.4,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            },
+            {
+              "tick": 150,
+              "t": 2.52,
+              "x": 0.727,
+              "y": 0.838,
+              "z": -17.111,
+              "speedKmh": 39.19,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": -12.17,
+              "wheels": [
+                {
+                  "contact": true,
+                  "length": 0.24,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 2958.5,
+                  "long": 0,
+                  "lat": 2958.5,
+                  "slip": 0,
+                  "steer": -0.611
+                },
+                {
+                  "contact": true,
+                  "length": 0.251,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 2490.2,
+                  "long": 0,
+                  "lat": 2490.2,
+                  "slip": 0,
+                  "steer": -0.611
+                },
+                {
+                  "contact": true,
+                  "length": 0.226,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 3640.9,
+                  "long": 1122.7,
+                  "lat": 1849.5,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.236,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 3172.6,
+                  "long": 1122.7,
+                  "lat": 1849,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            },
+            {
+              "tick": 165,
+              "t": 2.77,
+              "x": 1.661,
+              "y": 0.838,
+              "z": -19.653,
+              "speedKmh": 38.74,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": -20.73,
+              "wheels": [
+                {
+                  "contact": true,
+                  "length": 0.24,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 2982.4,
+                  "long": 0,
+                  "lat": 2982.4,
+                  "slip": 0,
+                  "steer": -0.611
+                },
+                {
+                  "contact": true,
+                  "length": 0.251,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 2497.7,
+                  "long": 0,
+                  "lat": 2497.7,
+                  "slip": 0,
+                  "steer": -0.611
+                },
+                {
+                  "contact": true,
+                  "length": 0.226,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 3632.5,
+                  "long": 1125.9,
+                  "lat": 1965,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.236,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 3147.9,
+                  "long": 1125.9,
+                  "lat": 1964.5,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            },
+            {
+              "tick": 180,
+              "t": 3.02,
+              "x": 2.967,
+              "y": 0.838,
+              "z": -21.992,
+              "speedKmh": 38.33,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": -29.67,
+              "wheels": [
+                {
+                  "contact": true,
+                  "length": 0.24,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 2982.3,
+                  "long": 0,
+                  "lat": 2982.3,
+                  "slip": 0,
+                  "steer": -0.611
+                },
+                {
+                  "contact": true,
+                  "length": 0.251,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 2493.7,
+                  "long": 0,
+                  "lat": 2493.7,
+                  "slip": 0,
+                  "steer": -0.611
+                },
+                {
+                  "contact": true,
+                  "length": 0.226,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 3636.6,
+                  "long": 1128.8,
+                  "lat": 2004,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.236,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 3148.1,
+                  "long": 1128.8,
+                  "lat": 2003.4,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            },
+            {
+              "tick": 195,
+              "t": 3.27,
+              "x": 4.612,
+              "y": 0.838,
+              "z": -24.071,
+              "speedKmh": 37.94,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": -38.79,
+              "wheels": [
+                {
+                  "contact": true,
+                  "length": 0.24,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 2981.9,
+                  "long": 0,
+                  "lat": 2981.9,
+                  "slip": 0,
+                  "steer": -0.611
+                },
+                {
+                  "contact": true,
+                  "length": 0.251,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 2492.2,
+                  "long": 0,
+                  "lat": 2492.2,
+                  "slip": 0,
+                  "steer": -0.611
+                },
+                {
+                  "contact": true,
+                  "length": 0.226,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 3638.2,
+                  "long": 1131.5,
+                  "lat": 2016.1,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.236,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 3148.5,
+                  "long": 1131.5,
+                  "lat": 2015.5,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            },
+            {
+              "tick": 210,
+              "t": 3.52,
+              "x": 6.551,
+              "y": 0.838,
+              "z": -25.841,
+              "speedKmh": 37.58,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": -48.03,
+              "wheels": [
+                {
+                  "contact": true,
+                  "length": 0.24,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 2981.2,
+                  "long": 0,
+                  "lat": 2981.2,
+                  "slip": 0,
+                  "steer": -0.611
+                },
+                {
+                  "contact": true,
+                  "length": 0.251,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 2491.2,
+                  "long": 0,
+                  "lat": 2491.2,
+                  "slip": 0,
+                  "steer": -0.611
+                },
+                {
+                  "contact": true,
+                  "length": 0.225,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 3639.2,
+                  "long": 1134.1,
+                  "lat": 2019.4,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.236,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 3149.2,
+                  "long": 1134.1,
+                  "lat": 2018.9,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            },
+            {
+              "tick": 225,
+              "t": 3.77,
+              "x": 8.732,
+              "y": 0.838,
+              "z": -27.258,
+              "speedKmh": 37.22,
+              "upY": 1,
+              "rootY": null,
+              "rayFromY": null,
+              "steerAngle": null,
+              "yawDeg": -57.37,
+              "wheels": [
+                {
+                  "contact": true,
+                  "length": 0.24,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 2980.3,
+                  "long": 0,
+                  "lat": 2980.3,
+                  "slip": 0,
+                  "steer": -0.611
+                },
+                {
+                  "contact": true,
+                  "length": 0.251,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 2490.4,
+                  "long": 0,
+                  "lat": 2490.4,
+                  "slip": 0,
+                  "steer": -0.611
+                },
+                {
+                  "contact": true,
+                  "length": 0.225,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 3640,
+                  "long": 1136.6,
+                  "lat": 2019.8,
+                  "slip": 0,
+                  "steer": 0
+                },
+                {
+                  "contact": true,
+                  "length": 0.236,
+                  "hitDistance": null,
+                  "hitY": null,
+                  "load": 3150.1,
+                  "long": 1136.6,
+                  "lat": 2019.3,
+                  "slip": 0,
+                  "steer": 0
+                }
+              ]
+            }
+          ],
+          "dynamics": null
+        },
+        "benchmark": {
+          "dynamicBodies": 500,
+          "physics": {
+            "count": 300,
+            "p50": 0.56,
+            "p95": 0.895,
+            "p99": 1.015,
+            "min": 0.31,
+            "max": 1.33,
+            "mean": 0.5533,
+            "totalMs": 166.57,
+            "stepsPerSecond": 1801.1,
+            "p95PercentOf16_67ms": 5.4,
+            "dynamicBodies": 500
+          },
+          "frames": {
+            "width": 1920,
+            "height": 1080,
+            "samples": 235,
+            "frameIntervalMs": {
+              "count": 235,
+              "p50": 8.33,
+              "p95": 8.735,
+              "p99": 11.325,
+              "min": 4.09,
+              "max": 42.285,
+              "mean": 8.487
+            },
+            "stepPlusRenderMs": {
+              "count": 235,
+              "p50": 5.02,
+              "p95": 7.175,
+              "p99": 10.45,
+              "min": 2.98,
+              "max": 41.825,
+              "mean": 5.311
+            },
+            "engineDeltaMs": {
+              "count": 235,
+              "p50": 0,
+              "p95": 0,
+              "p99": 0,
+              "min": 0,
+              "max": 0,
+              "mean": 0
+            },
+            "drawCalls": 501,
+            "activeMeshes": 501,
+            "fpsFromInterval": 117.8
+          }
+        },
+        "showcase": {
+          "screenshotReady": true,
+          "car": {
+            "x": 1.821,
+            "y": 0.838,
+            "z": -11.273
+          },
+          "character": {
+            "x": 3.198,
+            "y": 0.899,
+            "z": -0.998,
+            "grounded": true
+          }
+        },
+        "resources": [
+          {
+            "name": "index-DBxddsbR.js",
+            "initiatorType": "script",
+            "transferSize": 1233845,
+            "encodedBodySize": 1233545,
+            "decodedBodySize": 1233545,
+            "durationMs": 20.62
+          },
+          {
+            "name": "rapier-mIj8Wizn.js",
+            "initiatorType": "script",
+            "transferSize": 4403527,
+            "encodedBodySize": 4403227,
+            "decodedBodySize": 4403227,
+            "durationMs": 36.25
+          },
+          {
+            "name": "favicon.ico",
+            "initiatorType": "other",
+            "transferSize": 309,
+            "encodedBodySize": 9,
+            "decodedBodySize": 9,
+            "durationMs": 5.67
+          },
+          {
+            "name": "default.vertex-CxCiZRkd.js",
+            "initiatorType": "script",
+            "transferSize": 19968,
+            "encodedBodySize": 19668,
+            "decodedBodySize": 19668,
+            "durationMs": 7.29
+          },
+          {
+            "name": "logDepthDeclaration-C5EDZXK0.js",
+            "initiatorType": "script",
+            "transferSize": 2467,
+            "encodedBodySize": 2167,
+            "decodedBodySize": 2167,
+            "durationMs": 6.36
+          },
+          {
+            "name": "helperFunctions-CQODg4Nd.js",
+            "initiatorType": "script",
+            "transferSize": 7114,
+            "encodedBodySize": 6814,
+            "decodedBodySize": 6814,
+            "durationMs": 7.26
+          },
+          {
+            "name": "vertexColorMixing-zDcLG5FF.js",
+            "initiatorType": "script",
+            "transferSize": 10722,
+            "encodedBodySize": 10422,
+            "decodedBodySize": 10422,
+            "durationMs": 7.48
+          },
+          {
+            "name": "default.fragment-Djc8RBk4.js",
+            "initiatorType": "script",
+            "transferSize": 110810,
+            "encodedBodySize": 110510,
+            "decodedBodySize": 110510,
+            "durationMs": 20.76
+          },
+          {
+            "name": "fogFragment-C7bRmnVX.js",
+            "initiatorType": "script",
+            "transferSize": 2500,
+            "encodedBodySize": 2200,
+            "decodedBodySize": 2200,
+            "durationMs": 8.41
+          }
+        ]
+      }
+    }
+  ],
+  "size": {
+    "generatedAt": "2026-10-23T13:07:03.843Z",
+    "gzipLevel": 9,
+    "permissive": true,
+    "licences": [
+      {
+        "package": "@babylonjs/havok",
+        "version": "1.3.14",
+        "declaredLicense": "MIT",
+        "licenseFile": "node_modules/@babylonjs/havok/LICENSE",
+        "licenseFirstLine": "# MIT License",
+        "sha256": "d8b00cac49e55c3e93840e02868989c73520e50a865dfbd25b9d20d35397ccf0"
+      },
+      {
+        "package": "@dimforge/rapier3d-compat",
+        "version": "0.21.0",
+        "declaredLicense": "Apache-2.0",
+        "licenseFile": "node_modules/@dimforge/rapier3d-compat/LICENSE",
+        "licenseFirstLine": "Apache License",
+        "sha256": "4c05555705e3efde601fb1252ae48f1d63992af8a8fb8947745b7fa834e8f519"
+      }
+    ],
+    "files": [
+      {
+        "group": "havok",
+        "label": "havok wasm",
+        "path": "node_modules/@babylonjs/havok/lib/esm/HavokPhysics.wasm",
+        "rawBytes": 2094563,
+        "gzipBytes": 662067
+      },
+      {
+        "group": "havok",
+        "label": "havok esm glue",
+        "path": "node_modules/@babylonjs/havok/lib/esm/HavokPhysics_es.js",
+        "rawBytes": 67400,
+        "gzipBytes": 13404
+      },
+      {
+        "group": "rapier",
+        "label": "rapier compat bundle (wasm inlined)",
+        "path": "node_modules/@dimforge/rapier3d-compat/dist/rapier.mjs",
+        "rawBytes": 4340292,
+        "gzipBytes": 1644109
+      },
+      {
+        "group": "rapier",
+        "label": "rapier wasm (standalone)",
+        "path": "node_modules/@dimforge/rapier3d-compat/dist/rapier_wasm3d_bg.wasm",
+        "rawBytes": 3082103,
+        "gzipBytes": 1175669
+      },
+      {
+        "group": "rapier",
+        "label": "rapier wasm loader (standalone)",
+        "path": "node_modules/@dimforge/rapier3d-compat/dist/rapier_wasm3d.js",
+        "rawBytes": 342560,
+        "gzipBytes": 34702
+      }
+    ],
+    "dist": [
+      {
+        "file": "dist/assets/HavokPhysics-BqNY-4N9.wasm",
+        "rawBytes": 2094563,
+        "gzipBytes": 662067
+      },
+      {
+        "file": "dist/assets/basisTextureLoader-Buh9_n68.js",
+        "rawBytes": 27329,
+        "gzipBytes": 8236
+      },
+      {
+        "file": "dist/assets/color.fragment-8dw2Gt5h.js",
+        "rawBytes": 995,
+        "gzipBytes": 460
+      },
+      {
+        "file": "dist/assets/color.fragment-D7zj1jbN.js",
+        "rawBytes": 887,
+        "gzipBytes": 427
+      },
+      {
+        "file": "dist/assets/color.vertex-BaELcc9u.js",
+        "rawBytes": 1360,
+        "gzipBytes": 609
+      },
+      {
+        "file": "dist/assets/color.vertex-BhRlm2Bf.js",
+        "rawBytes": 1420,
+        "gzipBytes": 618
+      },
+      {
+        "file": "dist/assets/cubemapToSphericalPolynomial-TTddQIem.js",
+        "rawBytes": 3670,
+        "gzipBytes": 1633
+      },
+      {
+        "file": "dist/assets/dds.pure-BKjTKV-E.js",
+        "rawBytes": 7053,
+        "gzipBytes": 2477
+      },
+      {
+        "file": "dist/assets/ddsTextureLoader-BNxIWXqd.js",
+        "rawBytes": 1317,
+        "gzipBytes": 639
+      },
+      {
+        "file": "dist/assets/default.fragment-B9oyqvea.js",
+        "rawBytes": 115282,
+        "gzipBytes": 22140
+      },
+      {
+        "file": "dist/assets/default.fragment-Djc8RBk4.js",
+        "rawBytes": 110510,
+        "gzipBytes": 22331
+      },
+      {
+        "file": "dist/assets/default.vertex-CxCiZRkd.js",
+        "rawBytes": 19668,
+        "gzipBytes": 4348
+      },
+      {
+        "file": "dist/assets/default.vertex-D2QKZElb.js",
+        "rawBytes": 38088,
+        "gzipBytes": 6261
+      },
+      {
+        "file": "dist/assets/envTextureLoader-Bc_FA2ZR.js",
+        "rawBytes": 31768,
+        "gzipBytes": 8977
+      },
+      {
+        "file": "dist/assets/exrTextureLoader-Dl7u-VyC.js",
+        "rawBytes": 14186,
+        "gzipBytes": 5210
+      },
+      {
+        "file": "dist/assets/fogFragment-BhwBZBHc.js",
+        "rawBytes": 2430,
+        "gzipBytes": 749
+      },
+      {
+        "file": "dist/assets/fogFragment-C7bRmnVX.js",
+        "rawBytes": 2200,
+        "gzipBytes": 699
+      },
+      {
+        "file": "dist/assets/havok-DYtYgPGY.js",
+        "rawBytes": 137542,
+        "gzipBytes": 35405
+      },
+      {
+        "file": "dist/assets/hdrTextureLoader-BGQvgh0h.js",
+        "rawBytes": 2391,
+        "gzipBytes": 1139
+      },
+      {
+        "file": "dist/assets/helperFunctions-CQODg4Nd.js",
+        "rawBytes": 6814,
+        "gzipBytes": 2295
+      },
+      {
+        "file": "dist/assets/helperFunctions-CvclNdAx.js",
+        "rawBytes": 6488,
+        "gzipBytes": 2170
+      },
+      {
+        "file": "dist/assets/iesTextureLoader-BwCG5slN.js",
+        "rawBytes": 2489,
+        "gzipBytes": 1093
+      },
+      {
+        "file": "dist/assets/index-DBxddsbR.js",
+        "rawBytes": 1233545,
+        "gzipBytes": 301695
+      },
+      {
+        "file": "dist/assets/ktxTextureLoader-BjxT_a5U.js",
+        "rawBytes": 16405,
+        "gzipBytes": 4759
+      },
+      {
+        "file": "dist/assets/logDepthDeclaration-C5EDZXK0.js",
+        "rawBytes": 2167,
+        "gzipBytes": 850
+      },
+      {
+        "file": "dist/assets/logDepthDeclaration-DON5D__F.js",
+        "rawBytes": 2547,
+        "gzipBytes": 844
+      },
+      {
+        "file": "dist/assets/mesh.vertexData.functions-ayNlGC5K.js",
+        "rawBytes": 960,
+        "gzipBytes": 494
+      },
+      {
+        "file": "dist/assets/postprocess.vertex-C85UelVW.js",
+        "rawBytes": 459,
+        "gzipBytes": 307
+      },
+      {
+        "file": "dist/assets/postprocess.vertex-DRYYEpVB.js",
+        "rawBytes": 583,
+        "gzipBytes": 354
+      },
+      {
+        "file": "dist/assets/rapier-mIj8Wizn.js",
+        "rawBytes": 4403227,
+        "gzipBytes": 1662809
+      },
+      {
+        "file": "dist/assets/rgbdDecode.fragment-CqzFYmNd.js",
+        "rawBytes": 671,
+        "gzipBytes": 389
+      },
+      {
+        "file": "dist/assets/rgbdDecode.fragment-DRyKDumk.js",
+        "rawBytes": 528,
+        "gzipBytes": 346
+      },
+      {
+        "file": "dist/assets/tgaTextureLoader-Cv9yLsWc.js",
+        "rawBytes": 3527,
+        "gzipBytes": 1377
+      },
+      {
+        "file": "dist/assets/vertexColorMixing-VCGHCbUy.js",
+        "rawBytes": 11751,
+        "gzipBytes": 2162
+      },
+      {
+        "file": "dist/assets/vertexColorMixing-zDcLG5FF.js",
+        "rawBytes": 10422,
+        "gzipBytes": 2131
+      }
+    ]
+  }
+}
