@@ -1,0 +1,55 @@
+/*
+ * Evidence page chrome only. The console shell styles live in the component
+ * stylesheet (bundled to main.css); this file must not override them.
+ */
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #050505;
+  color: #f4f4f4;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+}
+
+.toolbar {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 8px;
+  border: 1px solid #ffffff2e;
+  border-radius: 12px;
+  background: #0d0d0de6;
+}
+
+.toolbar[hidden] {
+  display: none;
+}
+
+.toolbar__link {
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: #f4f4f4;
+  font-size: 13px;
+  text-decoration: none;
+  background: #ffffff14;
+}
+
+.toolbar__link:hover {
+  background: #ffffff24;
+}
+
+.toolbar__link:focus-visible {
+  outline: 3px solid #4cb3f0;
+  outline-offset: 2px;
+}
