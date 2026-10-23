@@ -35,7 +35,7 @@
 
 - WebGPU context loss is PENDING; only the WebGL2 loss path was exercised.
 - TLS was unit-tested but not exercised with a real certificate on a phone.
-- `npm run play` was not run end to end after the build (the gate builds every workspace and the dev server starts).
+- `npm run play` was run end to end on 2026-10-23: build completed, the server printed the LAN URL/QR, `/healthz` returned 200, then it was stopped.
 - The template game is a Wave 0 fixture; retire it once a real game proves registration.
 - Hardware rows (phones, TV, gyro, haptics) remain PENDING.
 
@@ -48,3 +48,12 @@ Wave 1: streams A (Babylon world), B (assets/audio), C (curation), F (game kit) 
 | Stream | Branch / commit | Evidence |
 |---|---|---|
 | F — `@lanpad/game-kit` | `ws/f-game-kit` → merged; integration wires `tsconfig`, Vitest and the lockfile | 79 package tests; sample 184 lines; whole gate 278 files / 3,074 tests, 0 unknown |
+| C — asset curation | `ws/c-asset-curation` → merged; root wiring committed | 32 CC0 files, 1,936,734 B raw / 740,904 B per-file gzip; 15 tests; Chrome OGG decode PASS, Firefox/Safari PENDING; gate 281 files / 3,089 tests |
+| B — assets/audio runtime | `ws/b-assets-audio` → merged | 50 asset/audio tests with real GLB/OGG fixture bytes; host boot 623,121 B gz; gate 285 files / 3,120 tests |
+| D — console launcher | `ws/d-console-launcher` in flight | UI-only, independent of A/B |
+| I — Sumo Bumpers (Minimal) | `ws/i-sumo-bumpers` in flight | Flat 2D, game-kit + SDK fakes |
+| J — Snake Royale (Minimal) | `ws/i-snake-royale` in flight | Flat 2D, game-kit + SDK fakes |
+| K — Bomb Defusal (Minimal) | `ws/i-bomb-defusal` in flight | Panels + flat 2D |
+| L — Beat Tap (Minimal) | `ws/i-beat-tap` in flight | Chart + flat 2D |
+
+Concurrency note: D and four Minimal games started before A/B/G because Wave 0 and the game kit were already green and those streams touch disjoint paths. G (shared host wiring) still waits for A and B.

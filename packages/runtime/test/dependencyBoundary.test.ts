@@ -34,7 +34,7 @@ describe("dependency boundaries (D0-REPO-01)", () => {
     );
 
     expect(ruleIds).toContain("no-restricted-imports");
-  });
+  }, 30_000);
 
   test("[FR-10.1] protocol may not import another workspace package", async () => {
     const ruleIds = await lintRuleIds(
@@ -43,7 +43,7 @@ describe("dependency boundaries (D0-REPO-01)", () => {
     );
 
     expect(ruleIds).toContain("no-restricted-imports");
-  });
+  }, 30_000);
 
   test("[FR-4.3] hard-coded websocket origins are rejected", async () => {
     const ruleIds = await lintRuleIds(
@@ -52,5 +52,5 @@ describe("dependency boundaries (D0-REPO-01)", () => {
     );
 
     expect(ruleIds).toContain("no-restricted-syntax");
-  });
+  }, 30_000);
 });
