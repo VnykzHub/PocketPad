@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "bt-calibrate-v1",
+  "orientation": "landscape",
+  "background": "#08080c",
+  "controls": [
+    {
+      "type": "button",
+      "id": "tap",
+      "x": "50%",
+      "y": "60%",
+      "label": "TAP",
+      "shape": "circle",
+      "r": "30%",
+      "bit": 0
+    },
+    {
+      "type": "button",
+      "id": "cancel",
+      "x": "88%",
+      "y": "10%",
+      "label": "Cancel",
+      "shape": "circle",
+      "r": "7%",
+      "bit": 15
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "bt-dpad-v1",
+  "orientation": "landscape",
+  "background": "#08080c",
+  "controls": [
+    {
+      "type": "dpad",
+      "id": "lanes",
+      "x": "50%",
+      "y": "70%",
+      "size": "50%",
+      "bits": {
+        "up": 8,
+        "down": 9,
+        "left": 10,
+        "right": 11
+      }
+    },
+    {
+      "type": "button",
+      "id": "calibrate",
+      "x": "88%",
+      "y": "14%",
+      "label": "CAL",
+      "shape": "circle",
+      "r": "7%",
+      "bit": 15
+    }
+  ]
+}
