@@ -1,0 +1,493 @@
+/**
+ * Headless Draw and Guess harness (GAME-DG-TEST-01..04, FR-7.17, SR-13).
+ *
+ * Every test drives the real `Game` through `simulate` with a recording
+ * `GameContext`. Panels, layouts, controller events and the flat TV surface
+ * are captured, so privacy, role swaps, stroke rendering and results can be
+ * asserted without a DOM, GPU or socket.
+ */
+import { readFileSync } from "node:fs";
+import {
+  validateManifest,
+  type GameContext,
+  type GameControllerState,
+  type GameDebug,
+  type GameEvent,
+  type GameEvents,
+  type GameHaptics,
+  type GameLayouts,
+  type GameManifest,
+  type GamePanels,
+  type GameRenderer3D,
+  type GameRng,
+  type JsonValue,
+  type LayoutDocument,
+} from "@lanpad/sdk";
+import {
+  createFakeContext,
+  createFakeInput,
+  createFakePlayer,
+  type FakeInput,
+} from "@lanpad/sdk/testing";
+import {
+  createDrawAndGuessGame,
+  type DrawAndGuessGame,
+  type DrawAndGuessGameOptions,
+} from "../src/game.js";
+import type { Renderer2DLike } from "../src/render.js";
+
+export { createFakePlayer };
+
+/** Fixed tick; 50 ms keeps the pause and hold arithmetic exact. */
+export const STEP_MS = 50;
+export const STEP_SECONDS = STEP_MS / 1000;
+
+/** Reads and validates the shipped manifest the same way the host does. */
+export function loadManifest(): GameManifest {
+  const raw: unknown = JSON.parse(
+    readFileSync(new URL("../game.manifest.json", import.meta.url), "utf8"),
+  );
+  const result = validateManifest(raw);
+  if (!result.ok) throw new Error(result.errors.join("\n"));
+  return result.manifest;
+}
+
+/** Deterministic mulberry32; matches the SDK RNG contract. */
+export function createSeededRng(seed: number): GameRng {
+  let state = seed >>> 0;
+  const next = (): number => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+  return {
+    seed,
+    next,
+    int(min: number, max: number): number {
+      return min + Math.floor(next() * (max - min + 1));
+    },
+  };
+}
+
+/** One panel payload addressed to one slot. */
+export interface RecordedPanel {
+  readonly slot: number;
+  readonly content: JsonValue | null;
+}
+
+export interface PanelRecorder extends GamePanels {
+  readonly records: RecordedPanel[];
+  /** Latest content for a slot, or undefined when it never received one. */
+  last(slot: number): JsonValue | null | undefined;
+}
+
+export function createPanelRecorder(): PanelRecorder {
+  const records: RecordedPanel[] = [];
+  const record = (slot: number, content: JsonValue | null): void => {
+    records.push({ slot, content });
+  };
+  return {
+    get records(): RecordedPanel[] {
+      return records;
+    },
+    set(slot, content): void {
+      record(slot, content);
+    },
+    show(slot, content): void {
+      record(slot, content);
+    },
+    clear(slot): void {
+      record(slot, null);
+    },
+    last(slot: number): JsonValue | null | undefined {
+      for (let index = records.length - 1; index >= 0; index -= 1) {
+        const entry = records[index];
+        if (entry !== undefined && entry.slot === slot) return entry.content;
+      }
+      return undefined;
+    },
+  };
+}
+
+/** Flattens panel JSON to text so a test can assert on what a phone shows. */
+export function panelText(content: unknown): string {
+  const parts: string[] = [];
+  const visit = (value: unknown): void => {
+    if (typeof value === "string") {
+      parts.push(value);
+    } else if (typeof value === "number" || typeof value === "boolean") {
+      parts.push(String(value));
+    } else if (Array.isArray(value)) {
+      for (let index = 0; index < value.length; index += 1) {
+        visit(value[index]);
+      }
+    } else if (value !== null && typeof value === "object") {
+      const record = value as Readonly<Record<string, unknown>>;
+      for (const key of Object.keys(record)) visit(record[key]);
+    }
+  };
+  visit(content);
+  return parts.join("\n");
+}
+
+export interface LayoutSetRecord {
+  readonly target: number | "all";
+  readonly layout: LayoutDocument | string;
+}
+
+export interface LayoutRecorder extends GameLayouts {
+  readonly sets: LayoutSetRecord[];
+  readonly clears: Array<number | "all">;
+  /** Last layout id requested for one slot, or undefined. */
+  lastFor(slot: number): LayoutDocument | string | undefined;
+}
+
+export function createLayoutRecorder(): LayoutRecorder {
+  const sets: LayoutSetRecord[] = [];
+  const clears: Array<number | "all"> = [];
+  return {
+    get sets(): LayoutSetRecord[] {
+      return sets;
+    },
+    get clears(): Array<number | "all"> {
+      return clears;
+    },
+    set(target, layout): void {
+      sets.push({ target, layout });
+    },
+    clear(target): void {
+      clears.push(target);
+    },
+    lastFor(slot: number): LayoutDocument | string | undefined {
+      for (let index = sets.length - 1; index >= 0; index -= 1) {
+        const entry = sets[index];
+        if (entry !== undefined && entry.target === slot) return entry.layout;
+      }
+      return undefined;
+    },
+  };
+}
+
+export interface PulseRecord {
+  readonly target: number | "all";
+  readonly pattern: readonly number[];
+}
+
+export interface HapticsRecorder extends GameHaptics {
+  readonly pulses: PulseRecord[];
+}
+
+export function createHapticsRecorder(): HapticsRecorder {
+  const pulses: PulseRecord[] = [];
+  return {
+    get pulses(): PulseRecord[] {
+      return pulses;
+    },
+    pulse(target, pattern): void {
+      pulses.push({ target, pattern: Array.from(pattern) });
+    },
+  };
+}
+
+export interface DebugRecorder extends GameDebug {
+  readonly counters: Map<string, number>;
+}
+
+export function createDebugRecorder(): DebugRecorder {
+  const counters = new Map<string, number>();
+  return {
+    enabled: false,
+    get counters(): Map<string, number> {
+      return counters;
+    },
+    setCounter(name, value): void {
+      counters.set(name, value);
+    },
+  };
+}
+
+export interface RecordedPolyline {
+  readonly points: ReadonlyArray<{ readonly x: number; readonly y: number }>;
+  readonly width: number;
+  readonly color: string;
+}
+
+export interface RecordedCircle {
+  readonly x: number;
+  readonly y: number;
+  readonly radius: number;
+  readonly color: string;
+}
+
+export interface FlatRenderer extends GameRenderer3D, Renderer2DLike {
+  /** Every string the TV was asked to draw, in call order. */
+  readonly texts: string[];
+  /** Every polyline the TV was asked to draw, with cloned points. */
+  readonly polylines: RecordedPolyline[];
+  /** Dot fallback calls from a surface without `polyline`. */
+  readonly circles: RecordedCircle[];
+  readonly frameCount: number;
+  readonly size: { readonly width: number; readonly height: number };
+}
+
+export interface FlatRendererOptions {
+  /** Set false to model a flat surface that only supports dots. */
+  readonly withPolyline?: boolean;
+}
+
+/**
+ * A 1280x720 Canvas2D-like surface. Points are cloned, which is fine in a
+ * test: production never allocates per frame.
+ */
+export function createFlatRenderer(options: FlatRendererOptions = {}): FlatRenderer {
+  const texts: string[] = [];
+  const polylines: RecordedPolyline[] = [];
+  const circles: RecordedCircle[] = [];
+  let frameCount = 0;
+
+  const renderer = {
+    backend: "canvas2d",
+    drawCalls: 0,
+    textureMemoryMB: 0,
+    size: { width: 1280, height: 720 },
+    get texts(): string[] {
+      return texts;
+    },
+    get polylines(): RecordedPolyline[] {
+      return polylines;
+    },
+    get circles(): RecordedCircle[] {
+      return circles;
+    },
+    get frameCount(): number {
+      return frameCount;
+    },
+    beginFrame(): void {
+      frameCount += 1;
+    },
+    endFrame(): void {},
+    clear(): void {},
+    rect(): void {},
+    circle(x: number, y: number, radius: number, color: string): void {
+      circles.push({ x, y, radius, color });
+    },
+    text(value: string): void {
+      texts.push(value);
+    },
+    setCamera(): void {},
+    drawCube(): void {},
+  } as FlatRenderer;
+
+  if (options.withPolyline !== false) {
+    renderer.polyline = (points, width, color): void => {
+      const copy: Array<{ x: number; y: number }> = [];
+      for (let index = 0; index < points.length; index += 1) {
+        const point = points[index];
+        if (point !== undefined) copy.push({ x: point.x, y: point.y });
+      }
+      polylines.push({ points: copy, width, color });
+    };
+  }
+
+  return renderer;
+}
+
+export interface EventBus extends GameEvents {
+  /** Delivers one controller event synchronously, as the host router does. */
+  emit(slot: number, name: string, data: JsonValue): void;
+  /** Live subscriptions; dispose must drive this back to zero. */
+  readonly subscriptionCount: number;
+}
+
+export function createEventBus(): EventBus {
+  const named = new Map<string, Set<(event: GameEvent) => void>>();
+  const anyListeners = new Set<(event: GameEvent) => void>();
+  let subscriptions = 0;
+  return {
+    get subscriptionCount(): number {
+      return subscriptions;
+    },
+    on(name, handler): () => void {
+      let handlers = named.get(name);
+      if (handlers === undefined) {
+        handlers = new Set();
+        named.set(name, handlers);
+      }
+      handlers.add(handler);
+      subscriptions += 1;
+      const listener = handlers;
+      return (): void => {
+        if (listener.delete(handler)) subscriptions -= 1;
+      };
+    },
+    onAny(handler): () => void {
+      anyListeners.add(handler);
+      subscriptions += 1;
+      return (): void => {
+        if (anyListeners.delete(handler)) subscriptions -= 1;
+      };
+    },
+    emit(slot, name, data): void {
+      const event: GameEvent = { slot, name, data };
+      const handlers = named.get(name);
+      if (handlers !== undefined) {
+        for (const handler of handlers) handler(event);
+      }
+      for (const handler of anyListeners) handler(event);
+    },
+  };
+}
+
+export interface CanvasPointInput {
+  readonly x: number;
+  readonly y: number;
+  readonly t?: number;
+}
+
+export interface Harness {
+  readonly manifest: GameManifest;
+  readonly game: DrawAndGuessGame;
+  readonly ctx: GameContext;
+  readonly input: FakeInput;
+  readonly bus: EventBus;
+  readonly panels: PanelRecorder;
+  readonly layouts: LayoutRecorder;
+  readonly haptics: HapticsRecorder;
+  readonly debug: DebugRecorder;
+  readonly renderer: FlatRenderer;
+  /** Advances whole fixed ticks; default one 50 ms step. */
+  tick(count?: number): void;
+  /** Ticks until `phase === "playing"`, failing loudly if the match stalls. */
+  advanceToPlaying(): void;
+  /** Ticks until `phase === "results"`, failing loudly if it never lands. */
+  advanceToResults(): void;
+  setPlayers(players: readonly GameControllerState[]): void;
+  emitChoice(slot: number, value: string): void;
+  emitText(slot: number, value: string): void;
+  emitCanvas(
+    slot: number,
+    points: readonly CanvasPointInput[],
+    phase?: "start" | "move" | "end",
+    color?: string,
+    width?: number,
+  ): void;
+  /** Every non-null panel text pushed to a slot, in call order. */
+  panelTextsFor(slot: number): string[];
+  /** Latest panel text for a slot, or "" when none was sent. */
+  latestPanelText(slot: number): string;
+}
+
+export interface HarnessOptions {
+  readonly players?: readonly GameControllerState[];
+  readonly game?: DrawAndGuessGameOptions;
+  readonly manifest?: GameManifest;
+  readonly rngSeed?: number;
+}
+
+/**
+ * Builds the real game against a recording context. Defaults keep tests
+ * short: no countdown, a 250 ms intermediate hold and three players, one of
+ * whom is the first drawer.
+ */
+export function createHarness(options: HarnessOptions = {}): Harness {
+  const manifest = options.manifest ?? loadManifest();
+  const players =
+    options.players ?? [createFakePlayer(1), createFakePlayer(2), createFakePlayer(3)];
+  const input = createFakeInput(players);
+  const bus = createEventBus();
+  const panels = createPanelRecorder();
+  const layouts = createLayoutRecorder();
+  const haptics = createHapticsRecorder();
+  const debug = createDebugRecorder();
+  const renderer = createFlatRenderer();
+  const rng = createSeededRng(options.rngSeed ?? 1);
+
+  const ctx = createFakeContext({
+    manifest,
+    input,
+    events: bus,
+    panels,
+    layouts,
+    haptics,
+    debug,
+    renderer,
+    rng,
+  });
+
+  const game = createDrawAndGuessGame(manifest, {
+    countdownMs: 0,
+    resultsHoldMs: 250,
+    ...(options.game ?? {}),
+  });
+  game.init(ctx);
+
+  const panelTextsFor = (slot: number): string[] => {
+    const texts: string[] = [];
+    for (let index = 0; index < panels.records.length; index += 1) {
+      const entry = panels.records[index];
+      if (entry !== undefined && entry.slot === slot && entry.content !== null) {
+        texts.push(panelText(entry.content));
+      }
+    }
+    return texts;
+  };
+
+  return {
+    manifest,
+    game,
+    ctx,
+    input,
+    bus,
+    panels,
+    layouts,
+    haptics,
+    debug,
+    renderer,
+    tick(count = 1): void {
+      for (let index = 0; index < count; index += 1) {
+        game.simulate(STEP_SECONDS, input.snapshot);
+      }
+    },
+    advanceToPlaying(): void {
+      for (let guard = 0; guard < 200 && game.phase !== "playing"; guard += 1) {
+        game.simulate(STEP_SECONDS, input.snapshot);
+      }
+      if (game.phase !== "playing") {
+        throw new Error(`game did not reach playing (phase ${game.phase})`);
+      }
+    },
+    advanceToResults(): void {
+      for (let guard = 0; guard < 200 && game.phase !== "results"; guard += 1) {
+        game.simulate(STEP_SECONDS, input.snapshot);
+      }
+      if (game.phase !== "results") {
+        throw new Error(`game did not reach results (phase ${game.phase})`);
+      }
+    },
+    setPlayers(next): void {
+      input.setPlayers(next);
+    },
+    emitChoice(slot, value): void {
+      bus.emit(slot, "kit.choice", { value });
+    },
+    emitText(slot, value): void {
+      bus.emit(slot, "kit.text", { value });
+    },
+    emitCanvas(slot, points, phase = "start", color = "#ffffff", width = 6): void {
+      const payload: JsonValue = {
+        phase,
+        color,
+        width,
+        points: points.map((point) => ({ x: point.x, y: point.y, t: point.t ?? 0 })),
+      };
+      bus.emit(slot, "kit.canvas", payload);
+    },
+    panelTextsFor,
+    latestPanelText(slot): string {
+      const content = panels.last(slot);
+      return content === null || content === undefined ? "" : panelText(content);
+    },
+  };
+}

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "dg-guesser-v1",
+  "orientation": "portrait",
+  "background": "#101014",
+  "controls": [
+    {
+      "type": "panel",
+      "id": "status",
+      "x": "50%",
+      "y": "16%",
+      "w": "92%",
+      "h": "22%"
+    },
+    {
+      "type": "text",
+      "id": "guess",
+      "x": "50%",
+      "y": "60%",
+      "w": "92%",
+      "h": "18%",
+      "event": "kit.text",
+      "maxLen": 60
+    }
+  ]
+}
