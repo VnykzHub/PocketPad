@@ -62,6 +62,7 @@ Wave 1: streams A (Babylon world), B (assets/audio), C (curation), F (game kit) 
 | D — console launcher | `ws/d-console-launcher` → merged via G's branch after a revert/re-apply; host wiring in G | 69 tests; 1920×1080 screenshots (start, 4/13 tiles, empty, 8-player lobby, loading, reduced); backdrop-cost ≤4 ms PENDING |
 | G — host integration | `ws/g-host-integration` → merged | Assets/audio + Babylon world wiring, launcher lifecycle/deps, phone/gamepad launcher input, real 4-bot e2e; Babylon loader moved inside `src/babylon` to restore ER-21-08 |
 | E — controllers/input | `ws/e-controllers` → merged | 501 controller tests + 50 bot tests; launcher remote layout, gyro calibration, steering/tap-tempo/haptics, reconnect/UGC flows, QA probe; controller 40,923 / 51,200 B gz |
+| Host launcher smoke | real Chrome, 2026-10-23 | `.console-shell` + live room code + seven tiles (Beat Tap, Bomb Defusal, Coin Run, Reaction Duel, Snake Royale, Sumo Bumpers, Template Game); Engine Cube hidden without `?debug=1` |
 | Trace tooling — game IDs | `GAME-…` prefix registered; 37 merged-game rows added | `tools/trace-check` recognizes the prefix; stage trace 0 unknown, 44 deferred; gate 308 files / 3,353 tests |
 | D — console launcher | `ws/d-console-launcher` in flight | UI-only, independent of A/B |
 | I — Sumo Bumpers (Minimal) | `ws/i-sumo-bumpers` in flight | Flat 2D, game-kit + SDK fakes |
