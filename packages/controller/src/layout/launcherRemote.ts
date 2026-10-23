@@ -11,11 +11,20 @@
  * Bits are frozen for the launcher: Select = 0, Back = 1, d-pad = 8..11.
  * Menu semantics (what Select means on a screen) belong to the host; the
  * controller only reports the bits.
+ *
+ * While this layout is active, the layout view translates those bit edges into
+ * the host's `remote` controller event (`spec 25 §2.7`) instead of game input.
  */
 import type { LayoutDocument } from "@lanpad/sdk";
 
 /** Stable layout id; the launcher can hot-swap by this id. */
 export const LAUNCHER_REMOTE_LAYOUT_ID = "launcher-remote-v1";
+
+/** Host event name for launcher navigation (spec 25 §2.7). */
+export const LAUNCHER_REMOTE_EVENT = "remote";
+
+/** The six navigation buttons the host console accepts. */
+export type LauncherRemoteButton = "up" | "down" | "left" | "right" | "ok" | "back";
 
 export const LAUNCHER_REMOTE_LAYOUT: LayoutDocument = {
   schemaVersion: 1,
@@ -74,3 +83,19 @@ export const LAUNCHER_REMOTE_BITS = Object.freeze({
   left: 10,
   right: 11,
 } as const);
+
+/** Bit to host button name; `ok` is Select and `back` is Back. */
+const LAUNCHER_REMOTE_BUTTON_BY_BIT: Readonly<Record<number, LauncherRemoteButton>> =
+  Object.freeze({
+    [LAUNCHER_REMOTE_BITS.select]: "ok",
+    [LAUNCHER_REMOTE_BITS.back]: "back",
+    [LAUNCHER_REMOTE_BITS.up]: "up",
+    [LAUNCHER_REMOTE_BITS.down]: "down",
+    [LAUNCHER_REMOTE_BITS.left]: "left",
+    [LAUNCHER_REMOTE_BITS.right]: "right",
+  });
+
+/** Maps one protocol bit to its launcher button; null for every other bit. */
+export function launcherRemoteButtonForBit(bit: number): LauncherRemoteButton | null {
+  return LAUNCHER_REMOTE_BUTTON_BY_BIT[bit] ?? null;
+}
