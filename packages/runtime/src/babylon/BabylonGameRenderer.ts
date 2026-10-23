@@ -159,6 +159,14 @@ export class BabylonGameRenderer implements Renderer3D {
     return this.surfaceSize;
   }
 
+  /**
+   * Host-only handle for AssetContainer loading (GLB -> world model source).
+   * Games never see this; the SDK and game boundary stay Babylon-free.
+   */
+  get babylonScene(): Scene | null {
+    return this.scene;
+  }
+
   get drawCalls(): number {
     return this.frameDrawCalls;
   }
